@@ -1,44 +1,116 @@
 from scipy.io import arff
 import pandas as pd
-import numpy as np
-from mil import Bag
+from typing import List
 
-def load_arff_dataset(dataset_path):
+from data.attribute import Attribute
+from data.instance import Instance
+from data.bag import Bag
+from data.midata import MIData
 
-    # Cargar el archivo ARFF
-    data, meta = arff.loadarff('data/musk1.arff')
+def extract_bag_schema(dataset_path: str, bag_attr_name: str = "bag") -> List[Attribute]:
+    """
+    Lee el archivo ARFF como texto para extraer los nombres reales de los atributos
+    que están dentro de la estructura relacional (entre @attribute bag relational y @end bag).
+    """
+    attributes = []
+    inside_bag_def = False
+    
+    with open(dataset_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            
+            # Ignorar comentarios y líneas vacías
+            if not line or line.startswith('%'):
+                continue
+            
+            # Detectar inicio de la bolsa relacional
+            # Buscar algo como: @attribute bag relational
+            if line.lower().startswith(f"@attribute {bag_attr_name} relational"):
+                inside_bag_def = True
+                continue
+            
+            # Detectar fin de la bolsa
+            # Busca algo como: @end bag
+            if line.lower().startswith(f"@end {bag_attr_name}"):
+                break # Ya tenemos lo que queríamos, dejamos de leer
+            
+            # Si estamos dentro del bloque, capturamos los atributos
+            if inside_bag_def and line.lower().startswith("@attribute"):
+                # Ejemplo de linea: @attribute f1 numeric
+                parts = line.split()
+                if len(parts) >= 3:
+                    attr_name = parts[1] # nombre de la carcteristica
+
+                    # Creamos el objeto Attribute (asumimos real/numeric para instancias)
+                    attributes.append(Attribute(attr_name, "real"))
+                    
+    if not attributes:
+        print(f"Advertencia: No se encontraron atributos dentro de '{bag_attr_name}'.")
+        
+    return attributes
+
+def load_arff_dataset(dataset_path: str, dataset_name: str = "dataset") -> MIData:
+    """
+    Carga un dataset MIL asumiendo estructura estándar:
+    Col 0: ID (variable), Col 'bag': Relacional, Col 'class': Etiqueta.
+    """
+    print(f"Cargando dataset: {dataset_path} ...")
+
+    # 1. Cargar datos crudos
+    try:
+        data, meta = arff.loadarff(dataset_path)
+    except Exception as e:
+        raise ValueError(f"Error cargando ARFF: {e}")
+
     df = pd.DataFrame(data)
+    
+    # El ID es siempre la primera columna (índice 0), tenga el nombre que tenga
+    id_col_name = df.columns[0] 
+    
+    # La bolsa y la clase tienen nombres fijos en este formato estándar
+    bag_col_name = 'bag'
+    class_col_name = 'class'
+    
+    # Validación básica por si acaso
+    if bag_col_name not in df.columns:
+        raise ValueError(f"No se encontró la columna '{bag_col_name}' en el dataset.")
 
-    id_column_name = df.columns[0]
-    dataset_mil = []
+    # Obtener el esquema interno (nombres reales de f1, f2...)
+    instance_schema = extract_bag_schema(dataset_path)
+    print(f"Esquema interno detectado: {len(instance_schema)} atributos.")
+
+    # Construir lista de Bolsas
+    bags_list = []
 
     for index, row in df.iterrows():
-
-        # A. Extraer ID 
-
-        b_id = row[id_column_name].decode('utf-8') if isinstance(row[id_column_name], bytes) else row[id_column_name]
-
         
-        # B. Extraer Etiqueta (La columna se llama 'class' en este dataset)
+        # Extraemos ID (primera columna)
+        b_id = row[id_col_name]
+        if isinstance(b_id, bytes): b_id = b_id.decode('utf-8')
 
-        label = row['class'].decode('utf-8') if isinstance(row['class'], bytes) else row['class']
+        # Extraemos Etiqueta (columna 'class')
+        label = row[class_col_name]
+        if isinstance(label, bytes): label = label.decode('utf-8')
+
+        # Extraemos Instancias (columna 'bag')
+        # raw_bag_data es un numpy array estructurado
+        raw_bag_data = row[bag_col_name]
         
-        # C. Extraer Instancias (La columna 'bag' ya tiene los datos anidados)
-        # Los datos vienen como una estructura compleja, los convertimos a una matriz numérica limpia
+        instances_in_bag = []
+        for raw_inst in raw_bag_data:
+            # Convertimos la fila numpy a lista estándar de python
+            values = list(raw_inst)
+            
+            # Creamos el objeto Instance pasándole el esquema con nombres reales
+            new_inst = Instance(values, instance_schema)
+            instances_in_bag.append(new_inst)
 
-        bag_data = row['bag'] 
-        
-        # Convertir la estructura interna a una lista de listas y luego a numpy array
+        # Crear la Bolsa
+        new_bag = Bag(bag_id=b_id, label=label, instances=instances_in_bag)
+        bags_list.append(new_bag)
 
-        instances_matrix = np.array(bag_data.tolist(), dtype=float)
-        
-        # Crear el objeto y guardar
+    print(f"-> Carga finalizada: {len(bags_list)} bolsas procesadas.")
+    return MIData(bags_list, dataset_name)
 
-        new_bag = Bag(b_id, label)
-        new_bag.instances = instances_matrix
-        dataset_mil.append(new_bag)
 
-    print(f"Se cargaron {len(dataset_mil)} bolsas.")
-    print("Ejemplo de la primera bolsa:")
-    print(dataset_mil[0])
-    print("Dimensiones de sus instancias:", dataset_mil[0].instances.shape)
+load_arff_dataset("datasets/mutagenesis3_atoms.arff")

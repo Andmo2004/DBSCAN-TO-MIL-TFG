@@ -1,8 +1,8 @@
 from util import load_arff_dataset
-from mil import Bag
+from data.bag import Bag
 
 def main():
-    dataset_path = 'data/musk1.arff'
+    dataset_path = 'datasets/musk1.arff'
     dataset = load_arff_dataset(dataset_path)
 
     
