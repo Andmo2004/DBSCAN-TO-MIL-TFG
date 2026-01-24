@@ -1,16 +1,17 @@
 import numpy as np
 from typing import List, Tuple, Optional, Any
-'''
-- Clase Attribute: 
-    atributos: 
-        name: nombre del atributo, 
-        type: tipo de dato (cadena, nominal, entero, real, fecha). 
-        Según el tipo: 
-            values: lista de valores posibles (solo si es nominal), 
-            data_format: formato (por ejemplo, para fechas), intervalo de valores enteros.
-    Propósito: definir el esquema de cada columna del dataset.
-'''
+
 class Attribute:
+    '''
+    - Clase Attribute: 
+        atributos: 
+            name: nombre del atributo, 
+            type: tipo de dato (cadena, nominal, entero, real, fecha). 
+            Según el tipo: 
+                values: lista de valores posibles (solo si es nominal), 
+                data_format: formato (por ejemplo, para fechas), intervalo de valores enteros.
+        Propósito: definir el esquema de cada columna del dataset.
+    '''
     def __init__(self, 
                  name: str, 
                  attr_type: str, 
@@ -25,11 +26,11 @@ class Attribute:
         :param data_format: Formato específico (por ejemplo, para fechas).
         :param int_range: Tupla (min, max) si el tipo es entero y se quiere definir un rango.
         """
-        self.name = name
-        self.type = attr_type
-        self.values = values
-        self.data_format = data_format
-        self.val_range = val_range
+        self._name = name
+        self._type = attr_type
+        self._values = values
+        self._data_format = data_format
+        self._val_range = val_range
 
     def __repr__(self):
         details = ""
@@ -40,4 +41,22 @@ class Attribute:
             
         return f"<Attribute '{self.name}' ({self.type}){details}>"
     
+    @property
+    def name(self) -> str:
+        return self._name
 
+    @property
+    def type(self) -> str:
+        return self._type
+
+    @property
+    def values(self) -> Optional[List[Any]]:
+        return self._values
+
+    @property
+    def data_format(self) -> Optional[str]:
+        return self._data_format
+
+    @property
+    def val_range(self) -> Optional[Tuple[float, float]]:
+        return self._val_range

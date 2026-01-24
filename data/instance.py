@@ -1,18 +1,19 @@
 from data.attribute import Attribute
 from typing import List, Any
-'''
-- Clase Instance: 
-    atributos: 
-        values: lista o array con los valores de la instancia, 
-        weight: peso (por defecto 1.0). 
-    Métodos: 
-        get_value(index): devuelve el valor en la posición indicada, 
-        set_value(index, value): asigna un valor validando el tipo según el esquema, 
-        num_attributes(): devuelve el número de atributos.
-    Nota: cada instancia debe conocer el esquema (lista de Attribute) para validar tipos y procesar correctamente.
-'''
 
 class Instance:
+    '''
+    - Clase Instance: 
+        atributos: 
+            values: lista o array con los valores de la instancia, 
+            weight: peso (por defecto 1.0). 
+        Métodos: 
+            get_value(index): devuelve el valor en la posición indicada, 
+            set_value(index, value): asigna un valor validando el tipo según el esquema, 
+            num_attributes(): devuelve el número de atributos.
+        Nota: cada instancia debe conocer el esquema (lista de Attribute) para validar tipos y procesar correctamente.
+    '''
+
     def __init__(self, values: List[Any], schema: List['Attribute'], weight: float = 1.0):
         """
         Constructor de la Instancia.
@@ -20,10 +21,21 @@ class Instance:
         :param schema: Esquema (lista de Attribute) para validar tipos.
         :param weight: Peso de la instancia (float), por defecto 1.0.
         """
-        self.values = values
-        self.schema = schema
-        self.weight = weight
-    
+        self._values = values
+        self._schema = schema
+        self._weight = weight
+
+    def __eq__(self, other):
+        if not isinstance(other, Instance):
+            return False
+        return self._values == other._values and self._schema == other._schema and self._weight == other._weight
+
+    def __repr__(self):
+        return f"<Instance values={self._values} weight={self._weight}>"
+
+    def __str__(self):
+        return f"Instance({self._values}, weight={self._weight})"
+
     def get_value(self, index: int) -> Any:
         """
         Devuelve el valor en la posición indicada.
@@ -78,3 +90,19 @@ class Instance:
         :return: Número de atributos (int).
         """
         return len(self.values)
+    
+    @property
+    def values(self) -> List[Any]:
+        return self._values
+
+    @property
+    def schema(self) -> List['Attribute']:
+        return self._schema
+
+    @property
+    def weight(self) -> float:
+        return self._weight
+
+    @weight.setter
+    def weight(self, value: float):
+        self._weight = value
