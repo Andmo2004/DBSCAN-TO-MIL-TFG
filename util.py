@@ -7,6 +7,10 @@ from data.instance import Instance
 from data.bag import Bag
 from data.midata import MIData
 
+# Al inicio del archivo
+DEFAULT_BAG_COLUMN = 'bag'
+DEFAULT_CLASS_COLUMN = 'class'
+
 def extract_bag_schema(dataset_path: str, bag_attr_name: str = "bag") -> List[Attribute]:
     """
     Lee el archivo ARFF como texto para extraer los nombres reales de los atributos
@@ -54,6 +58,7 @@ def load_arff_dataset(dataset_path: str, dataset_name: str = "dataset") -> MIDat
     Carga un dataset MIL asumiendo estructura estándar:
     Col 0: ID (variable), Col 'bag': Relacional, Col 'class': Etiqueta.
     """
+
     print(f"Cargando dataset: {dataset_path} ...")
 
     # 1. Cargar datos crudos
@@ -67,13 +72,9 @@ def load_arff_dataset(dataset_path: str, dataset_name: str = "dataset") -> MIDat
     # El ID es siempre la primera columna (índice 0), tenga el nombre que tenga
     id_col_name = df.columns[0] 
     
-    # La bolsa y la clase tienen nombres fijos en este formato estándar
-    bag_col_name = 'bag'
-    class_col_name = 'class'
-    
     # Validación básica por si acaso
-    if bag_col_name not in df.columns:
-        raise ValueError(f"No se encontró la columna '{bag_col_name}' en el dataset.")
+    if DEFAULT_BAG_COLUMN not in df.columns:
+        raise ValueError(f"No se encontró la columna '{DEFAULT_BAG_COLUMN}' en el dataset.")
 
     # Obtener el esquema interno (nombres reales de f1, f2...)
     instance_schema = extract_bag_schema(dataset_path)
@@ -85,16 +86,16 @@ def load_arff_dataset(dataset_path: str, dataset_name: str = "dataset") -> MIDat
     for index, row in df.iterrows():
         
         # Extraemos ID (primera columna)
+        
         b_id = row[id_col_name]
-        if isinstance(b_id, bytes): b_id = b_id.decode('utf-8')
+        _decode_if_bytes(b_id)
 
         # Extraemos Etiqueta (columna 'class')
-        label = row[class_col_name]
-        if isinstance(label, bytes): label = label.decode('utf-8')
-
+        label = row[DEFAULT_CLASS_COLUMN]
+        _decode_if_bytes(label)
         # Extraemos Instancias (columna 'bag')
         # raw_bag_data es un numpy array estructurado
-        raw_bag_data = row[bag_col_name]
+        raw_bag_data = row[DEFAULT_BAG_COLUMN]
         
         instances_in_bag = []
         for raw_inst in raw_bag_data:
@@ -109,8 +110,10 @@ def load_arff_dataset(dataset_path: str, dataset_name: str = "dataset") -> MIDat
         new_bag = Bag(bag_id=b_id, label=label, instances=instances_in_bag)
         bags_list.append(new_bag)
 
+
+    def _decode_if_bytes(value):
+        return value.decode('utf-8') if isinstance(value, bytes) else value
+    
     print(f"-> Carga finalizada: {len(bags_list)} bolsas procesadas.")
     return MIData(bags_list, dataset_name)
 
-
-load_arff_dataset("datasets/mutagenesis3_atoms.arff")

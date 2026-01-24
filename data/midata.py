@@ -2,28 +2,51 @@ from typing import List, Tuple
 from data.bag import Bag
 import random
 
-'''
-	- Clase MIData: 
-        atributos: 
-            bags: lista de objetos Bag, 
-            name: nombre del dataset. 
-        Métodos: 
-            get_bag(i): devuelve la bolsa i, 
-            get_num_bags(): número total de bolsas, 
-            split_data(percentage_train, seed): divide el dataset en entrenamiento y prueba 
-                (podemos implementar diferentes opciones).
-'''
 
 class MIData:
+    '''
+        - Clase MIData: 
+            atributos: 
+                bags: lista de objetos Bag, 
+                name: nombre del dataset. 
+            Métodos: 
+                get_bag(i): devuelve la bolsa i, 
+                get_num_bags(): número total de bolsas, 
+                split_data(percentage_train, seed): divide el dataset en entrenamiento y prueba 
+                    (podemos implementar diferentes opciones).
+    '''
     def __init__(self, bags: List['Bag'], name: str):
         """
         Constructor del dataset multi-instancia.        
         :param bags: lista de objetos Bag.
         :param name: Nombre del dataset.
         """
-        self.bags = bags
-        self.name = name
-    
+        self._bags = bags
+        self._name = name
+
+    def __iter__(self):
+        """
+        Permite iterar sobre las bolsas: for bag in dataset.
+        """
+        return iter(self._bags)
+
+    def __contains__(self, bag):
+        """
+        Permite usar 'in': bag in dataset.
+        """
+        return bag in self._bags
+
+    def __eq__(self, other):
+        if not isinstance(other, MIData):
+            return False
+        return self._bags == other._bags and self._name == other._name
+
+    def __repr__(self):
+        return f"<MIData name={self._name} bags={len(self._bags)} >"
+
+    def __str__(self):
+        return f"MIData '{self._name}' ({len(self._bags)} bags)"
+
     def get_bag(self, i: int) -> 'Bag':
         """
         Devuelve la bolsa i-ésima del dataset.
@@ -63,3 +86,10 @@ class MIData:
         
         return mi_data_train, mi_data_test
     
+    @property
+    def bags(self) -> List['Bag']:
+        return self._bags.copy()
+
+    @property
+    def name(self) -> str:
+        return self._name
