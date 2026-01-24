@@ -1,0 +1,233 @@
+2026-01-24 14:13:52,588 - __main__ - INFO - ======================================================================
+2026-01-24 14:13:52,588 - __main__ - INFO - Iniciando aplicación MIL - Demostración de carga de datasets
+2026-01-24 14:13:52,588 - __main__ - INFO - ======================================================================
+2026-01-24 14:13:52,588 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:13:52,588 - __main__ - INFO - MÉTODO 1: Usando MIData.from_arff() (Factory Method)
+2026-01-24 14:13:52,588 - __main__ - INFO - ======================================================================
+2026-01-24 14:13:52,588 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:13:52,588 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-24 14:13:52,605 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:13:52,605 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:13:52,605 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:15:25,172 - __main__ - INFO - ======================================================================
+2026-01-24 14:15:25,172 - __main__ - INFO - Iniciando aplicación MIL - Demostración de carga de datasets
+2026-01-24 14:15:25,172 - __main__ - INFO - ======================================================================
+2026-01-24 14:15:25,172 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:15:25,172 - __main__ - INFO - MÉTODO 1: Usando MIData.from_arff() (Factory Method)
+2026-01-24 14:15:25,172 - __main__ - INFO - ======================================================================
+2026-01-24 14:15:25,172 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:15:25,172 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-24 14:15:25,187 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:15:25,187 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:15:25,187 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:26:25,936 - __main__ - INFO - ======================================================================
+2026-01-24 14:26:25,936 - __main__ - INFO - Iniciando aplicación MIL - Demostración de carga de datasets
+2026-01-24 14:26:25,936 - __main__ - INFO - ======================================================================
+2026-01-24 14:26:25,936 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:26:25,936 - __main__ - INFO - MÉTODO 1: Usando MIData.from_arff() (Factory Method)
+2026-01-24 14:26:25,936 - __main__ - INFO - ======================================================================
+2026-01-24 14:26:25,936 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:26:25,936 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-24 14:26:25,953 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:26:25,953 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:26:25,953 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:26:25,967 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:26:25,967 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:26:25,967 - __main__ - INFO - Dataset cargado: MIData 'musk1' (92 bags)
+2026-01-24 14:26:25,967 - __main__ - INFO - Número de bolsas: 92
+2026-01-24 14:27:32,366 - __main__ - INFO - ======================================================================
+2026-01-24 14:27:32,366 - __main__ - INFO - Iniciando aplicación MIL - Demostración de carga de datasets
+2026-01-24 14:27:32,366 - __main__ - INFO - ======================================================================
+2026-01-24 14:27:32,367 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:27:32,367 - __main__ - INFO - MÉTODO 1: Usando MIData.from_arff() (Factory Method)
+2026-01-24 14:27:32,367 - __main__ - INFO - ======================================================================
+2026-01-24 14:27:32,367 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:27:32,367 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-24 14:27:32,384 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:27:32,384 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:27:32,384 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:27:32,398 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:27:32,398 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:27:32,399 - __main__ - INFO - Dataset cargado: MIData 'musk1' (92 bags)
+2026-01-24 14:27:32,399 - __main__ - INFO - Número de bolsas: 92
+2026-01-24 14:28:24,808 - __main__ - INFO - ======================================================================
+2026-01-24 14:28:24,808 - __main__ - INFO - Iniciando aplicación MIL - Demostración de carga de datasets
+2026-01-24 14:28:24,808 - __main__ - INFO - ======================================================================
+2026-01-24 14:28:24,808 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:28:24,808 - __main__ - INFO - MÉTODO 1: Usando MIData.from_arff() (Factory Method)
+2026-01-24 14:28:24,808 - __main__ - INFO - ======================================================================
+2026-01-24 14:28:24,808 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:28:24,808 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-24 14:28:24,823 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:28:24,823 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:28:24,823 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:28:24,837 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:28:24,837 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:28:24,837 - __main__ - INFO - Dataset cargado: MIData 'musk1' (92 bags)
+2026-01-24 14:28:24,837 - __main__ - INFO - Número de bolsas: 92
+2026-01-24 14:28:24,837 - __main__ - INFO - Primera bolsa: Bag 'MUSK-188' (4 instances)
+2026-01-24 14:28:24,837 - __main__ - INFO - Bolsas positivas: 47
+2026-01-24 14:28:24,837 - __main__ - INFO - Bolsas negativas: 45
+2026-01-24 14:28:24,837 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:28:24,837 - __main__ - INFO - MÉTODO 2: Carga con configuración personalizada
+2026-01-24 14:28:24,837 - __main__ - INFO - ======================================================================
+2026-01-24 14:28:24,837 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:28:24,837 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1_custom'
+2026-01-24 14:28:24,852 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:28:24,852 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:28:24,852 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:28:24,866 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:28:24,866 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:28:24,866 - __main__ - INFO - Dataset personalizado: MIData 'musk1_custom' (92 bags)
+2026-01-24 14:28:24,866 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:28:24,866 - __main__ - INFO - MÉTODO 3: Usando ArffToMIData directamente (más control)
+2026-01-24 14:28:24,866 - __main__ - INFO - ======================================================================
+2026-01-24 14:28:24,866 - __main__ - INFO - Loader creado: ARFF to MIData Transformer
+2026-01-24 14:28:24,866 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1_loader'
+2026-01-24 14:28:24,880 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:28:24,881 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:28:24,881 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:28:24,895 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:28:24,895 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:28:24,895 - __main__ - INFO - Dataset cargado: MIData 'musk1_loader' (92 bags)
+2026-01-24 14:28:24,896 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:28:24,896 - __main__ - INFO - MÉTODO 4: Función de conveniencia (retrocompatibilidad)
+2026-01-24 14:28:24,896 - __main__ - INFO - ======================================================================
+2026-01-24 14:28:24,896 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1_legacy'
+2026-01-24 14:28:24,911 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:28:24,911 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:28:24,911 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:28:24,925 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:28:24,925 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:28:24,925 - __main__ - INFO - Dataset cargado: MIData 'musk1_legacy' (92 bags)
+2026-01-24 14:28:24,925 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:28:24,925 - __main__ - INFO - DEMOSTRACIÓN: Operaciones con el dataset
+2026-01-24 14:28:24,925 - __main__ - INFO - ======================================================================
+2026-01-24 14:28:24,925 - __main__ - INFO - Dividiendo dataset en train/test (70/30)...
+2026-01-24 14:28:24,926 - __main__ - INFO - Train: MIData 'musk1_train' (64 bags)
+2026-01-24 14:28:24,926 - __main__ - INFO - Test: MIData 'musk1_test' (28 bags)
+2026-01-24 14:28:24,926 - __main__ - INFO - 
+Primeras 3 bolsas del conjunto de entrenamiento:
+2026-01-24 14:28:24,926 - __main__ - INFO -   1. Bag 'NON-MUSK-289' (4 instances)
+2026-01-24 14:28:24,926 - __main__ - INFO -   2. Bag 'MUSK-238' (5 instances)
+2026-01-24 14:28:24,926 - __main__ - INFO -   3. Bag 'MUSK-jf58' (5 instances)
+2026-01-24 14:28:24,926 - __main__ - INFO - 
+Acceso pythónico a datos:
+2026-01-24 14:28:24,926 - __main__ - INFO -   Total de bolsas: 64
+2026-01-24 14:28:24,926 - __main__ - INFO -   Primera bolsa: Bag 'NON-MUSK-289' (4 instances)
+2026-01-24 14:28:24,926 - __main__ - ERROR - Error en operaciones: 'Bag' object is not subscriptable
+2026-01-24 14:28:24,926 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:28:24,926 - __main__ - INFO - DEMOSTRACIÓN: Validación y manejo de errores
+2026-01-24 14:28:24,926 - __main__ - INFO - ======================================================================
+2026-01-24 14:28:24,926 - __main__ - INFO - Intentando cargar archivo inexistente...
+2026-01-24 14:28:24,926 - data.midata - INFO - Cargando dataset desde ARFF: datasets/no_existe.arff
+2026-01-24 14:28:24,926 - data.arff_reader - ERROR - Archivo no encontrado: datasets/no_existe.arff
+2026-01-24 14:28:24,926 - __main__ - INFO -   ✓ Error capturado correctamente: FileNotFoundError
+2026-01-24 14:28:24,926 - __main__ - INFO - Intentando cargar con columna incorrecta...
+2026-01-24 14:28:24,926 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:28:24,926 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-24 14:28:24,941 - data.arff_reader - ERROR - Columna relacional 'columna_inexistente' no encontrada en 'datasets/musk1.arff'. Columnas disponibles: ['molecule_name', 'bag', 'class']
+2026-01-24 14:28:24,941 - __main__ - INFO -   ✓ Error capturado correctamente: ValueError
+2026-01-24 14:28:24,941 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:28:24,941 - __main__ - INFO - Aplicación finalizada exitosamente
+2026-01-24 14:28:24,941 - __main__ - INFO - ======================================================================
+2026-01-24 14:32:10,535 - __main__ - INFO - ======================================================================
+2026-01-24 14:32:10,535 - __main__ - INFO - Iniciando aplicación MIL - Demostración de carga de datasets
+2026-01-24 14:32:10,535 - __main__ - INFO - ======================================================================
+2026-01-24 14:32:10,535 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:32:10,535 - __main__ - INFO - MÉTODO 1: Usando MIData.from_arff() (Factory Method)
+2026-01-24 14:32:10,535 - __main__ - INFO - ======================================================================
+2026-01-24 14:32:10,535 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:32:10,535 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-24 14:32:10,551 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:32:10,551 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:32:10,551 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:32:10,565 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:32:10,565 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:32:10,566 - __main__ - INFO - Dataset cargado: MIData 'musk1' (92 bags)
+2026-01-24 14:32:10,566 - __main__ - INFO - Número de bolsas: 92
+2026-01-24 14:32:10,566 - __main__ - INFO - Primera bolsa: Bag 'MUSK-188' (4 instances)
+2026-01-24 14:32:10,566 - __main__ - INFO - Bolsas positivas: 47
+2026-01-24 14:32:10,566 - __main__ - INFO - Bolsas negativas: 45
+2026-01-24 14:32:10,566 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:32:10,566 - __main__ - INFO - MÉTODO 2: Carga con configuración personalizada
+2026-01-24 14:32:10,566 - __main__ - INFO - ======================================================================
+2026-01-24 14:32:10,566 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:32:10,566 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1_custom'
+2026-01-24 14:32:10,580 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:32:10,581 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:32:10,581 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:32:10,595 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:32:10,595 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:32:10,595 - __main__ - INFO - Dataset personalizado: MIData 'musk1_custom' (92 bags)
+2026-01-24 14:32:10,595 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:32:10,595 - __main__ - INFO - MÉTODO 3: Usando ArffToMIData directamente (más control)
+2026-01-24 14:32:10,595 - __main__ - INFO - ======================================================================
+2026-01-24 14:32:10,595 - __main__ - INFO - Loader creado: ARFF to MIData Transformer
+2026-01-24 14:32:10,595 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1_loader'
+2026-01-24 14:32:10,610 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:32:10,610 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:32:10,610 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:32:10,624 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:32:10,625 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:32:10,625 - __main__ - INFO - Dataset cargado: MIData 'musk1_loader' (92 bags)
+2026-01-24 14:32:10,625 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:32:10,625 - __main__ - INFO - MÉTODO 4: Función de conveniencia (retrocompatibilidad)
+2026-01-24 14:32:10,625 - __main__ - INFO - ======================================================================
+2026-01-24 14:32:10,625 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1_legacy'
+2026-01-24 14:32:10,640 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-24 14:32:10,640 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-24 14:32:10,640 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-24 14:32:10,654 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-24 14:32:10,654 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-24 14:32:10,654 - __main__ - INFO - Dataset cargado: MIData 'musk1_legacy' (92 bags)
+2026-01-24 14:32:10,654 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:32:10,654 - __main__ - INFO - DEMOSTRACIÓN: Operaciones con el dataset
+2026-01-24 14:32:10,654 - __main__ - INFO - ======================================================================
+2026-01-24 14:32:10,654 - __main__ - INFO - Dividiendo dataset en train/test (70/30)...
+2026-01-24 14:32:10,654 - __main__ - INFO - Train: MIData 'musk1_train' (64 bags)
+2026-01-24 14:32:10,654 - __main__ - INFO - Test: MIData 'musk1_test' (28 bags)
+2026-01-24 14:32:10,654 - __main__ - INFO - 
+Primeras 3 bolsas del conjunto de entrenamiento:
+2026-01-24 14:32:10,654 - __main__ - INFO -   1. Bag 'NON-MUSK-289' (4 instances)
+2026-01-24 14:32:10,654 - __main__ - INFO -   2. Bag 'MUSK-238' (5 instances)
+2026-01-24 14:32:10,654 - __main__ - INFO -   3. Bag 'MUSK-jf58' (5 instances)
+2026-01-24 14:32:10,654 - __main__ - INFO - 
+Acceso pythónico a datos:
+2026-01-24 14:32:10,654 - __main__ - INFO -   Total de bolsas: 64
+2026-01-24 14:32:10,654 - __main__ - INFO -   Primera bolsa: Bag 'NON-MUSK-289' (4 instances)
+2026-01-24 14:32:10,654 - __main__ - INFO -   Primera instancia de primera bolsa: Instance([np.float64(38.0), np.float64(-132.0), np.float64(-128.0), np.float64(130.0), np.float64(-117.0), np.float64(-135.0), np.float64(52.0), np.float64(-72.0), np.float64(-37.0), np.float64(-184.0), np.float64(-227.0), np.float64(-27.0), np.float64(-159.0), np.float64(-160.0), np.float64(-177.0), np.float64(-303.0), np.float64(56.0), np.float64(-59.0), np.float64(-34.0), np.float64(-166.0), np.float64(-59.0), np.float64(-20.0), np.float64(13.0), np.float64(-66.0), np.float64(-99.0), np.float64(-50.0), np.float64(65.0), np.float64(-116.0), np.float64(4.0), np.float64(-152.0), np.float64(-97.0), np.float64(116.0), np.float64(18.0), np.float64(-272.0), np.float64(-20.0), np.float64(81.0), np.float64(-175.0), np.float64(2.0), np.float64(-142.0), np.float64(68.0), np.float64(-125.0), np.float64(102.0), np.float64(-157.0), np.float64(-203.0), np.float64(-77.0), np.float64(-324.0), np.float64(-85.0), np.float64(-95.0), np.float64(-88.0), np.float64(-177.0), np.float64(-72.0), np.float64(-24.0), np.float64(-7.0), np.float64(-110.0), np.float64(-46.0), np.float64(-37.0), np.float64(100.0), np.float64(-138.0), np.float64(-5.0), np.float64(-201.0), np.float64(186.0), np.float64(67.0), np.float64(-17.0), np.float64(-192.0), np.float64(-51.0), np.float64(62.0), np.float64(-165.0), np.float64(-53.0), np.float64(-133.0), np.float64(-9.0), np.float64(-133.0), np.float64(-125.0), np.float64(-181.0), np.float64(-56.0), np.float64(-147.0), np.float64(-183.0), np.float64(1.0), np.float64(-141.0), np.float64(-19.0), np.float64(-58.0), np.float64(-25.0), np.float64(11.0), np.float64(-48.0), np.float64(146.0), np.float64(-199.0), np.float64(4.0), np.float64(-53.0), np.float64(-184.0), np.float64(36.0), np.float64(-152.0), np.float64(-170.0), np.float64(100.0), np.float64(106.0), np.float64(-301.0), np.float64(10.0), np.float64(-44.0), np.float64(-189.0), np.float64(17.0), np.float64(-154.0), np.float64(93.0), np.float64(-119.0), np.float64(132.0), np.float64(-163.0), np.float64(-194.0), np.float64(-177.0), np.float64(-144.0), np.float64(-147.0), np.float64(-84.0), np.float64(-162.0), np.float64(-96.0), np.float64(-129.0), np.float64(4.0), np.float64(21.0), np.float64(19.0), np.float64(-219.0), np.float64(-193.0), np.float64(-93.0), np.float64(6.0), np.float64(78.0), np.float64(31.0), np.float64(-118.0), np.float64(-19.0), np.float64(-80.0), np.float64(42.0), np.float64(71.0), np.float64(9.0), np.float64(-216.0), np.float64(-217.0), np.float64(-242.0), np.float64(-28.0), np.float64(33.0), np.float64(-120.0), np.float64(-98.0), np.float64(-76.0), np.float64(-106.0), np.float64(-101.0), np.float64(38.0), np.float64(-85.0), np.float64(-30.0), np.float64(-56.0), np.float64(-61.0), np.float64(36.0), np.float64(63.0), np.float64(15.0), np.float64(-178.0), np.float64(148.0), np.float64(-119.0), np.float64(-22.0), np.float64(-42.0), np.float64(76.0), np.float64(-16.0), np.float64(-36.0), np.float64(33.0), np.float64(-50.0), np.float64(125.0), np.float64(32.0), np.float64(-236.0), np.float64(-320.0), np.float64(-211.0), np.float64(3.0), np.float64(31.0), np.float64(111.0), np.float64(86.0), np.float64(-28.0), np.float64(-1.0), np.float64(81.0)], weight=1.0)
+2026-01-24 14:32:10,655 - __main__ - INFO -   ¿Primera bolsa está en train? True
+2026-01-24 14:32:10,655 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:32:10,655 - __main__ - INFO - DEMOSTRACIÓN: Validación y manejo de errores
+2026-01-24 14:32:10,655 - __main__ - INFO - ======================================================================
+2026-01-24 14:32:10,655 - __main__ - INFO - Intentando cargar archivo inexistente...
+2026-01-24 14:32:10,655 - data.midata - INFO - Cargando dataset desde ARFF: datasets/no_existe.arff
+2026-01-24 14:32:10,655 - data.arff_reader - ERROR - Archivo no encontrado: datasets/no_existe.arff
+2026-01-24 14:32:10,655 - __main__ - INFO -   ✓ Error capturado correctamente: FileNotFoundError
+2026-01-24 14:32:10,655 - __main__ - INFO - Intentando cargar con columna incorrecta...
+2026-01-24 14:32:10,655 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-24 14:32:10,655 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-24 14:32:10,671 - data.arff_reader - ERROR - Columna relacional 'columna_inexistente' no encontrada en 'datasets/musk1.arff'. Columnas disponibles: ['molecule_name', 'bag', 'class']
+2026-01-24 14:32:10,671 - __main__ - INFO -   ✓ Error capturado correctamente: ValueError
+2026-01-24 14:32:10,671 - __main__ - INFO - 
+======================================================================
+2026-01-24 14:32:10,671 - __main__ - INFO - Aplicación finalizada exitosamente
+2026-01-24 14:32:10,671 - __main__ - INFO - ======================================================================

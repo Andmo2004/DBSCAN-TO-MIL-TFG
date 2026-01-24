@@ -29,12 +29,24 @@ class Bag:
         Permite iterar sobre las instancias: for inst in bag.
         """
         return iter(self._instances)
+    
+    def __len__(self) -> int:
+        """
+        Permite usar len(bag) para obtener el número de instancias.
+        """
+        return len(self._instances)
 
     def __contains__(self, instance):
         """
         Permite usar 'in': instance in bag.
         """
         return instance in self._instances
+
+    def __getitem__(self, index: int) -> 'Instance':
+        """
+        Permite acceder a las instancias con corchetes: bag[0]
+        """
+        return self.get_instance(index)
 
     def __eq__(self, other):
         if not isinstance(other, Bag):
