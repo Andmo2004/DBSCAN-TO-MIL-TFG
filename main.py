@@ -1,177 +1,156 @@
 from data.midata import MIData
 from data.arff_reader import ArffToMIData, load_arff_dataset
+from models.midbscan import MIDBSCAN
+from visualization.plotter import plot_mil_clusters
+from evaluation.evaluator import MILEvaluator
 import logging
+import sys
 
-# Configuración del sistema de logging
+# ==========================================
+# CONFIGURACIÓN DE LOGGING
+# ==========================================
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('mil_execution.log'),  # Log a archivo
-        logging.StreamHandler()  # Log a consola
+        logging.FileHandler('mil_execution.log'),  # Guarda log en archivo
+        logging.StreamHandler(sys.stdout)          # Muestra log en consola
     ]
 )
 
 logger = logging.getLogger(__name__)
 
-
-def main():
+def main(file_path = 'datasets/musk1.arff'):
     """
-    Función principal que demuestra las diferentes formas de cargar datasets.
+    Pipeline completo de Multi-Instance Learning:
+    Carga -> Preprocesamiento -> Clustering -> Visualización -> Evaluación
     """
     logger.info("=" * 70)
-    logger.info("Iniciando aplicación MIL - Demostración de carga de datasets")
+    logger.info("INICIANDO PIPELINE MIL - DBSCAN")
     logger.info("=" * 70)
     
+    # Variables para almacenar los datasets
+    train_data = None
+    test_data = None
+    
     # ==========================================
-    # MÉTODO 1: Usando MIData.from_arff() - RECOMENDADO
+    # 1. CARGA DE DATOS Y SPLIT
     # ==========================================
-    logger.info("\n" + "="*70)
-    logger.info("MÉTODO 1: Usando MIData.from_arff() (Factory Method)")
-    logger.info("="*70)
+    logger.info("\nPASO 1: Carga y División de Datos")
+    logger.info("-" * 30)
     
     try:
-        dataset1 = MIData.from_arff('datasets/musk1.arff')
+        # Cargamos el dataset completo
+        # NOTA: Asegúrate de que la ruta al archivo .arff sea correcta
+        full_dataset = MIData.from_arff(file_path)
         
-        logger.info(f"Dataset cargado: {dataset1}")
-        logger.info(f"Número de bolsas: {len(dataset1)}")
-        logger.info(f"Primera bolsa: {dataset1[0]}")
+        logger.info(f"Dataset cargado exitosamente: {full_dataset}")
+        logger.info(f"Total bolsas: {len(full_dataset)}")
         
-        # Estadísticas
-        positive_bags = dataset1.get_positive_bags()
-        negative_bags = dataset1.get_negative_bags()
-        logger.info(f"Bolsas positivas: {len(positive_bags)}")
-        logger.info(f"Bolsas negativas: {len(negative_bags)}")
-        
-    except FileNotFoundError as e:
-        logger.error(f"Archivo no encontrado: {e}")
-    except ValueError as e:
-        logger.error(f"Error en formato: {e}")
-    
-    # ==========================================
-    # MÉTODO 2: Usando MIData.from_arff() con configuración personalizada
-    # ==========================================
-    logger.info("\n" + "="*70)
-    logger.info("MÉTODO 2: Carga con configuración personalizada")
-    logger.info("="*70)
-    
-    try:
-        # Para datasets con nombres de columnas diferentes
-        # (este ejemplo usa los estándar, pero muestra cómo personalizarlo)
-        dataset2 = MIData.from_arff(
-            file_path='datasets/musk1.arff',
-            dataset_name='musk1_custom',
-            bag_column='bag',      # Puedes cambiar esto si tu ARFF usa otro nombre
-            class_column='class'   # Puedes cambiar esto si tu ARFF usa otro nombre
-        )
-        
-        logger.info(f"Dataset personalizado: {dataset2}")
-        
-    except Exception as e:
-        logger.error(f"Error: {e}")
-    
-    # ==========================================
-    # MÉTODO 3: Usando la clase ArffToMIData directamente
-    # ==========================================
-    logger.info("\n" + "="*70)
-    logger.info("MÉTODO 3: Usando ArffToMIData directamente (más control)")
-    logger.info("="*70)
-    
-    try:
-        # Crear el loader con configuración específica
-        loader = ArffToMIData(
-            bag_column='bag',
-            class_column='class',
-            encoding='utf-8'
-        )
-        
-        logger.info(f"Loader creado: {loader}")
-        
-        # Cargar el dataset
-        dataset3 = loader.load('datasets/musk1.arff', 'musk1_loader')
-        
-        logger.info(f"Dataset cargado: {dataset3}")
-        
-    except Exception as e:
-        logger.error(f"Error: {e}")
-    
-    # ==========================================
-    # MÉTODO 4: Usando la función de conveniencia (retrocompatibilidad)
-    # ==========================================
-    logger.info("\n" + "="*70)
-    logger.info("MÉTODO 4: Función de conveniencia (retrocompatibilidad)")
-    logger.info("="*70)
-    
-    try:
-        dataset4 = load_arff_dataset('datasets/musk1.arff', 'musk1_legacy')
-        logger.info(f"Dataset cargado: {dataset4}")
-        
-    except Exception as e:
-        logger.error(f"Error: {e}")
-    
-    # ==========================================
-    # DEMOSTRACIÓN: Split y operaciones
-    # ==========================================
-    logger.info("\n" + "="*70)
-    logger.info("DEMOSTRACIÓN: Operaciones con el dataset")
-    logger.info("="*70)
-    
-    try:
-        # Usar el primer dataset
-        logger.info("Dividiendo dataset en train/test (70/30)...")
-        train_data, test_data = dataset1.split_data(70, seed=42)
-        
-        logger.info(f"Train: {train_data}")
-        logger.info(f"Test: {test_data}")
-        
-        # Iterar sobre primeras 3 bolsas
-        logger.info("\nPrimeras 3 bolsas del conjunto de entrenamiento:")
-        for i, bag in enumerate(train_data):
-            if i >= 3:
-                break
-            logger.info(f"  {i+1}. {bag}")
-        
-        # Acceso pythónico
-        logger.info("\nAcceso pythónico a datos:")
-        logger.info(f"  Total de bolsas: {len(train_data)}")
-        logger.info(f"  Primera bolsa: {train_data[0]}")
-        logger.info(f"  Primera instancia de primera bolsa: {train_data[0][0]}")
-        
-        # Verificar si una bolsa está en el dataset
-        first_bag = train_data[0]
-        logger.info(f"  ¿Primera bolsa está en train? {first_bag in train_data}")
-        
-    except Exception as e:
-        logger.error(f"Error en operaciones: {e}")
-    
-    # ==========================================
-    # MANEJO DE ERRORES: Ejemplos de validación
-    # ==========================================
-    logger.info("\n" + "="*70)
-    logger.info("DEMOSTRACIÓN: Validación y manejo de errores")
-    logger.info("="*70)
-    
-    # Error 1: Archivo no existe
-    try:
-        logger.info("Intentando cargar archivo inexistente...")
-        MIData.from_arff('datasets/no_existe.arff')
-    except FileNotFoundError as e:
-        logger.info(f"  ✓ Error capturado correctamente: {type(e).__name__}")
-    
-    # Error 2: Columna faltante (simulación)
-    try:
-        logger.info("Intentando cargar con columna incorrecta...")
-        MIData.from_arff(
-            'datasets/musk1.arff',
-            bag_column='columna_inexistente'
-        )
-    except ValueError as e:
-        logger.info(f"  ✓ Error capturado correctamente: {type(e).__name__}")
-    
-    logger.info("\n" + "="*70)
-    logger.info("Aplicación finalizada exitosamente")
-    logger.info("="*70)
+        # Estadísticas básicas
+        positives = len(full_dataset.get_positive_bags())
+        negatives = len(full_dataset.get_negative_bags())
+        logger.info(f"Balance de clases: {positives} Positivas / {negatives} Negativas")
 
+        # Dividimos en Train (70%) y Test (30%)
+        logger.info("Dividiendo dataset (70% Train, 30% Test)...")
+        train_data, test_data = full_dataset.split_data(percentage_train=70, seed=42)
+        
+        logger.info(f"Train Set: {len(train_data)} bolsas")
+        logger.info(f"Test Set:  {len(test_data)} bolsas")
+
+    except FileNotFoundError:
+        logger.critical(f"No se encontró el archivo: {file_path}")
+        return # Terminamos si no hay datos
+    except Exception as e:
+        logger.critical(f"Error crítico en la carga de datos: {e}", exc_info=True)
+        return
+
+    # ==========================================
+    # 2. CONFIGURACIÓN Y ENTRENAMIENTO (FIT)
+    # ==========================================
+    logger.info("\nPASO 2: Entrenamiento del Modelo (Clustering)")
+    logger.info("-" * 30)
+
+    # Configuración de Hiperparámetros
+    # Ajusta 'epsilon' según tus resultados anteriores. 
+    # 900.0 funcionaba (agrupaba mucho), prueba bajar a 600.0 si quieres separar más.
+    epsilon = 900.0 
+    min_pts = 2
+    
+    try:
+        logger.info(f"Configurando MIDBSCAN: Epsilon={epsilon}, MinPts={min_pts}")
+        dbscan = MIDBSCAN(epsilon=epsilon, min_pts=min_pts, metric='hausdorff')
+        
+        logger.info("Entrenando modelo...")
+        dbscan.fit(train_data)
+        
+        # Obtenemos estadísticas internas del modelo
+        stats = dbscan.get_statistics()
+        logger.info(f"Modelo entrenado. Clusters encontrados: {stats['num_clusters']}")
+        logger.info(f"Puntos Núcleo: {stats['num_core_points']}")
+        logger.info(f"Ruido en Train: {stats['noise_points_count']} bolsas")
+        logger.debug(f"Distribución detallada: {stats['cluster_sizes']}")
+
+        # ==========================================
+        # 3. EVALUACIÓN DE ENTRENAMIENTO
+        # ==========================================
+        logger.info("\nPASO 3: Evaluación del Ajuste (Training)")
+        logger.info("-" * 30)
+        
+        # Evaluamos qué tan bien se alinean los clusters con las etiquetas reales en Train
+        MILEvaluator.evaluate(
+            dataset=train_data, 
+            model_labels=dbscan.labels, 
+            title="Training Set (Cluster Quality)"
+        )
+
+        # ==========================================
+        # 4. VISUALIZACIÓN
+        # ==========================================
+        logger.info("\nPASO 4: Visualización")
+        logger.info("-" * 30)
+        
+        try:
+            logger.info("Generando gráfico PCA...")
+            plot_mil_clusters(
+                model=dbscan, 
+                dataset=train_data, 
+                method='pca', 
+                title=f"Musk1 Train (Eps={epsilon})"
+            )
+            logger.info("Gráfico generado exitosamente.")
+        except Exception as e:
+            logger.error(f"No se pudo generar la visualización: {e}")
+
+        # ==========================================
+        # 5. PREDICCIÓN Y EVALUACIÓN FINAL (TEST)
+        # ==========================================
+        logger.info("\nPASO 5: Predicción y Generalización (Test)")
+        logger.info("-" * 30)
+        
+        if test_data and len(test_data) > 0:
+            logger.info(f"Prediciendo etiquetas para {len(test_data)} bolsas de prueba...")
+            
+            test_results = dbscan.predict(test_data)
+            
+            # Evaluación final: Esta es la métrica más importante
+            # Nos dice si el modelo aprendió patrones reales o solo memorizó
+            MILEvaluator.evaluate(
+                dataset=test_data, 
+                model_labels=test_results, 
+                title="Test Set (Generalization Performance)"
+            )
+        else:
+            logger.warning("El set de prueba está vacío, saltando predicción.")
+
+    except Exception as e:
+        logger.error(f"Ocurrió un error durante el proceso de modelado: {e}", exc_info=True)
+
+    logger.info("\n" + "="*70)
+    logger.info("PROCESO FINALIZADO")
+    logger.info("="*70)
 
 if __name__ == "__main__":
+    # file_path = 'datasets/BirdsChestnut-backedChickadee.arff'
     main()
