@@ -1,5 +1,4 @@
 from data.midata import MIData
-from data.arff_reader import ArffToMIData, load_arff_dataset
 from models.midbscan import MIDBSCAN
 from visualization.plotter import plot_mil_clusters
 from evaluation.evaluator import MILEvaluator
@@ -152,5 +151,5 @@ def main(file_path = 'datasets/musk1.arff'):
     logger.info("="*70)
 
 if __name__ == "__main__":
-    # file_path = 'datasets/BirdsChestnut-backedChickadee.arff'
-    main()
+    file_path = 'datasets/simple_dummy.arff'
+    main(file_path)

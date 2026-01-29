@@ -1,0 +1,19 @@
+Eps,MinPts,Clusters,Ruido_Pct,Precision,Recall,Specificity,F1_Score,Interpretacion
+0.5,2,35,0.0,0.0,0.0,1.0,0.0,Sobre segmentado.
+1.0,2,22,0.0,1.0,0.4706,1.0,0.64,Sobre segmentado.
+1.5,2,9,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+2.0,2,7,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+3.0,2,7,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+5.0,2,7,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+0.5,3,35,0.0,0.0,0.0,1.0,0.0,Sobre segmentado.
+1.0,3,22,0.0,1.0,0.4706,1.0,0.64,Sobre segmentado.
+1.5,3,9,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+2.0,3,7,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+3.0,3,7,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+5.0,3,7,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+0.5,4,35,0.0,0.0,0.0,1.0,0.0,Sobre segmentado.
+1.0,4,25,0.0,1.0,0.2941,1.0,0.4545,Sobre segmentado.
+1.5,4,9,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+2.0,4,7,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+3.0,4,7,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
+5.0,4,7,0.0,1.0,0.8824,1.0,0.9375,Sobre segmentado.
