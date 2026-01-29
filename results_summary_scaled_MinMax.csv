@@ -1,0 +1,12 @@
+Dataset,Status,Execution_Time,Train_Bags,Test_Bags,Clusters,Noise_Pct,Precision,Recall,F1,Specificity,Error_Msg
+musk1,Success,0.1,64,28,64,0.0,0.0,0.0,0.0,1.0,
+ImageElephant,Success,0.71,140,60,140,0.0,0.5833,1.0,0.7368,0.0,
+Thioredoxin,Success,1.01,135,58,135,0.0,0.0,0.0,0.0,1.0,
+mutagenesis3_atoms,Success,0.16,131,57,50,0.0,0.75,0.9474,0.8372,0.3684,
+simple_dummy,Success,0.0,24,11,24,0.0,0.0,0.0,0.0,1.0,
+BirdsChestnut-backedChickadee,Success,2.68,383,165,383,0.0,0.0,0.0,0.0,1.0,
+Newsgroups1,Success,2.03,70,30,30,0.0,0.8571,0.4615,0.6,0.9412,
+Harddrive1,Success,27.46,258,111,258,0.0,0.5405,1.0,0.7018,0.0,
+mutagenesis3_chains,Success,0.52,131,57,90,0.0,0.6038,0.9412,0.7356,0.087,
+musk2,Success,1.24,71,31,71,0.0,0.0,0.0,0.0,1.0,
+BirdsHammondsFlycatcher,Success,2.71,383,165,383,0.0,0.0,0.0,0.0,1.0,
