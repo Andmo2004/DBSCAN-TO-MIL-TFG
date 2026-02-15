@@ -1,0 +1,115 @@
+2026-01-30 14:05:39,045 - __main__ - INFO - ======================================================================
+2026-01-30 14:05:39,046 - __main__ - INFO - INICIANDO PIPELINE MIL - DBSCAN
+2026-01-30 14:05:39,046 - __main__ - INFO - ======================================================================
+2026-01-30 14:05:39,046 - __main__ - INFO - 
+PASO 1: Carga y División de Datos
+2026-01-30 14:05:39,046 - __main__ - INFO - ------------------------------
+2026-01-30 14:05:39,792 - data.midata - INFO - Cargando dataset desde ARFF: datasets/simple_dummy.arff
+2026-01-30 14:05:39,792 - data.arff_reader - INFO - Iniciando carga de 'datasets/simple_dummy.arff' como dataset 'simple_dummy'
+2026-01-30 14:05:39,795 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/simple_dummy.arff'
+2026-01-30 14:05:39,795 - data.arff_reader - INFO - Esquema extraído: 2 atributos
+2026-01-30 14:05:39,795 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-30 14:05:39,796 - data.arff_reader - INFO - Bolsas construidas: 35 bolsas, 97 instancias totales
+2026-01-30 14:05:39,796 - data.arff_reader - INFO - Carga completada: 35 bolsas procesadas
+2026-01-30 14:05:39,796 - __main__ - INFO - Dataset cargado exitosamente: MIData 'simple_dummy' (35 bags)
+2026-01-30 14:05:39,796 - __main__ - INFO - Total bolsas: 35
+2026-01-30 14:05:39,796 - __main__ - INFO - Balance de clases: 17 Positivas / 18 Negativas
+2026-01-30 14:05:39,796 - __main__ - INFO - Dividiendo dataset (70% Train, 30% Test)...
+2026-01-30 14:05:39,796 - __main__ - INFO - Train Set: 24 bolsas
+2026-01-30 14:05:39,796 - __main__ - INFO - Test Set:  11 bolsas
+2026-01-30 14:05:39,796 - __main__ - INFO - 
+PASO 2: Entrenamiento del Modelo (Clustering)
+2026-01-30 14:05:39,796 - __main__ - INFO - ------------------------------
+2026-01-30 14:05:39,796 - __main__ - INFO - Configurando MIDBSCAN: Epsilon=900.0, MinPts=2
+2026-01-30 14:05:39,796 - __main__ - INFO - Entrenando modelo...
+2026-01-30 14:05:39,796 - models.midbscan - INFO - Calculando matriz (24x24) usando métrica: 'hausdorff'...
+2026-01-30 14:05:39,799 - models.midbscan - INFO - Iniciando clustering DBSCAN (eps=900.0, min_pts=2)...
+2026-01-30 14:05:39,799 - __main__ - INFO - Modelo entrenado. Clusters encontrados: 1
+2026-01-30 14:05:39,799 - __main__ - INFO - Puntos Núcleo: 24
+2026-01-30 14:05:39,799 - __main__ - INFO - Ruido en Train: 0 bolsas
+2026-01-30 14:05:39,799 - __main__ - INFO - 
+PASO 3: Evaluación del Ajuste (Training)
+2026-01-30 14:05:39,799 - __main__ - INFO - ------------------------------
+2026-01-30 14:05:39,802 - __main__ - INFO - 
+PASO 4: Visualización
+2026-01-30 14:05:39,802 - __main__ - INFO - ------------------------------
+2026-01-30 14:05:39,802 - __main__ - INFO - Generando gráfico PCA...
+2026-01-30 14:05:57,190 - __main__ - INFO - Gráfico generado exitosamente.
+2026-01-30 14:05:57,190 - __main__ - INFO - 
+PASO 5: Predicción y Generalización (Test)
+2026-01-30 14:05:57,191 - __main__ - INFO - ------------------------------
+2026-01-30 14:05:57,191 - __main__ - INFO - Prediciendo etiquetas para 11 bolsas de prueba...
+2026-01-30 14:05:57,191 - models.midbscan - INFO - Prediciendo 11 bolsas de prueba usando 24 núcleos...
+2026-01-30 14:05:57,194 - models.midbscan - INFO - Predicción completada: 0 bolsas asignadas como ruido (0.00%)
+2026-01-30 14:05:57,197 - __main__ - INFO - 
+======================================================================
+2026-01-30 14:05:57,197 - __main__ - INFO - PROCESO FINALIZADO
+2026-01-30 14:05:57,197 - __main__ - INFO - ======================================================================
+2026-01-30 14:15:00,824 - CLI - INFO - ============================================================
+2026-01-30 14:15:00,825 - CLI - INFO - INICIANDO EXPERIMENTO: musk1.arff
+2026-01-30 14:15:00,825 - CLI - INFO - PARAMS: Scaler=Standard, Eps=1.5, MinPts=3
+2026-01-30 14:15:00,825 - CLI - INFO - ============================================================
+2026-01-30 14:15:00,868 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-30 14:15:00,868 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-30 14:15:00,889 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-30 14:15:00,889 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-30 14:15:00,889 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-30 14:15:00,906 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-30 14:15:00,906 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-30 14:15:00,906 - CLI - INFO - Dataset cargado: 92 bolsas.
+2026-01-30 14:15:00,906 - CLI - INFO - Split realizado: Train=64, Test=28
+2026-01-30 14:15:00,906 - CLI - INFO - Aplicando preprocesamiento: Standard
+2026-01-30 14:15:00,906 - data.preprocessing - INFO - Entrenando StandardScaler en dataset 'musk1_train'
+2026-01-30 14:15:00,907 - data.preprocessing - INFO - StandardScaler entrenado: mean=[]..., std=[]...
+2026-01-30 14:15:00,907 - data.preprocessing - INFO - Transformando dataset 'musk1_train' con StandardScaler
+2026-01-30 14:15:00,907 - data.preprocessing - INFO - Transformando dataset 'musk1_test' con StandardScaler
+2026-01-30 14:15:00,907 - CLI - INFO - Datos escalados correctamente.
+2026-01-30 14:15:00,908 - models.midbscan - INFO - Calculando matriz (64x64) usando métrica: 'hausdorff'...
+2026-01-30 14:15:00,967 - models.midbscan - INFO - Iniciando clustering DBSCAN (eps=1.5, min_pts=3)...
+2026-01-30 14:15:00,967 - CLI - INFO - Clusters: 64 | Ruido: 0 bolsas
+2026-01-30 14:15:00,969 - models.midbscan - WARNING - Modelo entrenado sin puntos núcleo (todo fue ruido). Asignando RUIDO a todo el test set.
+2026-01-30 14:15:00,970 - CLI - INFO - Generando gráfico (cierre la ventana para continuar)...
+2026-01-30 14:18:05,790 - CLI - INFO - ============================================================
+2026-01-30 14:18:05,790 - CLI - INFO - INICIANDO EXPERIMENTO: musk2.arff
+2026-01-30 14:18:05,790 - CLI - INFO - PARAMS: Scaler=MinMax, Eps=650.0, MinPts=4
+2026-01-30 14:18:05,790 - CLI - INFO - ============================================================
+2026-01-30 14:18:05,830 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk2.arff
+2026-01-30 14:18:05,830 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk2.arff' como dataset 'musk2'
+2026-01-30 14:18:05,985 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk2.arff'
+2026-01-30 14:18:05,985 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-30 14:18:05,985 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-30 14:18:06,155 - data.arff_reader - INFO - Bolsas construidas: 102 bolsas, 6598 instancias totales
+2026-01-30 14:18:06,155 - data.arff_reader - INFO - Carga completada: 102 bolsas procesadas
+2026-01-30 14:18:06,155 - CLI - INFO - Dataset cargado: 102 bolsas.
+2026-01-30 14:18:06,155 - CLI - INFO - Split realizado: Train=71, Test=31
+2026-01-30 14:18:06,155 - CLI - INFO - Aplicando preprocesamiento: MinMax
+2026-01-30 14:18:06,155 - data.preprocessing - INFO - Entrenando MinMaxScaler en dataset 'musk2_train'
+2026-01-30 14:18:06,156 - data.preprocessing - WARNING - No se encontraron atributos numéricos para escalar
+2026-01-30 14:18:06,156 - data.preprocessing - INFO - Transformando dataset 'musk2_train' con MinMaxScaler
+2026-01-30 14:18:06,158 - data.preprocessing - INFO - Transformando dataset 'musk2_test' con MinMaxScaler
+2026-01-30 14:18:06,161 - CLI - INFO - Datos escalados correctamente.
+2026-01-30 14:18:06,161 - models.midbscan - INFO - Calculando matriz (71x71) usando métrica: 'hausdorff'...
+2026-01-30 14:18:06,898 - models.midbscan - INFO - Iniciando clustering DBSCAN (eps=650.0, min_pts=4)...
+2026-01-30 14:18:06,899 - CLI - INFO - Clusters: 47 | Ruido: 0 bolsas
+2026-01-30 14:18:06,901 - models.midbscan - INFO - Prediciendo 31 bolsas de prueba usando 10 núcleos...
+2026-01-30 14:18:06,982 - models.midbscan - INFO - Predicción completada: 26 bolsas asignadas como ruido (83.87%)
+2026-01-30 14:18:06,984 - CLI - INFO - Generando gráfico (cierre la ventana para continuar)...
+2026-01-30 14:18:48,553 - CLI - INFO - ============================================================
+2026-01-30 14:18:48,554 - CLI - INFO - INICIANDO EXPERIMENTO: musk1.arff
+2026-01-30 14:18:48,554 - CLI - INFO - PARAMS: Scaler=None, Eps=900.0, MinPts=2
+2026-01-30 14:18:48,554 - CLI - INFO - ============================================================
+2026-01-30 14:18:48,554 - data.midata - INFO - Cargando dataset desde ARFF: datasets/musk1.arff
+2026-01-30 14:18:48,554 - data.arff_reader - INFO - Iniciando carga de 'datasets/musk1.arff' como dataset 'musk1'
+2026-01-30 14:18:48,587 - data.arff_reader - INFO - Extrayendo esquema de instancias desde 'datasets/musk1.arff'
+2026-01-30 14:18:48,587 - data.arff_reader - INFO - Esquema extraído: 166 atributos
+2026-01-30 14:18:48,587 - data.arff_reader - INFO - Construyendo bolsas...
+2026-01-30 14:18:48,606 - data.arff_reader - INFO - Bolsas construidas: 92 bolsas, 476 instancias totales
+2026-01-30 14:18:48,606 - data.arff_reader - INFO - Carga completada: 92 bolsas procesadas
+2026-01-30 14:18:48,606 - CLI - INFO - Dataset cargado: 92 bolsas.
+2026-01-30 14:18:48,606 - CLI - INFO - Split realizado: Train=64, Test=28
+2026-01-30 14:18:48,606 - models.midbscan - INFO - Calculando matriz (64x64) usando métrica: 'hausdorff'...
+2026-01-30 14:18:48,667 - models.midbscan - INFO - Iniciando clustering DBSCAN (eps=900.0, min_pts=2)...
+2026-01-30 14:18:48,668 - CLI - INFO - Clusters: 14 | Ruido: 0 bolsas
+2026-01-30 14:18:48,669 - models.midbscan - INFO - Prediciendo 28 bolsas de prueba usando 54 núcleos...
+2026-01-30 14:18:48,711 - models.midbscan - INFO - Predicción completada: 8 bolsas asignadas como ruido (28.57%)
+2026-01-30 14:18:48,712 - CLI - INFO - Generando gráfico (cierre la ventana para continuar)...
