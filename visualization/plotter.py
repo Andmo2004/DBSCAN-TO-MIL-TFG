@@ -96,3 +96,4 @@ def plot_mil_clusters(model: MIDBSCAN, dataset: MIData,
     plt.grid(True, linestyle='--', alpha=0.3)
     plt.tight_layout()
     plt.show()
+    plt.close()
