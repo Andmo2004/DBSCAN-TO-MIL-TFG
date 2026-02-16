@@ -20,7 +20,7 @@ class BaseScaler:
         # Esquema usado
         self._schema: Optional[List[Attribute]] = None
         # Indice numerico
-        self._numeric_index: List[int] = []
+        self._numeric_indices: List[int] = []
   
     @property
     def is_fitted(self) -> bool:
@@ -121,6 +121,9 @@ class BaseScaler:
         if not self._fitted:
             raise RuntimeError("El scaler no ha sido entrenado. Ejecuta fit() primero.")
         
+        if self._schema is None:
+            raise RuntimeError("El esquema no fue guardado durante fit(). Estado interno inconsistente.")
+        
         current_schema = self._extract_schema(dataset)
 
         if len(current_schema) != len(self._schema):
@@ -162,7 +165,7 @@ class BaseScaler:
         full_mat = np.vstack(all_values)
 
         #Extraemos solo columnas numéricas
-        numeric_mat = full_mat[:, self._numeric_index]
+        numeric_mat = full_mat[:, self._numeric_indices]
 
         logger.debug(f"Datos recolectados: {numeric_mat.shape}")
         return numeric_mat        
@@ -185,7 +188,7 @@ class BaseScaler:
                 new_values = list(instance._values)
 
                 # Transformamos solo valores numericos
-                for idx in self._numeric_index:
+                for idx in self._numeric_indices:
                     try:
                         old_val = float(new_values[idx])
                         new_values[idx] = transform_fn(idx, old_val)
@@ -213,7 +216,7 @@ class BaseScaler:
         """Representación legible del scaler."""
         if not self._fitted:
             return f"{self.__class__.__name__} (not fitted)"
-        return f"{self.__class__.__name__} (fitted on {len(self._numeric_indices)} numeric features)"
+        return f"{self.__class__.__name__} (fitted on {len(self.numeric_indices)} numeric features)"
 
 class MinMaxScaler(BaseScaler):
     """
@@ -275,7 +278,7 @@ class MinMaxScaler(BaseScaler):
         self._schema = self._extract_schema(dataset)
         self._numeric_indices = self._identify_numeric_indices(self._schema)  
 
-        if not self._numeric_index:
+        if not self._numeric_indices:
             logger.warning("No se encontraron atributos numéricos para escalar")
             self._fitted = True
             return self
@@ -285,18 +288,23 @@ class MinMaxScaler(BaseScaler):
 
         # Calcular estadisiticos
         self._data_min = np.min(numeric_mat, axis=0)
-        data_max = np.mac(numeric_mat, axis=0)
+        data_max = np.max(numeric_mat, axis=0)
         self._data_range = data_max - self._data_min
 
+        # Capturamos para evitar problemas de tipo
+        data_range = self._data_range if self._data_range is not None else np.array([])
+
         # Evitae división por cero
-        zero_range_mask = self._data_range == 0
+        zero_range_mask = data_range == 0
         if zero_range_mask.any():
             num_constant = zero_range_mask.sum()
             logger.warning(f"{num_constant} atributos son constantes (rango = 0)")
-            self._data_range[zero_range_mask] = 1.0
+            data_range[zero_range_mask] = 1.0
 
         self._fitted = True
-        logger.info(f"MinMaxScaler entrenado: min={self._data_min[:3]}..., "
+        # Usamos variables locales para evitar problemas de tipo en logging
+        data_min = self._data_min if self._data_min is not None else np.array([])
+        logger.info(f"MinMaxScaler entrenado: min={data_min[:3]}..., "
                    f"max={data_max[:3]}...")
         return self
     
@@ -315,6 +323,9 @@ class MinMaxScaler(BaseScaler):
         """
         self._validate_schema(dataset)
         
+        if self._data_min is None or self._data_range is None:
+            raise RuntimeError("MinMaxScaler no fue entrenado correctamente. Llama a fit() primero.")
+        
         logger.info(f"Transformando dataset '{dataset.name}' con MinMaxScaler")
         
         if not self._numeric_indices:
@@ -324,10 +335,14 @@ class MinMaxScaler(BaseScaler):
         min_range, max_range = self._feature_range
         range_diff = max_range - min_range
         
+        # Capturamos los valores para evitar problemas de tipo
+        data_min = self._data_min
+        data_range = self._data_range
+        
         def transform_value(idx_in_numeric: int, value: float) -> float:
             """Función de transformación Min-Max."""
             # Normalizar a [0, 1]
-            normalized = (value - self._data_min[idx_in_numeric]) / self._data_range[idx_in_numeric]
+            normalized = (value - data_min[idx_in_numeric]) / data_range[idx_in_numeric]
             # Escalar al rango objetivo
             return normalized * range_diff + min_range
         
@@ -363,17 +378,24 @@ class MinMaxScaler(BaseScaler):
         """
         self._validate_schema(dataset)
         
+        if self._data_min is None or self._data_range is None:
+            raise RuntimeError("MinMaxScaler no fue entrenado correctamente. Llama a fit() primero.")
+        
         logger.info(f"Revirtiendo transformación Min-Max en '{dataset.name}'")
         
         min_range, max_range = self._feature_range
         range_diff = max_range - min_range
+
+        # Capturamos los valores para evitar problemas de tipo
+        data_min = self._data_min
+        data_range = self._data_range
 
         def inverse_transform_value(idx_in_numeric: int, value: float) -> float:
             """Función inversa de Min-Max."""
             # De rango objetivo a [0, 1]
             normalized = (value - min_range) / range_diff
             # De [0, 1] a escala original
-            return normalized * self._data_range[idx_in_numeric] + self._data_min[idx_in_numeric]
+            return normalized * data_range[idx_in_numeric] + data_min[idx_in_numeric]
         
         # Inicialmente esto estará capado, peligroso modificar directamente el dataset
         if inplace:
@@ -398,9 +420,9 @@ class StandardScaler(BaseScaler):
     """
     Estandariza atributos eliminando la media y escalando a varianza unitaria.
     
-    Fórmula: X_scaled = (X - u(\mu)) / o(\sigma)
+    Formula: X_scaled = (X - mean) / std
     
-    donde \mu es la media y \sigma es la desviación estándar.
+    donde mean es la media y std es la desviacion estandar.
     
     """
     
@@ -449,16 +471,21 @@ class StandardScaler(BaseScaler):
         self._mean = np.mean(numeric_matrix, axis=0)
         self._std = np.std(numeric_matrix, axis=0)
         
+        # Capturamos para evitar problemas de tipo
+        std_val = self._std if self._std is not None else np.array([])
+        
         # Evitar división por cero
-        zero_std_mask = self._std == 0
+        zero_std_mask = std_val == 0
         if zero_std_mask.any():
             num_constant = zero_std_mask.sum()
             logger.warning(f"{num_constant} atributos tienen desviación estándar = 0")
-            self._std[zero_std_mask] = 1.0
+            std_val[zero_std_mask] = 1.0
         
         self._fitted = True
-        logger.info(f"StandardScaler entrenado: mean={self._mean[:3]}..., "
-                   f"std={self._std[:3]}...")
+        # Usamos variables locales para evitar problemas de tipo en logging
+        mean = self._mean if self._mean is not None else np.array([])
+        logger.info(f"StandardScaler entrenado: mean={mean[:3]}..., "
+                   f"std={std_val[:3]}...")
         
         return self
     
@@ -476,15 +503,22 @@ class StandardScaler(BaseScaler):
         """
         self._validate_schema(dataset)
         
+        if self._mean is None or self._std is None:
+            raise RuntimeError("StandardScaler no fue entrenado correctamente. Llama a fit() primero.")
+        
         logger.info(f"Transformando dataset '{dataset.name}' con StandardScaler")
         
         if not self._numeric_indices:
             logger.warning("No hay atributos numéricos que transformar")
             return dataset
         
+        # Capturamos los valores para evitar problemas de tipo
+        mean = self._mean
+        std = self._std
+        
         def transform_value(idx_in_numeric: int, value: float) -> float:
             """Función de estandarización Z-score."""
-            return (value - self._mean[idx_in_numeric]) / self._std[idx_in_numeric]
+            return (value - mean[idx_in_numeric]) / std[idx_in_numeric]
         
         if inplace:
             logger.warning("Transformación inplace: modificando dataset original")
@@ -515,11 +549,18 @@ class StandardScaler(BaseScaler):
         """
         self._validate_schema(dataset)
         
+        if self._mean is None or self._std is None:
+            raise RuntimeError("StandardScaler no fue entrenado correctamente. Llama a fit() primero.")
+        
         logger.info(f"Revirtiendo estandarización en '{dataset.name}'")
+        
+        # Capturamos los valores para evitar problemas de tipo
+        mean = self._mean
+        std = self._std
         
         def inverse_transform_value(idx_in_numeric: int, value: float) -> float:
             """Función inversa de Z-score."""
-            return value * self._std[idx_in_numeric] + self._mean[idx_in_numeric]
+            return value * std[idx_in_numeric] + mean[idx_in_numeric]
         
         if inplace:
             for bag in dataset:

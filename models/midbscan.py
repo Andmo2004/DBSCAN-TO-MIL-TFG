@@ -6,6 +6,7 @@ from collections import Counter
 from data.midata import MIData
 from data.bag import Bag
 from distances.hausdorff import hausdorff_distance
+from distances.cauchy_schwarz import cauchy_schwarz_distance
 
 logger = logging.getLogger(__name__)
 
@@ -112,6 +113,7 @@ class MIDBSCAN:
             # Registro de métricas disponibles
             metrics_registry = {
                 'hausdorff': hausdorff_distance,
+                'cauchy_schwarz': cauchy_schwarz_distance
                 # 'mean': mean_distance, 
             }
 
@@ -223,7 +225,9 @@ class MIDBSCAN:
             # Si v es None, lo cambiamos por self.NOISE_LABEL (que suele ser -1).
             self._labels = {k: (v if v is not None else self.NOISE_LABEL) for k, v in bag_cluster_map.items()}
             self._cluster_count = current_cluster_id
-            self._fitted = True 
+            self._fitted = True
+        
+        return self 
 
     def _expand_cluster(self, 
                         initial_neighbors: np.ndarray, 
