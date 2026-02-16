@@ -80,7 +80,11 @@ class Instance:
             return isinstance(value, str)
         
         elif attr_type == 'nominal':
-            return isinstance(value, str) and (value in attribute.values)
+            if not isinstance(value, str):
+                return False
+            if attribute.values is None:
+                return True
+            return value in attribute.values
         
         return True
     

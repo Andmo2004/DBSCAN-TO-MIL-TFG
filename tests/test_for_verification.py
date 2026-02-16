@@ -5,18 +5,14 @@ import time
 import logging
 from typing import Dict, Any
 
-# Obtiene la ruta absoluta de ESTE script
 current_dir = os.path.dirname(os.path.abspath(__file__))
-# Obtiene la ruta del directorio PADRE (ej: .../proyecto/)
 project_root = os.path.dirname(current_dir)
-# Añade el padre al path de Python para que encuentre 'data', 'models', etc.
 sys.path.append(project_root)
 
-# Importaciones de tu framework
-from data.arff_reader import ArffToMIData
+# Importaciones del framework
 from models.midbscan import MIDBSCAN
+from data.arff_reader import ArffToMIData
 from evaluation.evaluator import MILEvaluator
-# [NUEVO] Importamos el preprocesamiento
 from data.preprocessing import MinMaxScaler, StandardScaler
 
 # Configuración de Logging
@@ -24,16 +20,13 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
 logger = logging.getLogger("ExperimentRunner")
 
 # Configuración Global
 DATASETS_DIR = "datasets"
-OUTPUT_CSV = "results_summary_scaled" # Cambié el nombre para no sobrescribir el anterior
+output_csv = ""
 
-# [IMPORTANTE] Ajuste de Parámetros para datos escalados
-# Al escalar a [0, 1], las distancias serán muy pequeñas.
-# Un epsilon de 1000 agruparía todo en un solo cluster.
-# Probamos con 0.5 (la mitad del rango normalized) como punto de partida.
 DEFAULT_EPSILON = 0.5  
 DEFAULT_MIN_PTS = 2
 
@@ -131,6 +124,7 @@ def run_single_experiment(filename: str, scaler_type: str) -> Dict[str, Any]:
 
 def main():
 
+
     # Verificar directorio
     if not os.path.exists(DATASETS_DIR):
         logger.error(f"El directorio '{DATASETS_DIR}' no existe.")
@@ -149,6 +143,7 @@ def main():
     # Ejecutar experimentos
     scaler_type = "MinMax"
     for i, filename in enumerate(files):
+        output_csv = f"{filename}_results"
         logger.info(f"--- Procesando {i+1}/{len(files)}: {filename} ---")
         row = run_single_experiment(filename, scaler_type)
         results.append(row)
@@ -163,12 +158,12 @@ def main():
     ]
     
     try:
-        with open(f'{OUTPUT_CSV}_{scaler_type}.csv', mode='w', newline='', encoding='utf-8') as f:
+        with open(f'{output_csv}_{scaler_type}.csv', mode='w', newline='', encoding='utf-8') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(results)
         
-        logger.info(f"\nResumen completado. Resultados guardados en '{OUTPUT_CSV}'")
+        logger.info(f"\nResumen completado. Resultados guardados en '{output_csv}'")
         
         # Imprimir vista previa en consola
         print("\n" + "="*90)
