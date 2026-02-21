@@ -82,3 +82,4 @@ cython_debug/
 *.csv
 **/*.csv
 #*.arff
+*.png
