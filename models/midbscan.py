@@ -186,13 +186,11 @@ class MIDBSCAN:
             if len(neighbors_index) < self._min_pts:
                 # Marcar como ruido (puede cambiar luego si es alcanzable por otro cluster)
                 bag_cluster_map[bags[i].bag_id] = self.NOISE_LABEL
-
-            else:
-                self._add_core_point(bags[i], current_cluster_id)
-                bag_cluster_map[bags[i].bag_id] = current_cluster_id
-
+                continue
+            
             logger.debug(f"Cluster {current_cluster_id} iniciado en bolsa {bags[i].bag_id}")
-
+            self._add_core_point(bags[i], current_cluster_id)
+            bag_cluster_map[bags[i].bag_id] = current_cluster_id
             self._expand_cluster(
                                 neighbors_index,
                                 current_cluster_id,
@@ -203,11 +201,11 @@ class MIDBSCAN:
                             )
             current_cluster_id += 1
 
-            # Limpiamos el diccionario
-            # Si v es None, lo cambiamos por self.NOISE_LABEL (que suele ser -1).
-            self._labels = {k: (v if v is not None else self.NOISE_LABEL) for k, v in bag_cluster_map.items()}
-            self._cluster_count = current_cluster_id
-            self._fitted = True
+        # Limpiamos el diccionario
+        # Si v es None, lo cambiamos por self.NOISE_LABEL (que suele ser -1).
+        self._labels = {k: (v if v is not None else self.NOISE_LABEL) for k, v in bag_cluster_map.items()}
+        self._cluster_count = current_cluster_id
+        self._fitted = True
         
         return self 
 

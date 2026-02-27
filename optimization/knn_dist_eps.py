@@ -164,7 +164,16 @@ def optimize_eps(
 
         plt.close(fig)
 
-    logger.info(f"Eps óptimo seleccionado: {best_eps:.6f}")
+    ## logger.info(f"Eps óptimo seleccionado: {best_eps:.6f}")
+    
+    # Sanity check: si eps > percentil 50 de distancias, probablemente es demasiado grande
+    upper = dist_matrix[np.triu_indices_from(dist_matrix, k=1)]
+    upper = upper[upper > 0]
+    p50 = float(np.percentile(upper, 50))
+    if best_eps > p50:
+        logger.warning(f"Eps óptimo ({best_eps:.4f}) > percentil 50 ({p50:.4f}). Usando percentil 20.")
+        best_eps = float(np.percentile(upper, 20))
+
     return best_eps
 
 
