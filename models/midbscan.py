@@ -149,6 +149,7 @@ class MIDBSCAN:
                 matrix[j, i] = d
 
         logger.debug("Cálculo de matriz de distancias finalizado.")
+        logger.debug(f"Matriz:\n{matrix}")
         return matrix
 
     def _add_core_point(self, bag: Bag, cluster_id: int):
