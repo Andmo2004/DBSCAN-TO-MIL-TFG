@@ -119,17 +119,20 @@ def run_verification_experiment(
     logger.info(f"[{dataset_name}] Métrica de distancia seleccionada: {metric}")
 
     # ── PASO 4: Optimizar eps usando k-NN distance plot ─────────────────────
-    logger.info(f"[{dataset_name}] PASO 4 — Optimizando eps mediante k-NN distance plot...")
-    
-    eps_optimal = optimize_eps(
+    logger.info(f"[{dataset_name}] PASO 4 — Grid search (eps, min_pts)...")
+
+    from optimization.grid_search import grid_search_dbscan
+
+    best_eps, best_min_pts = grid_search_dbscan(
         dataset=train_scaled,
         distance_func=distance_func,
-        min_pts=min_pts,
-        try_range=True,  # Explora k=1..20
-        save_plots=True
+        metric_name=metric,
+        min_pts_values=None,   # Usa heurística automática
+        n_eps_values=8,
+        save_plots=False,
     )
-    
-    logger.info(f"[{dataset_name}] Eps óptimo encontrado: {eps_optimal:.6f}")
+
+    logger.info(f"[{dataset_name}] Parámetros óptimos → eps={best_eps:.6f}, min_pts={best_min_pts}")
 
     '''
     # ── PASO 5: Generar heatmap con la matriz de distancias ────────────────
@@ -161,8 +164,8 @@ def run_verification_experiment(
         "Dataset":        dataset_name,
         "Scaler":         scaler_name,
         "Metric":         metric,
-        "Epsilon":        eps_optimal,
-        "MinPts":         min_pts,
+        "Epsilon":        best_eps,
+        "MinPts":         best_min_pts,
         "Status":         "Failed",
         "Train_Bags":     train_data.get_num_bags(),
         "Test_Bags":      test_data.get_num_bags(),
@@ -177,7 +180,7 @@ def run_verification_experiment(
     }
 
     try:
-        model = MIDBSCAN(epsilon=eps_optimal, min_pts=min_pts, metric=metric)
+        model = MIDBSCAN(epsilon=best_eps, min_pts=min_pts, metric=metric)
         model.fit(train_scaled)
 
         stats = model.get_statistics()
@@ -187,7 +190,7 @@ def run_verification_experiment(
         predictions = model.predict(test_scaled)
         metrics = MILEvaluator.evaluate(
             test_scaled, predictions,
-            title=f"Test {dataset_name} eps={eps_optimal}"
+            title=f"Test {dataset_name} eps={best_eps}"
         )
 
         row["Precision"]   = round(metrics.get("Precision",   0), 4)
@@ -197,7 +200,7 @@ def run_verification_experiment(
         row["Status"]      = "Success"
 
     except Exception as e:
-        logger.error(f"[{dataset_name}] Error en eps={eps_optimal}: {e}")
+        logger.error(f"[{dataset_name}] Error en eps={best_eps}: {e}")
         row["Error_Msg"] = str(e)
 
     row["Execution_Time"] = round(time.time() - start_time, 2)
