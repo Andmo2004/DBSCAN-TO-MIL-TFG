@@ -7,6 +7,7 @@ from data.midata import MIData
 from data.bag import Bag
 from distances.hausdorff import hausdorff_distance
 from distances.cauchy_schwarz import cauchy_schwarz_distance
+from distances.distance_matrix import compute_distance_matrix
 
 logger = logging.getLogger(__name__)
 
@@ -125,32 +126,12 @@ class MIDBSCAN:
 
     def _compute_distance_matrix(self, bags: List[Bag]) -> np.ndarray:
         """
-        Calcula la matriz de distancias Hausdorff simétrica.        
+        Calcula la matriz de distancias usando el módulo externo.
+        
         :param bags: (List[Bag]) Lista de Bolsas
-        :return: (ndarray[_AnyShape, dtype[Any]]) Matriz numpy de distancias (N X N)
+        :return: (ndarray) Matriz numpy de distancias (N X N)
         """
-
-        num_bags = len(bags)
-        logger.info(f"Calculando matriz ({num_bags}x{num_bags}) usando métrica: '{self._metric_name}'...")
-
-        # Inicializamos matriz a 0
-        matrix = np.zeros((num_bags, num_bags))
-
-        dist_func = self._metric_func
-
-        for i in range(num_bags):
-            bag_a = bags[i]
-            for j in range(i + 1, num_bags):
-                bag_b = bags[j]
-                
-                d = dist_func(bag_a, bag_b)
-
-                matrix[i, j] = d
-                matrix[j, i] = d
-
-        logger.debug("Cálculo de matriz de distancias finalizado.")
-        logger.debug(f"Matriz:\n{matrix}")
-        return matrix
+        return compute_distance_matrix(bags, self._metric_func, self._metric_name)
 
     def _add_core_point(self, bag: Bag, cluster_id: int):
         """Registra un punto como núcleo para uso futuro en predicciones."""

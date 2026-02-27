@@ -2,13 +2,13 @@ import os
 import logging
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
+from matplotlib.patches import Rectangle
 from typing import List, Optional
 
 logger = logging.getLogger(__name__)
 
 # ─── Directorio de salida por defecto ────────────────────────────────────────
-_DEFAULT_OUTPUT_DIR = "visualization/heatmaps_output"
+_DEFAULT_OUTPUT_DIR = "results/heatmaps_output"
 
 
 def _ensure_output_dir(output_dir: str) -> None:
@@ -114,7 +114,7 @@ def plot_distance_heatmap(
             for j in range(n):
                 if i != j and distance_matrix[i, j] <= eps:
                     ax.add_patch(
-                        plt.Rectangle(
+                        Rectangle(
                             (j - 0.5, i - 0.5), 1, 1,
                             fill=False,
                             edgecolor="dodgerblue",
