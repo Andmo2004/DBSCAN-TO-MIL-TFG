@@ -2,6 +2,7 @@ import csv
 import time
 import logging
 import numpy as np
+from datetime import datetime
 from typing import Dict, Any, Callable
 
 ######## SOLO PARA TEST UNITARIO
@@ -130,6 +131,7 @@ def run_verification_experiment(
     
     logger.info(f"[{dataset_name}] Eps óptimo encontrado: {eps_optimal:.6f}")
 
+    '''
     # ── PASO 5: Generar heatmap con la matriz de distancias ────────────────
     logger.info(f"[{dataset_name}] PASO 5 — Calculando matriz de distancias para heatmap...")
     
@@ -147,7 +149,8 @@ def run_verification_experiment(
         show=False,
     )
     logger.info(f"[{dataset_name}] Heatmap guardado → {saved_path}")
-
+    '''
+    logger.info(f"[{dataset_name}] saltando PASO 5: heatmap")
     # ── PASO 6: Ejecución con el eps óptimo ────────────────────────────────
     logger.info(f"[{dataset_name}] PASO 6 — Ejecutando MIDBSCAN con eps óptimo...")
 
@@ -206,31 +209,107 @@ def run_verification_experiment(
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def main():
-    if not os.path.exists(DATASETS_DIR):
-        logger.error(f"El directorio '{DATASETS_DIR}' no existe.")
-        return
+    # Crear directorios de salida si no existen
+    os.makedirs("results", exist_ok=True)
+    os.makedirs(HEATMAPS_DIR, exist_ok=True)
 
-    files = [f for f in os.listdir(DATASETS_DIR) if f.endswith('.arff')]
-    if not files:
-        logger.warning("No se encontraron archivos .arff en el directorio.")
-        return
+    # Obtener fecha y hora actual
+    now = datetime.now()
 
-    logger.info(f"Encontrados {len(files)} dataset(s) para verificación.")
+    # Formato DDMMAAAAHHMM
+    timestamp = now.strftime("%d%m%Y%H%M")
+    
+    # ── Configuración de Datasets ──────────────────────────────────────────
+    # Dict con: dataset_name, dataset_path, best_distance, best_scaler
+    datasets_config = [
+        {
+            "dataset_name": "musk1",
+            "dataset_path": "datasets/musk1.arff",
+            "best_distance": "hausdorff",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "musk2",
+            "dataset_path": "datasets/musk2.arff",
+            "best_distance": "hausdorff",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "ImageElephant",
+            "dataset_path": "datasets/ImageElephant.arff",
+            "best_distance": "hausdorff",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "BirdsChestnut-backedChickadee",
+            "dataset_path": "datasets/BirdsChestnut-backedChickadee.arff",
+            "best_distance": "cauchy_schwarz",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "BirdsHammondsFlycatcher",
+            "dataset_path": "datasets/BirdsHammondsFlycatcher.arff",
+            "best_distance": "cauchy_schwarz",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "Harddrive1",
+            "dataset_path": "datasets/Harddrive1.arff",
+            "best_distance": "hausdorff",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "mutagenesis3_atoms",
+            "dataset_path": "datasets/mutagenesis3_atoms.arff",
+            "best_distance": "hausdorff",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "mutagenesis3_chains",
+            "dataset_path": "datasets/mutagenesis3_chains.arff",
+            "best_distance": "hausdorff",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "Newsgroups1",
+            "dataset_path": "datasets/Newsgroups1.arff",
+            "best_distance": "hausdorff",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "simple_dummy",
+            "dataset_path": "datasets/simple_dummy.arff",
+            "best_distance": "hausdorff",
+            "best_scaler": StandardScaler,
+        },
+        {
+            "dataset_name": "Thioredoxin",
+            "dataset_path": "datasets/Thioredoxin.arff",
+            "best_distance": "hausdorff",
+            "best_scaler": StandardScaler,
+        },
+    ]
+
+    logger.info(f"Configurados {len(datasets_config)} dataset(s) para verificación.")
 
     # ── Configuración ─────────────────────────────────────────────────────
     # Cambia la lambda para usar otro scaler: lambda: StandardScaler()
     # scaler_factory = lambda: MinMaxScaler(feature_range=(0, 1))
-    scaler_factory = lambda: StandardScaler()
-
-    metric         = 'hausdorff'    # o 'cauchy_schwarz'
-    min_pts        = DEFAULT_MIN_PTS
+    
+    min_pts = DEFAULT_MIN_PTS
 
     all_results: list[Dict[str, Any]] = []
 
-    for filename in files:
-        logger.info(f"\n{'#'*60}\n  Procesando: {filename}\n{'#'*60}")
+    for config in datasets_config:
+        dataset_name = config["dataset_name"]
+        dataset_path = config["dataset_path"]
+        metric = config["best_distance"]
+        scaler_class = config["best_scaler"]
+        scaler_factory = lambda: scaler_class()  # Factory callable
+        
+        logger.info(f"\n{'#'*60}\n  Procesando: {dataset_name}\n{'#'*60}")
         rows = run_verification_experiment(
-            filename=filename,
+            filename=os.path.basename(dataset_path),
             scaler_factory=scaler_factory,
             min_pts=min_pts,
             metric=metric,
@@ -238,8 +317,10 @@ def main():
         all_results.extend(rows)
 
     # ── PASO 5: Guardar CSV ────────────────────────────────────────────────
-    scaler_name = scaler_factory().__class__.__name__
-    output_csv  = f"results/verification_results_{scaler_name}_{metric}.csv"
+    first_config = datasets_config[0] if datasets_config else {}
+    scaler_name = first_config.get("best_scaler", StandardScaler)().__class__.__name__
+    distance_metric = first_config.get("best_distance", "hausdorff")
+    output_csv  = f"results/verification_results_{timestamp}.csv"
     fieldnames  = [
         "Dataset", "Scaler", "Metric",
         "Epsilon", "MinPts", "Status", "Execution_Time",
@@ -271,7 +352,7 @@ def main():
             f"{r['F1']:>8} | {r['Clusters']:>8} | {r['Noise_Pct']:>8}"
         )
     print("=" * 100)
-    print(f"\nHeatmaps guardados en: {os.path.abspath(HEATMAPS_DIR)}")
+    # print(f"\nHeatmaps guardados en: {os.path.abspath(HEATMAPS_DIR)}")
 
 
 if __name__ == "__main__":

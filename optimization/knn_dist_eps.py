@@ -55,12 +55,39 @@ def _find_knee_point(distances: np.ndarray) -> Tuple[int, float]:
 
     return knee_idx, float(distances[knee_idx])
 
+def _adaptive_eps_cap_percentile(n_bags: int) -> int:
+    """
+    Devuelve el percentil máximo permitido para eps según el tamaño del dataset.
+
+    Datasets pequeños necesitan un epsilon relativamente más alto para que
+    los clusters sean viables. Datasets grandes con muchas bolsas suelen
+    tener distribuciones de distancia más densas y requieren un umbral más
+    estricto para evitar que todo colapse en un único cluster.
+
+    Tabla de referencia:
+        n <  50  → percentil 35  (dataset muy pequeño, necesita más margen)
+        n < 100  → percentil 30
+        n < 200  → percentil 25
+        n < 400  → percentil 20
+        n >= 400 → percentil 15  (dataset grande, corte agresivo)
+    """
+    if n_bags < 50:
+        return 35
+    elif n_bags < 100:
+        return 30
+    elif n_bags < 200:
+        return 25
+    elif n_bags < 400:
+        return 20
+    else:
+        return 15
 
 def optimize_eps(
     dataset: MIData,
     distance_func: Callable[[Bag, Bag], float],
     min_pts: Optional[int] = None,
     try_range: bool = False,
+    plots: bool = True,
     save_plots: bool = True,
 ) -> float:
     """
@@ -73,6 +100,7 @@ def optimize_eps(
     :param distance_func: Función (Bag, Bag) -> float.
     :param min_pts:       minPts de DBSCAN. Si None, se usa la heurística 2*d.
     :param try_range:     Si True, explora k de 1 a 20 en lugar de solo k = minPts-1.
+    :param plots:         Si True, plotea.
     :param save_plots:    Si True, guarda los gráficos en output_dir (no los muestra).
     :param output_dir:    Directorio donde se guardan los PNGs.
     :return:              Valor de eps estimado en el codo más pronunciado.
@@ -102,8 +130,17 @@ def optimize_eps(
     # Calculamos la matriz de distancias una sola vez (dataset ya escalado)
     dist_matrix = compute_distance_matrix(dataset.bags, distance_func, metric_name="k-NN")
 
+    # Precalculamos percentiles para el sanity check final
+    upper = dist_matrix[np.triu_indices_from(dist_matrix, k=1)]
+    upper = upper[upper > 0]
+
+    n_bags = dataset.get_num_bags()
+    cap_percentile = _adaptive_eps_cap_percentile(n_bags)
+    eps_cap = float(np.percentile(upper, cap_percentile))
+    logger.info(f"Dataset con {n_bags} bolsas → cap de eps en percentil {cap_percentile} = {eps_cap:.6f}")
+
     best_eps   = 0.0
-    best_knee  = -1.0   # máxima distancia perpendicular encontrada
+    best_knee  = -1.0   # maxima distancia perpendicular encontrada
 
     n_bags = dataset.get_num_bags()
 
@@ -142,30 +179,31 @@ def optimize_eps(
         logger.info(f"k={k:>3} | knee_idx={knee_idx:>4} | eps≈{eps_candidate:.6f} | prominencia={prominence:.6f}")
 
         # Visualización: guarda PNG.
-        fig, ax = plt.subplots(figsize=(10, 6))
-        ax.plot(k_distances, linewidth=2, label=f'{k}-NN Distances')
-        ax.axhline(y=eps_candidate, color='r', linestyle='--',
-                   label=f'Knee  eps ≈ {eps_candidate:.4f}')
-        ax.axvline(x=knee_idx, color='r', linestyle=':', alpha=0.5)
-        ax.scatter(knee_idx, eps_candidate, color='red', s=60, zorder=5)
-        ax.set_title(f'k-NN Distance Plot  (k={k})')
-        ax.set_xlabel('Bolsas ordenadas por distancia al k-ésimo vecino')
-        ax.set_ylabel(f'Distancia al {k}-ésimo vecino más cercano')
-        ax.legend()
-        ax.grid(True, alpha=0.3)
-        fig.tight_layout()
+        if plots:
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.plot(k_distances, linewidth=2, label=f'{k}-NN Distances')
+            ax.axhline(y=eps_candidate, color='r', linestyle='--',
+                    label=f'Knee  eps ≈ {eps_candidate:.4f}')
+            ax.axvline(x=knee_idx, color='r', linestyle=':', alpha=0.5)
+            ax.scatter(knee_idx, eps_candidate, color='red', s=60, zorder=5)
+            ax.set_title(f'k-NN Distance Plot  (k={k})')
+            ax.set_xlabel('Bolsas ordenadas por distancia al k-ésimo vecino')
+            ax.set_ylabel(f'Distancia al {k}-ésimo vecino más cercano')
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+            fig.tight_layout()
 
-        if save_plots:
-            path = os.path.join(output_dir, f"knn_dist_k{k:02d}.png")
-            fig.savefig(path, dpi=150, bbox_inches="tight")
-            logger.info(f"Gráfico guardado → {path}")
-        else:
-            plt.show()
+            if save_plots:
+                path = os.path.join(output_dir, f"knn_dist_k{k:02d}.png")
+                fig.savefig(path, dpi=150, bbox_inches="tight")
+                logger.info(f"Gráfico guardado → {path}")
+            else:
+                plt.show()
 
-        plt.close(fig)
+            plt.close(fig)
 
     ## logger.info(f"Eps óptimo seleccionado: {best_eps:.6f}")
-    
+    '''
     # Sanity check: si eps > percentil 50 de distancias, probablemente es demasiado grande
     upper = dist_matrix[np.triu_indices_from(dist_matrix, k=1)]
     upper = upper[upper > 0]
@@ -173,7 +211,19 @@ def optimize_eps(
     if best_eps > p50:
         logger.warning(f"Eps óptimo ({best_eps:.4f}) > percentil 50 ({p50:.4f}). Usando percentil 20.")
         best_eps = float(np.percentile(upper, 20))
+    '''
+    # ── Sanity check adaptativo ───────────────────────────────────────────────
+    # Si el eps del codo supera el cap, lo recortamos.
+    # Esto previene que datasets grandes (Birds, 383 bolsas) colapsen en 1 cluster.
+    if best_eps > eps_cap:
+        logger.warning(
+            f"Eps óptimo ({best_eps:.4f}) supera el cap adaptativo "
+            f"(p{cap_percentile}={eps_cap:.4f}) para n={n_bags} bolsas. "
+            f"Aplicando cap."
+        )
+        best_eps = eps_cap
 
+    logger.info(f"Eps final seleccionado: {best_eps:.6f}")
     return best_eps
 
 
