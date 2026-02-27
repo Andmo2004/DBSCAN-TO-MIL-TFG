@@ -24,10 +24,32 @@ from optimization.knn_dist_eps import optimize_eps, _adaptive_eps_cap_percentile
 
 logger = logging.getLogger(__name__)
 
+def _detect_imbalance_ratio(dataset: MIData) -> float:
+    """
+    Calcula el ratio de desbalanceo: n_minority / n_majority.
+
+    Retorna un valor en (0, 1]:
+        1.0 → clases perfectamente equilibradas
+        0.1 → clase minoritaria 10x más pequeña que la mayoritaria
+    """
+    labels = []
+    for bag in dataset.bags:
+        lv = int(float(bag.label)) if isinstance(bag.label, (str, float)) else int(bag.label)
+        labels.append(lv)
+
+    arr = np.array(labels)
+    counts = np.bincount(arr.astype(int), minlength=2)
+    if counts.min() == 0:
+       return 0.0
+
+    return float(counts.min()) / float(counts.max())
+
 
 def _score_labels(
     dataset: MIData,
     predicted_labels: Dict[str, int],
+    imbalance_ratio: float = 1.0,
+
 ) -> float:
     """
     Calcula un score combinado para una configuración DBSCAN dada sobre
@@ -71,7 +93,7 @@ def _score_labels(
         # Un único cluster puede ser correcto en casos raros, pero penalizamos
         return 0.05
 
-    # ── Hungarian mapping → F1 ───────────────────────────────────────────────
+    # ── Hungarian mapping - F1 ───────────────────────────────────────────────
     classes = np.array([0, 1])
     cost = np.zeros((n_clusters, 2), dtype=int)
     for i, c in enumerate(real_clusters):
@@ -101,7 +123,21 @@ def _score_labels(
         mapping[-1] = int(np.argmax(counts))
 
     y_mapped = np.array([mapping.get(p, 0) for p in y_pred])
-    base_f1 = f1_score(y_true, y_mapped, zero_division=0)
+    
+    # ── Métrica de score adaptativa al desbalanceo ───────────────────────────
+    # Dataset equilibrado   (ratio >= 0.3): F1 binario sobre clase positiva
+    # Dataset desbalanceado (ratio <  0.3): F1 macro (media de F1 por clase)
+    #   - F1 macro vale 0 si el recall de cualquier clase es 0
+    #   - Fuerza al grid search a encontrar configuraciones que detecten
+    #     tanto positivos como negativos, no solo la clase mayoritaria
+    if imbalance_ratio < 0.3:
+        base_f1 = float(f1_score(y_true, y_mapped, average='macro', zero_division=0))
+        logger.debug(
+            f"Dataset desbalanceado (ratio={imbalance_ratio:.2f}) "
+            f"- F1 macro={base_f1:.4f}"
+        )
+    else:
+        base_f1 = float(f1_score(y_true, y_mapped, average='binary', zero_division=0))
 
     # ── Penalización por ruido excesivo y fragmentación ───────────────────────
     noise_pct = float(np.sum(y_pred < 0)) / len(y_pred)
@@ -109,7 +145,7 @@ def _score_labels(
     noise_penalty = max(0.0, noise_pct - 0.30) * 0.5
 
     # Penalizar clusters > 10 (fragmentación)
-    frag_penalty = max(0, n_clusters - 10) * 0.01
+    frag_penalty = max(0, n_clusters - 10) * 0.02
 
     score = float(base_f1) - noise_penalty - frag_penalty
     return float(max(0.0, score))
@@ -120,7 +156,7 @@ def grid_search_dbscan(
     distance_func: Callable[[Bag, Bag], float],
     metric_name: str = "hausdorff",
     min_pts_values: Optional[List[int]] = None,
-    n_eps_values: int = 8,
+    n_eps_values: int = 12,
     save_plots: bool = False,
 ) -> Tuple[float, int]:
     """
@@ -132,6 +168,10 @@ def grid_search_dbscan(
       2. Para cada min_pts candidato, estima un eps base con knn_dist_eps.
       3. Alrededor de ese eps base, prueba n_eps_values variaciones.
       4. Selecciona la combinación con mayor score interno.
+      5. Selecciona la combinación con mayor score:
+        - F1 binario si dataset equilibrado
+        - F1 macro   si dataset desbalanceado (ratio < 0.3)
+
 
     :param dataset:         MIData ya escalado (train).
     :param distance_func:   Función (Bag, Bag) → float.
@@ -146,6 +186,13 @@ def grid_search_dbscan(
 
     n_bags = dataset.get_num_bags()
 
+    # ── Detección de desbalanceo (una sola vez) ───────────────────────────────
+    imbalance_ratio = _detect_imbalance_ratio(dataset)
+    logger.info(
+        f"Ratio de desbalanceo: {imbalance_ratio:.3f} → "
+        f"{'DESBALANCEADO (F1 macro)' if imbalance_ratio < 0.3 else 'Equilibrado (F1 binario)'}"
+    )
+
     # ── Valores de min_pts a explorar ─────────────────────────────────────────
     if min_pts_values is None:
         ln_n = max(2, int(np.log(n_bags)))
@@ -155,8 +202,8 @@ def grid_search_dbscan(
 
     # ── Matriz de distancias (se calcula UNA sola vez) ────────────────────────
     logger.info("Calculando matriz de distancias para grid search...")
-    dist_matrix = compute_distance_matrix(dataset.bags, distance_func, metric_name)
     bags = dataset.bags
+    dist_matrix = compute_distance_matrix(bags, distance_func, metric_name)
 
     # Límites de eps desde las distancias del dataset
     upper = dist_matrix[np.triu_indices_from(dist_matrix, k=1)]
@@ -196,6 +243,9 @@ def grid_search_dbscan(
         for eps in eps_candidates:
             try:
                 model = MIDBSCAN(epsilon=eps, min_pts=min_pts, metric=metric_name)
+
+                # inyección directa
+                model._distance_matrix = dist_matrix
 
                 # Entrenamos el modelo normalmente
                 model.fit(dataset)

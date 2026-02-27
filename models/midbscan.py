@@ -94,7 +94,7 @@ class MIDBSCAN:
         """Indica si el modelo ha sido entrenado."""
         return self._fitted
 
-    # 12. Método _reset_state()
+    # Método _reset_state()
     def _reset_state(self):
         """Reinicia el estado interno del modelo antes de un nuevo ajuste."""
         self._labels = {}
@@ -104,23 +104,6 @@ class MIDBSCAN:
         self._core_bag_labels = {}
         self._train_bags = []
         self._distance_matrix = None
-
-    def _reset_state_keep_matrix(self, bags: list, dist_matrix):
-            """
-            Reinicia el estado interno excepto la matriz de distancias ya calculada.
-            Útil para grid search: evita recalcular la matriz en cada iteración.
-
-            Uso (desde grid_search.py):
-                model._reset_state_keep_matrix(bags, dist_matrix)
-                model.fit(dataset)   # fit() detecta que _distance_matrix ya existe y la reutiliza
-            """
-            self._labels = {}
-            self._cluster_count = 0
-            self._fitted = False
-            self._core_bags = []
-            self._core_bag_labels = {}
-            self._train_bags = bags
-            self._distance_matrix = dist_matrix  # ← conservamos la matriz inyectada
 
     # Usamos callable para dedevolver una función    
     def _get_metric_function(self, name: str) -> Callable[[Bag, Bag], float]:
@@ -170,24 +153,27 @@ class MIDBSCAN:
             error_msg = "El dataset de entrenamiento está vacío."
             logger.error(error_msg)
             raise ValueError(error_msg)
-        
+
+        # 1. Capturar la matriz inyectada ANTES de que _reset_state() la borre
+        precomputed_matrix = self._distance_matrix
+
+        # 2. Reset del estado (pone _distance_matrix = None)
         self._reset_state()
 
-        # Accedemos a la propiedad un única vez
+        # 3. Ahora sí definimos bags y num_bags
         bags = dataset.bags
         self._train_bags = bags
         num_bags = len(bags)
 
-        # Calculamos la matriz de distancias
-        # self._distance_matrix = self._compute_distance_matrix(bags)
-        # IMPROVEMENT UPDATE -- no recalcular si la matriz ya existe:
-        if self._distance_matrix is None:
-            self._distance_matrix = self._compute_distance_matrix(bags)
-        else:
+        # 4. Restaurar matriz precalculada o calcularla si no había
+        if precomputed_matrix is not None:
+            self._distance_matrix = precomputed_matrix
             logger.debug("Reutilizando matriz de distancias precomputada (grid search mode).")
+        else:
+            self._distance_matrix = self._compute_distance_matrix(bags)
 
         logger.info(f"Iniciando clustering DBSCAN (eps={self._epsilon}, min_pts={self._min_pts})...")
-
+    
         # Vector de visitados a false
         visited = np.zeros(num_bags, dtype=bool)
         
