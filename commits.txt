@@ -33,3 +33,10 @@ generando fragmentación extrema (Thioredoxin: 15 clusters). Subir min_pts forza
 - Solución implementada: Grid_search para búsqueda de epsilon
 La heurística clásica es min_pts = ln(n), pero para MIL con bolsas heterogéneas funciona 
 mejor explorar un rango pequeño:
+
+# COMMIT TFG 27/02/2026 #005
+
+bugs en el grid_search.py
+
+bugs en fit()
+

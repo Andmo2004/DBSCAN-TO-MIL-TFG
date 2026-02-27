@@ -228,68 +228,112 @@ def main():
         {
             "dataset_name": "musk1",
             "dataset_path": "datasets/musk1.arff",
-            "best_distance": "hausdorff",
-            "best_scaler": StandardScaler,
+            
+            # "best_distance": "hausdorff",
+            "best_distance": "cauchy_schwarz",
+            
+            # "best_scaler": StandardScaler,         
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "musk2",
             "dataset_path": "datasets/musk2.arff",
-            "best_distance": "hausdorff",
-            "best_scaler": StandardScaler,
+            
+            # "best_distance": "hausdorff",
+            "best_distance": "cauchy_schwarz",
+            
+            # "best_scaler": StandardScaler,
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "ImageElephant",
             "dataset_path": "datasets/ImageElephant.arff",
-            "best_distance": "hausdorff",
-            "best_scaler": StandardScaler,
+            
+            # "best_distance": "hausdorff",
+            "best_distance": "cauchy_schwarz",
+            
+            # "best_scaler": StandardScaler,         
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "BirdsChestnut-backedChickadee",
             "dataset_path": "datasets/BirdsChestnut-backedChickadee.arff",
-            "best_distance": "cauchy_schwarz",
-            "best_scaler": StandardScaler,
+
+            #"best_distance": "cauchy_schwarz",
+            "best_distance": "hausdorff",
+
+            # "best_scaler": StandardScaler,
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "BirdsHammondsFlycatcher",
             "dataset_path": "datasets/BirdsHammondsFlycatcher.arff",
-            "best_distance": "cauchy_schwarz",
-            "best_scaler": StandardScaler,
+            
+            #"best_distance": "cauchy_schwarz",
+            "best_distance": "hausdorff",
+
+            # "best_scaler": StandardScaler,
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "Harddrive1",
             "dataset_path": "datasets/Harddrive1.arff",
-            "best_distance": "hausdorff",
-            "best_scaler": StandardScaler,
+            
+            # "best_distance": "hausdorff",
+            "best_distance": "cauchy_schwarz",
+            
+            # "best_scaler": StandardScaler,         
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "mutagenesis3_atoms",
             "dataset_path": "datasets/mutagenesis3_atoms.arff",
-            "best_distance": "hausdorff",
-            "best_scaler": StandardScaler,
+            
+            # "best_distance": "hausdorff",
+            "best_distance": "cauchy_schwarz",
+            
+            # "best_scaler": StandardScaler,         
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "mutagenesis3_chains",
             "dataset_path": "datasets/mutagenesis3_chains.arff",
-            "best_distance": "hausdorff",
-            "best_scaler": StandardScaler,
+            
+            # "best_distance": "hausdorff",
+            "best_distance": "cauchy_schwarz",
+            
+            # "best_scaler": StandardScaler,         
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "Newsgroups1",
             "dataset_path": "datasets/Newsgroups1.arff",
-            "best_distance": "hausdorff",
-            "best_scaler": StandardScaler,
+            
+            # "best_distance": "hausdorff",
+            "best_distance": "cauchy_schwarz",
+            
+            # "best_scaler": StandardScaler,         
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "simple_dummy",
             "dataset_path": "datasets/simple_dummy.arff",
-            "best_distance": "hausdorff",
-            "best_scaler": StandardScaler,
+            
+            # "best_distance": "hausdorff",
+            "best_distance": "cauchy_schwarz",
+            
+            # "best_scaler": StandardScaler,         
+            "best_scaler": MinMaxScaler,
         },
         {
             "dataset_name": "Thioredoxin",
             "dataset_path": "datasets/Thioredoxin.arff",
-            "best_distance": "hausdorff",
-            "best_scaler": StandardScaler,
+            
+            # "best_distance": "hausdorff",
+            "best_distance": "cauchy_schwarz",
+            
+            # "best_scaler": StandardScaler,         
+            "best_scaler": MinMaxScaler,
         },
     ]
 
