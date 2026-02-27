@@ -87,7 +87,7 @@ def optimize_eps(
     distance_func: Callable[[Bag, Bag], float],
     min_pts: Optional[int] = None,
     try_range: bool = False,
-    plots: bool = True,
+    plots: bool = False,
     save_plots: bool = True,
 ) -> float:
     """

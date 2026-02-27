@@ -1,0 +1,35 @@
+# COMMIT TFG 27/02/2026 #001
+- desanclar `compute_distance_matriz()` de MIDBSCAN para poder reciclar función, añadido en modulo distances
+- creación nuevo módulo preprocessing, trasladar Scalers ahí
+- creación módulo optimización: algoritmo knn para eps 
+- mejor estructura de archivos en results
+- prueba del algoritmo con optimización de parámetro eps en test_for_verification
+
+# COMMIT TFG 27/02/2026 #002
+Problemas encontrados en el algoritmo
+Problemas 1: En fit(), estoy incrementando current_cluster_id siempre, incluso cuando el punto es marcado como ruido. Cada punto no-núcleo genera un "cluster" nuevo que luego queda como ruido. #FIXED
+Problema 2: _labels y _cluster_count se actualizan DENTRO del bucle no debía #FIXED
+
+# COMMIT TFG 27/02/2026 #003
+- El map_clusters_to_labels actual asigna la clase mayoritaria a cada cluster independientemente. Si tienes 3 clusters y los 3 tienen más negativos que positivos, todos mapean a 0 → Recall=0.
+-- Solución implementada: Hungarian Algorithm para asignar clusters a clases de forma óptima globalmente, no localmente.
+- Problema 2 de Clusters=1 en Birds, ..., indica que es necesario ajustar la estrategia de epsilon para datasets grandes 
+-- p.e. (Birds tiene 383 bolsas de entrenamiento).
+- En run_experiments especifico que distancia y scalado es mejor para cada dataset en un Dict
+
+# COMMIT TFG 27/02/2026 #004
+- Problema 1: Demasiado ruido (ImageElephant 35%, Harddrive1 25%, Newsgroups1 31%)
+Epsilon demasiado pequeño ( muchos puntos quedan sin cluster.)
+
+- Problema 2: Demasiados clusters fragmentados (Thioredoxin 15, musk2 9)
+Epsilon demasiado pequeño para ese dataset ( cada bolsa forma su propio mini-cluster.)
+
+- Problema 3: 1 solo cluster (Newsgroups1)
+Epsilon demasiado grande ( todo colapsa, o epsilon demasiado pequeño -> sólo un núcleo sobrevive.)
+
+-- Causa raíz común: min_pts=2 es demasiado permisivo. Con min_pts=2 cualquier par de bolsas forma un cluster, 
+generando fragmentación extrema (Thioredoxin: 15 clusters). Subir min_pts forzaría clusters más densos y coherentes.
+
+- Solución implementada: Grid_search para búsqueda de epsilon
+La heurística clásica es min_pts = ln(n), pero para MIL con bolsas heterogéneas funciona 
+mejor explorar un rango pequeño:

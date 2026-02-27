@@ -105,6 +105,23 @@ class MIDBSCAN:
         self._train_bags = []
         self._distance_matrix = None
 
+    def _reset_state_keep_matrix(self, bags: list, dist_matrix):
+            """
+            Reinicia el estado interno excepto la matriz de distancias ya calculada.
+            Útil para grid search: evita recalcular la matriz en cada iteración.
+
+            Uso (desde grid_search.py):
+                model._reset_state_keep_matrix(bags, dist_matrix)
+                model.fit(dataset)   # fit() detecta que _distance_matrix ya existe y la reutiliza
+            """
+            self._labels = {}
+            self._cluster_count = 0
+            self._fitted = False
+            self._core_bags = []
+            self._core_bag_labels = {}
+            self._train_bags = bags
+            self._distance_matrix = dist_matrix  # ← conservamos la matriz inyectada
+
     # Usamos callable para dedevolver una función    
     def _get_metric_function(self, name: str) -> Callable[[Bag, Bag], float]:
             """
@@ -162,7 +179,12 @@ class MIDBSCAN:
         num_bags = len(bags)
 
         # Calculamos la matriz de distancias
-        self._distance_matrix = self._compute_distance_matrix(bags)
+        # self._distance_matrix = self._compute_distance_matrix(bags)
+        # IMPROVEMENT UPDATE -- no recalcular si la matriz ya existe:
+        if self._distance_matrix is None:
+            self._distance_matrix = self._compute_distance_matrix(bags)
+        else:
+            logger.debug("Reutilizando matriz de distancias precomputada (grid search mode).")
 
         logger.info(f"Iniciando clustering DBSCAN (eps={self._epsilon}, min_pts={self._min_pts})...")
 
