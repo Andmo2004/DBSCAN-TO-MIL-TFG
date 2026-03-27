@@ -15,7 +15,7 @@ sys.path.append(project_root)
 
 from models.midbscan import MIDBSCAN
 from data.arff_reader import ArffToMIData
-from evaluation.evaluator import MILEvaluator
+from evaluation.bcm import MILEvaluator
 from preprocessing.scaler import MinMaxScaler, StandardScaler
 from visualization.heatmap import plot_distance_heatmap
 from optimization.knn_dist_eps import optimize_eps

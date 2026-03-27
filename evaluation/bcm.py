@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 class MILEvaluator:
     """
     Clase para evaluar resultados de algoritmos MIL.
-    Transforma resultados de clustering en métricas de clasificación binaria.
+    Transforma resultados de clustering en métricas de clasificación binaria (BCM).
     """
     @staticmethod
     def hungarian_map_clusters_to_labels(
