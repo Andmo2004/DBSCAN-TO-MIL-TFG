@@ -71,3 +71,13 @@ MinMaxScaler + Cauchy-Schwarz es la combinación ganadora en 5 de 11 datasets. T
 StandardScaler + Hausdorff sigue siendo mejor para datasets con features gaussianas y bolsas donde importa la distancia absoluta entre instancias extremas (mutagenesis, Newsgroups1), porque Hausdorff es sensible a outliers y StandardScaler los controla mejor que MinMax.
 
 Thioredoxin sube de 0.154 a 0.333 con MM+CS — sigue siendo el dataset más difícil pero hay mejora real. Con Precision=1.0 y Recall=0.20, hay 8 clusters de los cuales probablemente solo 1-2 contienen positivos reales y están bien identificados, pero la mayoría de positivos siguen dispersos en clusters negativos o en ruido (40.74%).
+
+
+
+|SED — musk1|
+|-----------------------|
+|  Clusters : 8 |
+|  Ruido    : 40.6%|
+|  SED      : 33.854300  (↓ mejor)|
+
+Tener 40.6% de ruido es bastante alto. Significa que casi la mitad de las bolsas no quedaron asignadas a ningún cluster, y esas bolsas no contribuyen al SED. Esto es importante tenerlo en cuenta para comparar SED entre configuraciones, porque un modelo con menos ruido y SED ligeramente mayor puede estar describiendo mejor el dataset que uno con SED bajo pero mucho ruido.

@@ -1,4 +1,4 @@
-from preprocessing import MinMaxScaler, StandardScaler
+from preprocessing.scaler import MinMaxScaler, StandardScaler
 
 datasets_config = [
     {"dataset_name": "musk1",             "best_scaler": MinMaxScaler,  "best_distance": "hausdorff",      "best_eps": 2.1673,   "best_min_pts": 2},

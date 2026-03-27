@@ -1,0 +1,394 @@
+"""
+evaluation/internal_cvi.py
+ 
+Métricas de Validación Interna de Clustering (CVIs internos) para MIL.
+ 
+Los CVIs internos evalúan la calidad del clustering basándose únicamente en
+la estructura de los datos y la agrupación obtenida, SIN usar etiquetas reales.
+Son especialmente útiles para comparar configuraciones de parámetros cuando
+no se dispone de ground-truth.
+ 
+Todas las métricas trabajan con la MATRIZ DE DISTANCIAS precomputada entre
+bolsas, lo que las hace agnósticas al espacio de features original — requisito
+fundamental en MIL donde no existe un espacio vectorial canónico de bolsas.
+
+Tipo 1 — Solo Compactibilidad (↓ mejor):
+    - SED  : Suma de Distancias Euclidianas
+    - DD   : Distancia Distorsionada (SED normalizada por n y d)
+    - Hc   : Entropía de distribución de tamaños de clusters
+
+Tipo 2 — Compactibilidad + Separación:
+Tipo 3 — Estructuras Especiales / orientado a densidad:
+
+"""
+
+import logging
+import numpy as np
+
+from data.midata import MIData
+from typing import Any, Dict, List, Optional, Tuple
+
+_NOISE = -1
+
+logger = logging.getLogger(__name__)
+
+class BaseCVI:
+    """
+    Clase base para los Índices de Validación Interna de Clustering.
+    """
+    def __init__(self):
+        pass
+
+    @property
+    def name(self) -> str:
+        """Nombre legible del índice."""
+        raise NotImplementedError("Las subclases deben implementar name")
+
+    @property
+    def category(self) -> str:
+        """
+        Grupo de clasificación:
+          'compactness'            → solo compactibilidad
+          'compactness_separation' → compactibilidad + separación
+          'special'                → estructuras especiales / densidad
+        """
+        raise NotImplementedError("Las subclases deben implementar category")
+
+    @property
+    def higher_is_better(self) -> bool:
+        """
+        True si valores mayores indican mejor clustering.
+        Por defecto True; las métricas que minimizan deben sobreescribirlo.
+        """
+        return True  # valor por defecto, las subclases pueden sobreescribirlo
+
+    def compute(        
+        self,
+        dist_matrix: np.ndarray,
+        labels: Dict[str, int],
+        bag_ids: List[str],
+        X: Optional[np.ndarray] = None,
+    ) -> float:
+        """
+        Calcula el índice de validación interna.
+ 
+        :param dist_matrix: Matriz cuadrada (N×N) de distancias entre bolsas.
+                            Debe ser simétrica y con diagonal 0.
+        :param labels:      {bag_id: cluster_id}. Ruido → -1.
+        :param bag_ids:     Lista de bag_ids en el mismo orden que dist_matrix.
+        :returns:           Valor escalar del índice (float).
+        """
+        raise NotImplementedError("Las subclases deben implementar compute()")
+    
+    # ── Utilidades internas compartidas ──────────────────────────────────────
+    
+    def _label_array(self, labels: Dict[str, int], bag_ids: List[str]) -> np.ndarray:
+        """Convierte el dict de etiquetas a array numpy alineado con bag_ids."""
+        return np.array([labels.get(bid, _NOISE) for bid in bag_ids])
+ 
+    def _real_clusters(self, label_arr: np.ndarray) -> np.ndarray:
+        """IDs de clusters reales (excluye ruido -1)."""
+        return np.unique(label_arr[label_arr >= 0])
+ 
+    def _cluster_idx(self, label_arr: np.ndarray, cid: int) -> np.ndarray:
+        """Índices (posición en dist_matrix / X) de los miembros de un cluster."""
+        return np.where(label_arr == cid)[0]
+ 
+    def _require_X(self, X: Optional[np.ndarray]) -> np.ndarray:
+        """Lanza ValueError claro si X no fue proporcionada."""
+        if X is None:
+            raise ValueError(
+                f"{self.name} necesita la matriz de características X "
+                "(centroides de bolsas). Pasa dataset a InternalCVIEvaluator.evaluate()."
+            )
+        return X
+ 
+    def __repr__(self) -> str:
+        arrow = "↑" if self.higher_is_better else "↓"
+        return f"<{self.__class__.__name__} [{self.category}] {arrow} mejor>"
+    
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TIPO 1 — Solo Compactibilidad
+# ══════════════════════════════════════════════════════════════════════════════
+
+class SEDIndex(BaseCVI):
+    """
+    Suma de Distancias Euclidianas (SED) — ↓ mejor.
+ 
+    Mide la dispersión total de las instancias respecto al centroide de su
+    cluster. Un SED bajo indica clusters compactos y bien cohesionados.
+ 
+    Fórmula (Tabla 4.2, ec. 1):
+        SED = Σ_Cj  Σ_{xi ∈ Cj}  ||xi - µj||
+ 
+    Donde:
+      xi  = centroide de la bolsa i (fila i de X).
+      µj  = centroide del cluster Cj = media de los xi que pertenecen a Cj.
+ 
+    Notas:
+      - Los puntos de ruido (-1) se excluyen del cálculo.
+      - Clusters singleton contribuyen 0 (||xi - xi|| = 0).
+      - Es una función monótona decreciente con k: a más clusters, menor SED.
+        Por eso es más útil para comparar configuraciones con el MISMO k.
+      - Requiere X (centroides de bolsas). InternalCVIEvaluator lo calcula
+        automáticamente si se pasa dataset.  
+    """
+
+    @property
+    def name(self) -> str:
+        return "SED"
+ 
+    @property
+    def category(self) -> str:
+        return "compactness"
+ 
+    @property
+    def higher_is_better(self) -> bool:
+        return False   
+    
+    def compute(
+        self,
+        dist_matrix: np.ndarray,
+        labels: Dict[str, int],
+        bag_ids: List[str],
+        X: Optional[np.ndarray] = None,
+    ) -> float:
+        X         = self._require_X(X)
+        label_arr = self._label_array(labels, bag_ids)
+        clusters  = self._real_clusters(label_arr)
+ 
+        if len(clusters) == 0:
+            logger.warning("[SED] No hay clusters reales.")
+            return float("inf")
+ 
+        sed = 0.0
+        for cid in clusters:
+            idx = self._cluster_idx(label_arr, int(cid))
+            if len(idx) == 0:
+                continue
+            mu_j  = X[idx].mean(axis=0)           # (n_features,)
+            diffs = X[idx] - mu_j                  # (|Cj|, n_features)
+            sed  += float(np.linalg.norm(diffs, axis=1).sum())
+ 
+        return sed
+# ══════════════════════════════════════════════════════════════════════════════
+# TIPO 2 — Compactibilidad + Separación
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TIPO 3 — Estructuras Especiales / orientado a densidad
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Evaluador Unificado de CVIs Internos
+# ══════════════════════════════════════════════════════════════════════════════
+ 
+class InternalCVIEvaluator:
+    """
+    Orquestador que ejecuta y reporta todos los CVIs internos registrados.
+ 
+    Uso básico (calcula X automáticamente a partir del dataset):
+        evaluator = InternalCVIEvaluator()
+        results   = evaluator.evaluate(dist_matrix, labels, bag_ids,
+                                       dataset=train_scaled)
+ 
+    Uso sin dataset (solo CVIs que no necesitan X, como Hc):
+        results = evaluator.evaluate(dist_matrix, labels, bag_ids)
+ 
+    Uso personalizado (solo algunos CVIs):
+        evaluator = InternalCVIEvaluator(cvis=[SEDIndex(), HcIndex()])
+ 
+    Añadir un CVI externo en caliente:
+        evaluator.register(MiIndicePropioXXX())
+    """
+ 
+    _DEFAULT_CVIS: List[BaseCVI] = [
+        SEDIndex(),
+        # DDIndex(),
+        # HcIndex(),
+    ]
+ 
+    def __init__(self, cvis: Optional[List[BaseCVI]] = None) -> None:
+        """
+        :param cvis: Lista de instancias BaseCVI a ejecutar.
+                     None → usa todos los CVIs registrados por defecto.
+        """
+        self._cvis: List[BaseCVI] = (
+            list(cvis) if cvis is not None else list(self._DEFAULT_CVIS)
+        )
+ 
+    # ── API pública ───────────────────────────────────────────────────────────
+ 
+    def register(self, cvi: BaseCVI) -> "InternalCVIEvaluator":
+        """Añade un CVI al evaluador. Retorna self para encadenamiento."""
+        if not isinstance(cvi, BaseCVI):
+            raise TypeError(
+                f"Se esperaba una instancia de BaseCVI, recibido: {type(cvi)}"
+            )
+        self._cvis.append(cvi)
+        return self
+ 
+    @property
+    def cvi_names(self) -> List[str]:
+        """Nombres de los CVIs registrados."""
+        return [cvi.name for cvi in self._cvis]
+ 
+    def evaluate(
+        self,
+        dist_matrix: np.ndarray,
+        labels: Dict[str, int],
+        bag_ids: List[str],
+        dataset: Optional[MIData] = None,
+        title: str = "Evaluación Interna",
+        verbose: bool = True,
+    ) -> Dict[str, Any]:
+        """
+        Calcula todos los CVIs registrados y devuelve un diccionario de resultados.
+ 
+        :param dist_matrix: Matriz (N×N) de distancias entre bolsas.
+        :param labels:      {bag_id: cluster_id}; ruido → -1.
+        :param bag_ids:     Lista de bag_ids en el orden de dist_matrix.
+        :param dataset:     MIData opcional. Si se proporciona, se calcula X
+                            automáticamente como el centroide (mean) de cada bolsa.
+                            Necesario para SED y DD.
+        :param title:       Título para el reporte en consola.
+        :param verbose:     Si True, imprime reporte formateado.
+        :returns:
+            Dict con claves:
+              "title"      : str
+              "n_bags"     : int
+              "n_clusters" : int
+              "noise_count": int
+              "noise_pct"  : float
+              "scores"     : Dict[name → {"value", "category",
+                                          "higher_is_better", ?"error"}]
+        """
+        # ── Calcular X si se proporcionó dataset ──────────────────────────────
+        X: Optional[np.ndarray] = None
+        if dataset is not None:
+            X = self._compute_bag_centroids(dataset, bag_ids)
+ 
+        # ── Estadísticas generales ────────────────────────────────────────────
+        label_arr     = np.array([labels.get(bid, _NOISE) for bid in bag_ids])
+        real_clusters = np.unique(label_arr[label_arr >= 0])
+        noise_count   = int(np.sum(label_arr < 0))
+        n             = len(bag_ids)
+ 
+        results: Dict[str, Any] = {
+            "title":       title,
+            "n_bags":      n,
+            "n_clusters":  len(real_clusters),
+            "noise_count": noise_count,
+            "noise_pct":   round(100.0 * noise_count / n, 2) if n > 0 else 0.0,
+            "scores":      {},
+        }
+ 
+        # ── Ejecutar cada CVI ─────────────────────────────────────────────────
+        for cvi in self._cvis:
+            try:
+                value = cvi.compute(dist_matrix, labels, bag_ids, X=X)
+                results["scores"][cvi.name] = {
+                    "value":            round(float(value), 6),
+                    "category":         cvi.category,
+                    "higher_is_better": cvi.higher_is_better,
+                }
+                logger.debug(f"[InternalCVI] {cvi.name}: {value:.6f}")
+ 
+            except Exception as exc:
+                logger.warning(f"[InternalCVI] Error en {cvi.name}: {exc}")
+                results["scores"][cvi.name] = {
+                    "value":            None,
+                    "category":         cvi.category,
+                    "higher_is_better": cvi.higher_is_better,
+                    "error":            str(exc),
+                }
+ 
+        if verbose:
+            self._print_report(results)
+ 
+        return results
+ 
+    # ── Cálculo automático de centroides de bolsas ────────────────────────────
+ 
+    @staticmethod
+    def _compute_bag_centroids(dataset: MIData, bag_ids: List[str]) -> np.ndarray:
+        """
+        Calcula el centroide de cada bolsa como la media de sus instancias.
+ 
+        El orden de filas en X respeta el orden de bag_ids, que es el mismo
+        que el de dist_matrix, garantizando la alineación de índices.
+ 
+        :param dataset:  MIData (ya escalado).
+        :param bag_ids:  Lista de bag_ids en el orden de dist_matrix.
+        :returns:        np.ndarray (N × n_features).
+        """
+        bag_index = {bag.bag_id: bag for bag in dataset.bags}
+ 
+        centroids = []
+        for bid in bag_ids:
+            bag = bag_index.get(bid)
+            if bag is None or len(bag) == 0:
+                d = len(centroids[0]) if centroids else 1
+                centroids.append(np.zeros(d))
+                logger.warning(
+                    f"[InternalCVIEvaluator] Bolsa '{bid}' no encontrada o vacía."
+                )
+            else:
+                centroids.append(np.mean(bag.as_matrix(), axis=0))
+ 
+        return np.array(centroids)   # (N, n_features)
+ 
+    # ── Reporte en consola ────────────────────────────────────────────────────
+ 
+    @staticmethod
+    def _print_report(results: Dict[str, Any]) -> None:
+        W = 65
+ 
+        scores    = results["scores"]
+        title     = results["title"]
+        n         = results["n_bags"]
+        nc        = results["n_clusters"]
+        noise     = results["noise_count"]
+        noise_pct = results["noise_pct"]
+ 
+        print(f"\n{'═'*W}")
+        print(f"  CVIs INTERNOS — {title}")
+        print(f"{'═'*W}")
+        print(f"  Bolsas totales : {n}")
+        print(f"  Clusters reales: {nc}")
+        print(f"  Ruido          : {noise} bolsas ({noise_pct:.1f}%)")
+ 
+        groups = [
+            ("compactness",            "GRUPO 1 — Solo Compactibilidad"),
+            ("compactness_separation", "GRUPO 2 — Compactibilidad + Separación"),
+            ("special",                "GRUPO 3 — Estructuras Especiales"),
+        ]
+ 
+        for cat_key, cat_label in groups:
+            cat_items = {
+                name: info for name, info in scores.items()
+                if info.get("category") == cat_key
+            }
+            if not cat_items:
+                continue
+ 
+            print(f"\n  {'─'*W}")
+            print(f"  {cat_label}")
+            print(f"  {'─'*W}")
+            print(f"  {'Índice':<20} {'Valor':>12}   {'Criterio'}")
+            print(f"  {'·'*50}")
+ 
+            for name, info in cat_items.items():
+                val = info.get("value")
+                if val is None:
+                    val_str = f"  ERROR: {info.get('error', '?')}"
+                elif abs(val) >= 1e15:
+                    val_str = f"{'∞':>12}"
+                else:
+                    val_str = f"{val:>12.6f}"
+ 
+                arrow = "↑ mayor mejor" if info["higher_is_better"] else "↓ menor mejor"
+                print(f"  {name:<20} {val_str}   {arrow}")
+ 
+        print(f"\n{'═'*W}\n")
