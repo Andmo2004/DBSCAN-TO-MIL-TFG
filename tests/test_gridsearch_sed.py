@@ -37,7 +37,7 @@ from models.midbscan import MIDBSCAN
 from preprocessing.scaler import MinMaxScaler, StandardScaler
 from distances.hausdorff import hausdorff_distance
 from distances.cauchy_schwarz import cauchy_schwarz_distance
-from evaluation.internal_cvi import SEDIndex
+from evaluation.cvi import SEDIndex
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s - %(message)s")
 logger = logging.getLogger("cvi_grid")

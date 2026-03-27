@@ -167,11 +167,148 @@ class SEDIndex(BaseCVI):
             idx = self._cluster_idx(label_arr, int(cid))
             if len(idx) == 0:
                 continue
-            mu_j  = X[idx].mean(axis=0)           # (n_features,)
+            mu_j  = X[idx].mean(axis=0)            # (n_features,)
             diffs = X[idx] - mu_j                  # (|Cj|, n_features)
             sed  += float(np.linalg.norm(diffs, axis=1).sum())
  
         return sed
+    
+
+class DDIndex(BaseCVI):
+    """
+    Distancia Distorsionada (DD) — ↓ mejor.
+ 
+    Versión normalizada de SSE (suma del error cuadrático) que divide por
+    el número total de instancias n y la dimensionalidad d, haciéndola
+    comparable entre datasets de distinto tamaño y dimensión.
+ 
+    Fórmula (Tabla 4.2, ec. 5):
+        DD = Σ_Cj  Σ_{xi ∈ Cj}  ||xi - µj||²  /  (n · d)
+ 
+    Donde:
+      xi  = centroide de la bolsa i.
+      µj  = centroide del cluster Cj.
+      n   = número total de bolsas válidas (excluye ruido).
+      d   = dimensionalidad de las bolsas (número de features).
+ 
+    Notas:
+      - Al normalizar por n·d, DD es directamente comparable entre
+        experimentos con distintos datasets o dimensionalidades.
+      - Como SED, es monótona decreciente con k.
+      - Requiere X.
+ 
+    Ref: Gomez-Flores (tesis), ec. (5).
+    """
+ 
+    @property
+    def name(self) -> str:
+        return "DD"
+ 
+    @property
+    def category(self) -> str:
+        return "compactness"
+ 
+    @property
+    def higher_is_better(self) -> bool:
+        return False
+ 
+    def compute(
+        self,
+        dist_matrix: np.ndarray,
+        labels: Dict[str, int],
+        bag_ids: List[str],
+        X: Optional[np.ndarray] = None,
+    ) -> float:
+        X         = self._require_X(X)
+        label_arr = self._label_array(labels, bag_ids)
+        clusters  = self._real_clusters(label_arr)
+ 
+        if len(clusters) == 0:
+            logger.warning("[DD] No hay clusters reales.")
+            return float("inf")
+ 
+        n_valid = int(np.sum(label_arr >= 0))
+        d       = X.shape[1]
+ 
+        if n_valid == 0 or d == 0:
+            return float("inf")
+ 
+        sse = 0.0
+        for cid in clusters:
+            idx  = self._cluster_idx(label_arr, int(cid))
+            if len(idx) == 0:
+                continue
+            mu_j  = X[idx].mean(axis=0)
+            diffs = X[idx] - mu_j
+            sse  += float((np.linalg.norm(diffs, axis=1) ** 2).sum())
+ 
+        return sse / (n_valid * d)
+ 
+ 
+class HcIndex(BaseCVI):
+    """
+    Entropía de distribución de tamaños de clusters (Hc) — ↓ mejor.
+ 
+    La entropía de Bezdek (1981) está definida originalmente para clustering
+    difuso. En este proyecto se adapta a clustering duro (DBSCAN) como la
+    entropía de Shannon de la distribución de probabilidad de los tamaños
+    de cluster:
+ 
+        p_k  = |Ck| / n_valid          (proporción del cluster k)
+        Hc   = -Σ_k  p_k · log(p_k)   (en nats)
+ 
+    Interpretación:
+      - Hc = 0     → un único cluster (o todos del mismo tamaño unitario).
+      - Hc máximo  → todos los clusters tienen exactamente el mismo tamaño
+                     (distribución uniforme, máximo desorden).
+      - Valores bajos indican que pocos clusters concentran la mayoría de los
+        puntos, lo que en DBSCAN suele corresponder a una partición más clara.
+      - Puntos de ruido (-1) se excluyen: no pertenecen a ningún cluster.
+ 
+    No requiere X.
+ 
+    Ref: Bezdek (1981); Gomez-Flores (tesis), ec. (8).
+    """
+ 
+    @property
+    def name(self) -> str:
+        return "Hc"
+ 
+    @property
+    def category(self) -> str:
+        return "compactness"
+ 
+    @property
+    def higher_is_better(self) -> bool:
+        return False
+ 
+    def compute(
+        self,
+        dist_matrix: np.ndarray,
+        labels: Dict[str, int],
+        bag_ids: List[str],
+        X: Optional[np.ndarray] = None,    # no se usa, firma uniforme
+    ) -> float:
+        label_arr = self._label_array(labels, bag_ids)
+        clusters  = self._real_clusters(label_arr)
+ 
+        if len(clusters) == 0:
+            logger.warning("[Hc] No hay clusters reales.")
+            return float("inf")
+ 
+        n_valid = int(np.sum(label_arr >= 0))
+        if n_valid == 0:
+            return float("inf")
+ 
+        hc = 0.0
+        for cid in clusters:
+            nk = len(self._cluster_idx(label_arr, int(cid)))
+            if nk == 0:
+                continue
+            p_k  = nk / n_valid
+            hc  -= p_k * np.log(p_k)     # entropía de Shannon en nats
+ 
+        return float(hc)
 # ══════════════════════════════════════════════════════════════════════════════
 # TIPO 2 — Compactibilidad + Separación
 # ══════════════════════════════════════════════════════════════════════════════
@@ -199,14 +336,12 @@ class InternalCVIEvaluator:
     Uso personalizado (solo algunos CVIs):
         evaluator = InternalCVIEvaluator(cvis=[SEDIndex(), HcIndex()])
  
-    Añadir un CVI externo en caliente:
-        evaluator.register(MiIndicePropioXXX())
     """
  
     _DEFAULT_CVIS: List[BaseCVI] = [
         SEDIndex(),
-        # DDIndex(),
-        # HcIndex(),
+        DDIndex(),
+        HcIndex(),
     ]
  
     def __init__(self, cvis: Optional[List[BaseCVI]] = None) -> None:
