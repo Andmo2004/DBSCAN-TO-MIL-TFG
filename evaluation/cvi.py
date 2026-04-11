@@ -309,13 +309,191 @@ class HcIndex(BaseCVI):
             hc  -= p_k * np.log(p_k)     # entropía de Shannon en nats
  
         return float(hc)
+    
 # ══════════════════════════════════════════════════════════════════════════════
 # TIPO 2 — Compactibilidad + Separación
 # ══════════════════════════════════════════════════════════════════════════════
 
-# ══════════════════════════════════════════════════════════════════════════════
-# TIPO 3 — Estructuras Especiales / orientado a densidad
-# ══════════════════════════════════════════════════════════════════════════════
+class VRCIndex(BaseCVI):
+    """
+    Criterio de Relación de Varianza (VRC) o Índice Calinski-Harabasz — ↑ mejor.
+ 
+    Mide la cohesión interna de los clusters y su aislamiento respecto al
+    resto, comparando la varianza entre clusters (SSB) con la varianza dentro
+    de los clusters (SSW):
+ 
+        VRC = (SSB / SSW) · (n - k) / (k - 1)
+ 
+        SSB = Σ_k |Cj| · ||µj - M||²        (varianza entre clusters)
+        SSW = Σ_k Σ_{xi∈Cj} ||xi - µj||²    (varianza dentro de clusters)
+        M   = centroide global de todos los puntos válidos (sin ruido)
+        n   = número de puntos válidos
+        k   = número de clusters reales
+ 
+    Propiedades:
+      - Valores altos → clusters compactos y bien separados entre sí.
+      - Indefinido para k=1 (división por k-1=0); se devuelve 0.0.
+      - Los puntos de ruido (-1) se excluyen de SSB, SSW y del centroide M.
+      - Es la base del índice CH (Calinski-Harabasz) ampliamente usado en
+        scikit-learn como `calinski_harabasz_score`.
+ 
+    Requiere X.
+ 
+    Ref: Caliński & Harabasz (1974); Gomez-Flores (tesis), ec. (19).
+    """
+ 
+    @property
+    def name(self) -> str:
+        return "VRC"
+ 
+    @property
+    def category(self) -> str:
+        return "compactness_separation"
+ 
+    def compute(
+        self,
+        dist_matrix: np.ndarray,
+        labels: Dict[str, int],
+        bag_ids: List[str],
+        X: Optional[np.ndarray] = None,
+    ) -> float:
+        X         = self._require_X(X)
+        label_arr = self._label_array(labels, bag_ids)
+        clusters  = self._real_clusters(label_arr)
+        k         = len(clusters)
+ 
+        if k < 2:
+            logger.warning("[VRC] Se necesitan al menos 2 clusters.")
+            return 0.0
+ 
+        valid_mask = label_arr >= 0
+        n_valid    = int(valid_mask.sum())
+ 
+        if n_valid == 0:
+            return 0.0
+ 
+        # Centroide global M (solo puntos válidos)
+        M = X[valid_mask].mean(axis=0)   # (n_features,)
+ 
+        # SSB: varianza entre clusters
+        ssb = 0.0
+        for cid in clusters:
+            idx  = self._cluster_idx(label_arr, int(cid))
+            mu_j = X[idx].mean(axis=0)
+            ssb += len(idx) * float(np.dot(mu_j - M, mu_j - M))
+ 
+        # SSW: varianza dentro de clusters
+        ssw = 0.0
+        for cid in clusters:
+            idx   = self._cluster_idx(label_arr, int(cid))
+            mu_j  = X[idx].mean(axis=0)
+            diffs = X[idx] - mu_j
+            ssw  += float((diffs ** 2).sum())
+ 
+        if ssw < 1e-12:
+            # Clusters perfectamente compactos (todos singletons idénticos)
+            return float("inf")
+ 
+        return float((ssb / ssw) * ((n_valid - k) / (k - 1)))
+ 
+ 
+class IIndex(BaseCVI):
+    """
+    Índice I (o PBM — Pakhira-Bandyopadhyay-Maulik) — ↑ mejor.
+ 
+    Combina tres factores para penalizar a la vez la fragmentación (muchos
+    clusters), la dispersión interna y la falta de separación entre clusters:
+ 
+        I(k) = (1/k · E1/Ek · Dk)^p      p = 2
+ 
+        E1 = Σ_i ||xi - M||              (SED respecto al centroide global)
+        Ek = Σ_k Σ_{xi∈Cj} ||xi - µj||  (SED respecto a centroides de cluster)
+        Dk = max_{j≠j'} ||µj - µj'||     (máxima separación entre centroides)
+        M  = centroide global de todos los puntos válidos
+ 
+    Interpretación de los tres factores:
+      - 1/k          : penaliza tener muchos clusters.
+      - E1/Ek        : penaliza que los clusters sean dispersos (Ek alto)
+                       y premia que el dataset esté concentrado (E1 bajo).
+                       Si Ek → 0 los clusters son perfectamente compactos.
+      - Dk           : premia la separación máxima entre centroides.
+ 
+    Propiedades:
+      - Un único cluster (k=1) devuelve 0.0 (Dk = 0, no hay separación).
+      - Si Ek ≈ 0 (clusters degenerados de un solo punto), devuelve inf.
+      - Los puntos de ruido se excluyen.
+ 
+    Requiere X.
+ 
+    Ref: Pakhira, Bandyopadhyay & Maulik (2004); Gomez-Flores (tesis), ec. (21).
+    """
+ 
+    _P = 2  # exponente fijo según los autores
+ 
+    @property
+    def name(self) -> str:
+        return "I"
+ 
+    @property
+    def category(self) -> str:
+        return "compactness_separation"
+ 
+    def compute(
+        self,
+        dist_matrix: np.ndarray,
+        labels: Dict[str, int],
+        bag_ids: List[str],
+        X: Optional[np.ndarray] = None,
+    ) -> float:
+        X         = self._require_X(X)
+        label_arr = self._label_array(labels, bag_ids)
+        clusters  = self._real_clusters(label_arr)
+        k         = len(clusters)
+ 
+        if k == 0:
+            logger.warning("[IIndex] No hay clusters reales.")
+            return 0.0
+ 
+        valid_mask = label_arr >= 0
+ 
+        if not valid_mask.any():
+            return 0.0
+ 
+        # Centroide global M
+        M = X[valid_mask].mean(axis=0)   # (n_features,)
+ 
+        # E1: SED de todos los puntos válidos respecto a M
+        diffs_global = X[valid_mask] - M
+        e1 = float(np.linalg.norm(diffs_global, axis=1).sum())
+ 
+        # Ek: SED de cada punto respecto al centroide de su cluster
+        ek = 0.0
+        centroids: List[np.ndarray] = []
+        for cid in clusters:
+            idx  = self._cluster_idx(label_arr, int(cid))
+            mu_j = X[idx].mean(axis=0)
+            centroids.append(mu_j)
+            diffs = X[idx] - mu_j
+            ek   += float(np.linalg.norm(diffs, axis=1).sum())
+ 
+        if ek < 1e-12:
+            logger.warning("[IIndex] Ek ≈ 0: clusters degenerados.")
+            return float("inf")
+ 
+        # Dk: máxima distancia euclídea entre pares de centroides
+        dk = 0.0
+        for a in range(len(centroids)):
+            for b in range(a + 1, len(centroids)):
+                d = float(np.linalg.norm(centroids[a] - centroids[b]))
+                if d > dk:
+                    dk = d
+ 
+        if dk < 1e-12:
+            # Todos los centroides son idénticos → no hay separación
+            return 0.0
+ 
+        return float(((1.0 / k) * (e1 / ek) * dk) ** self._P)
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Evaluador Unificado de CVIs Internos
