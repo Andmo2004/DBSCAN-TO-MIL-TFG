@@ -10,6 +10,5 @@ datasets_config = [
     {"dataset_name": "mutagenesis_atoms", "best_scaler": StandardScaler,"best_distance": "hausdorff",      "best_eps": 0.4748,   "best_min_pts": 3},
     {"dataset_name": "mutagenesis_chains","best_scaler": MinMaxScaler,  "best_distance": "cauchy_schwarz", "best_eps": 0.006638, "best_min_pts": 3},
     {"dataset_name": "Newsgroups1",       "best_scaler": StandardScaler,"best_distance": "hausdorff",      "best_eps": 50.434,   "best_min_pts": 2},
-    {"dataset_name": "simple_dummy",      "best_scaler": StandardScaler,"best_distance": "hausdorff",      "best_eps": 0.1303,   "best_min_pts": 2},
     {"dataset_name": "Thioredoxin",       "best_scaler": MinMaxScaler,  "best_distance": "cauchy_schwarz", "best_eps": 0.001185, "best_min_pts": 2},
 ]
