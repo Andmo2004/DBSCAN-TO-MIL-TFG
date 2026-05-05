@@ -93,10 +93,20 @@ def create_objective(dataset: MIData, dataset_name: str):
     """
     imbalance_ratio = _detect_imbalance_ratio(dataset)
     scaled_datasets_cache = {}
+
+    # 1. Definir qué métricas están permitidas según el dataset
+    available_metrics = list(DISTANCES.keys())
+    
+    # 2. Excluimos EMD de los datasets computacionalmente intratables o muy densos
+    # (Basado en el análisis de la media y el máximo de instancias por bolsa)
+    if dataset_name in ["Harddrive1", "Thioredoxin", "Newsgroups1"]:
+        if "earth_movers" in available_metrics:
+            available_metrics.remove("earth_movers")
+            logger.warning(f"  [!] Excluyendo 'earth_movers' para {dataset_name} por coste computacional.")
     
     def objective(trial: optuna.Trial) -> float:
         scaler_name = trial.suggest_categorical("scaler", list(SCALERS.keys()))
-        metric_name = trial.suggest_categorical("metric", list(DISTANCES.keys()))
+        metric_name = trial.suggest_categorical("metric", available_metrics)
         min_pts = trial.suggest_int("min_pts", 2, 20)
         
         # El usuario sugirió buscar eps_percentile entre 1.0 y 15.0
