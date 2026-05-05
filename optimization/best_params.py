@@ -215,6 +215,7 @@ def run_optuna_search(n_trials: int = 100):
         best = study.best_trial
         eps_absolute = best.user_attrs.get("eps_absolute", 0.0)
         clusters = best.user_attrs.get("clusters", 0)
+        noise_pct = best.user_attrs.get("noise_pct", 0.0)
         
         print(f"  >> Mejor F1 Score : {best.value:.4f}")
         print(f"  >> Scaler         : {best.params['scaler']}")
@@ -222,6 +223,7 @@ def run_optuna_search(n_trials: int = 100):
         print(f"  >> eps_percentile : {best.params['eps_percentile']:.2f}% -> eps_abs: {eps_absolute:.6f}")
         print(f"  >> min_pts        : {best.params['min_pts']}")
         print(f"  >> Clusters Hall. : {clusters}")
+        print(f"  >> Ruido (%)      : {noise_pct}%")
         
         results.append({
             "dataset": dataset_name,
@@ -231,7 +233,8 @@ def run_optuna_search(n_trials: int = 100):
             "min_pts": best.params["min_pts"],
             "eps_percentile": round(best.params["eps_percentile"], 2),
             "eps_absolute": round(eps_absolute, 6),
-            "clusters": clusters
+            "clusters": clusters,
+            "noise_pct": noise_pct
         })
         
     # Guardar todos los mejores en CSV
@@ -242,7 +245,7 @@ def run_optuna_search(n_trials: int = 100):
         with open(csv_file, "w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=[
                 "dataset", "best_score", "scaler", "metric", "min_pts", 
-                "eps_percentile", "eps_absolute", "clusters"
+                "eps_percentile", "eps_absolute", "clusters", "noise_pct"
             ])
             writer.writeheader()
             writer.writerows(results)
