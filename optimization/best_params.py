@@ -135,13 +135,20 @@ def create_objective(dataset: MIData, dataset_name: str):
             model._distance_matrix = dist_matrix 
             model.fit(scaled_dataset)
             
+            # Penalización progresiva por ruido
+            stats = model.get_statistics()
+            noise_pct = stats.get("noise_percentage", 0) / 100.0
+            noise_penalty = max(0.0, noise_pct - 0.20) * 0.8
+
             # 5. Evaluar (score adaptativo a desbalanceo igual que en grid_search.py)
             score = _score_labels(scaled_dataset, model.labels, imbalance_ratio=imbalance_ratio)
-            
+            score = max(0.0, score - noise_penalty)
+
             # Guardamos variables de interés para que queden registradas en el study de Optuna
             trial.set_user_attr("eps_absolute", eps_absolute)
             trial.set_user_attr("clusters", model.cluster_count)
-            
+            trial.set_user_attr("noise_pct", round(noise_pct * 100, 1))
+
             # Penalizamos la puntuación a cero si todo el dataset resulta ser ruido
             if model.cluster_count == 0:
                 return 0.0
@@ -169,7 +176,7 @@ def run_optuna_search(n_trials: int = 100):
         arff_name = config["arff_name"]
         
         print(f"\n► Procesando Dataset: {dataset_name}...")
-        
+        global_cache._cache.clear()
         path = os.path.join("datasets", f"{arff_name}.arff")
         if not os.path.exists(path):
             print(f"  [!] No se encontró el archivo: {path}. Omitiendo.")

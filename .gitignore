@@ -83,3 +83,5 @@ cython_debug/
 **/*.csv
 #*.arff
 *.png
+*.db
+**/*.db
