@@ -109,8 +109,8 @@ def create_objective(dataset: MIData, dataset_name: str):
         metric_name = trial.suggest_categorical("metric", available_metrics)
         min_pts = trial.suggest_int("min_pts", 2, 20)
         
-        # El usuario sugirió buscar eps_percentile entre 1.0 y 15.0
-        eps_percentile = trial.suggest_float("eps_percentile", 1.0, 15.0)
+        # El usuario sugirió buscar eps_percentile entre 1.0 y 40.0
+        eps_percentile = trial.suggest_float("eps_percentile", 1.0, 40.0)
 
         # 1. Escalar el dataset (con caché)
         if scaler_name not in scaled_datasets_cache:
