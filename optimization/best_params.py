@@ -54,6 +54,21 @@ DISTANCES = {
     "mahalanobis": mahalanobis_distance
 }
 
+# --- NUEVA LÓGICA DE WARM STARTING ---
+# Diccionario para almacenar configuraciones previas óptimas (Best Known Configurations).
+KNOWN_BESTS = {
+    "musk1":              {"scaler": "MinMaxScaler",   "metric": "hausdorff",      "min_pts": 2,  "eps_abs": 2.1673},
+    "musk2":              {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3,  "eps_abs": 0.02026},
+    "ImageElephant":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2,  "eps_abs": 0.11840},
+    "BirdsChestnut":      {"scaler": "StandardScaler", "metric": "cauchy_schwarz", "min_pts": 10, "eps_abs": 0.2988},
+    "BirdsHammonds":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2,  "eps_abs": 0.00565},
+    "Harddrive1":         {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3,  "eps_abs": 0.003467},
+    "mutagenesis_atoms":  {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 3,  "eps_abs": 0.4748},
+    "mutagenesis_chains": {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3,  "eps_abs": 0.006638},
+    "Newsgroups1":        {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 2,  "eps_abs": 50.434},
+    "Thioredoxin":        {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2,  "eps_abs": 0.001185},
+}
+
 DATASETS_CONFIG = [
     {"dataset_name": "musk1",              "arff_name": "musk1"},
     {"dataset_name": "musk2",              "arff_name": "musk2"},
@@ -206,6 +221,39 @@ def run_optuna_search(n_trials: int = 100):
             sampler=sampler  
         )
         
+        if dataset_name in KNOWN_BESTS:
+            kb = KNOWN_BESTS[dataset_name]
+            
+            # 1. Escalar los datos temporalmente para sacar la matriz
+            scaler_class = SCALERS[kb["scaler"]]
+            scaled_dataset = scaler_class().fit_transform(train_data)
+            
+            # 2. Obtener la matriz de distancias desde tu caché
+            dist_matrix = global_cache.get(
+                dataset_name=dataset_name, 
+                split="train", 
+                scaler_name=kb["scaler"], 
+                metric_name=kb["metric"], 
+                bags=scaled_dataset.bags
+            )
+            
+            # 3. Calcular a qué percentil equivale exactamente tu eps_abs
+            upper = dist_matrix[np.triu_indices_from(dist_matrix, k=1)]
+            upper_positive = upper[upper > 0]
+            
+            if len(upper_positive) > 0:
+                # Calculamos el porcentaje de distancias que son menores o iguales a tu eps_abs
+                exact_percentile = float(np.mean(upper_positive <= kb["eps_abs"]) * 100.0)
+                
+                # 4. Inyectar en Optuna
+                study.enqueue_trial({
+                    "scaler": kb["scaler"],
+                    "metric": kb["metric"],
+                    "min_pts": kb["min_pts"],
+                    "eps_percentile": exact_percentile
+                })
+                print(f"  [+] Inyectando solución previa (Warm Start): eps_percentile={exact_percentile:.2f}%")
+
         # Envoltorio de la función objetivo
         objective = create_objective(train_data, dataset_name)
         
