@@ -5,8 +5,8 @@ from collections import Counter
 
 from data.midata import MIData
 from data.bag import Bag
-from distances.hausdorff import hausdorff_distance
-from distances.cauchy_schwarz import cauchy_schwarz_distance
+from distances.hausdorff import hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg
+from distances.probability_distribution import cauchy_schwarz_distance, earth_movers_distance, mahalanobis_distance
 from distances.distance_matrix import compute_distance_matrix
 
 logger = logging.getLogger(__name__)
@@ -114,8 +114,11 @@ class MIDBSCAN:
             # Registro de métricas disponibles
             metrics_registry = {
                 'hausdorff': hausdorff_distance,
-                'cauchy_schwarz': cauchy_schwarz_distance
-                # 'mean': mean_distance, 
+                'hausdorff_min': hausdorff_distance_min,
+                'hausdorff_avg': hausdorff_distance_avg,
+                'cauchy_schwarz': cauchy_schwarz_distance,
+                'earth_movers': earth_movers_distance,
+                'mahalanobis': mahalanobis_distance
             }
 
             if name not in metrics_registry:
