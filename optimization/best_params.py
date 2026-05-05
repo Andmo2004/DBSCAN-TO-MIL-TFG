@@ -30,8 +30,8 @@ from models.midbscan import MIDBSCAN
 from preprocessing.scaler import MinMaxScaler, StandardScaler
 from distances.distance_matrix import compute_distance_matrix
 
-# Funciones de evaluación de grid_search.py
-from optimization.grid_search import _detect_imbalance_ratio, _score_labels
+# Funciones de evaluación
+from evaluation.scoring import detect_imbalance_ratio, score_labels
 
 # Métricas de distancia
 from distances.hausdorff import hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg
@@ -91,7 +91,7 @@ def create_objective(dataset: MIData, dataset_name: str):
     """
     Fábrica de la función objetivo para Optuna asociada a un dataset.
     """
-    imbalance_ratio = _detect_imbalance_ratio(dataset)
+    imbalance_ratio = detect_imbalance_ratio(dataset)
     scaled_datasets_cache = {}
 
     # 1. Definir qué métricas están permitidas según el dataset
@@ -145,14 +145,12 @@ def create_objective(dataset: MIData, dataset_name: str):
             model._distance_matrix = dist_matrix 
             model.fit(scaled_dataset)
             
-            # Penalización progresiva por ruido
+            # Extraer estadísticas para el registro
             stats = model.get_statistics()
             noise_pct = stats.get("noise_percentage", 0) / 100.0
-            noise_penalty = max(0.0, noise_pct - 0.20) * 0.8
 
-            # 5. Evaluar (score adaptativo a desbalanceo igual que en grid_search.py)
-            score = _score_labels(scaled_dataset, model.labels, imbalance_ratio=imbalance_ratio)
-            score = max(0.0, score - noise_penalty)
+            # 5. Evaluar (score_labels ya aplica su propia penalización por ruido internamente)
+            score = score_labels(scaled_dataset, model.labels, imbalance_ratio=imbalance_ratio)
 
             # Guardamos variables de interés para que queden registradas en el study de Optuna
             trial.set_user_attr("eps_absolute", eps_absolute)
@@ -197,10 +195,15 @@ def run_optuna_search(n_trials: int = 100):
         train_data, _ = dataset_full.split_data(percentage_train=70, seed=42)
         
         study_name = f"midbscan_optuna_{dataset_name}"
+
+        # 1. Creamos un "sampler" (muestreador) de Optuna fijando la semilla
+        sampler = optuna.samplers.TPESampler(seed=42)
         
+        # 2. Le pasamos el sampler al estudio
         study = optuna.create_study(
             study_name=study_name,
-            direction="maximize"
+            direction="maximize",
+            sampler=sampler  
         )
         
         # Envoltorio de la función objetivo
