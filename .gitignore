@@ -83,5 +83,15 @@ cython_debug/
 **/*.csv
 #*.arff
 *.png
+
+# Databases
 *.db
+*.sqlite
+*.sqlite3
 **/*.db
+**/*.sqlite
+**/*.sqlite3
+
+# Optuna plots & artifacts
+optuna_plots/
+**/*.html

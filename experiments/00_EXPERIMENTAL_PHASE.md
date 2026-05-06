@@ -1,10 +1,11 @@
+# Andrés Moros Rincón
 # Roadmap de Ejecución — TFG: DBSCAN en Aprendizaje de Múltiple Instancia (MIL)
 
 > **Objetivo general:** Evaluar y validar la implementación de MIDBSCAN como algoritmo de clustering aplicado a problemas de clasificación MIL, comparándolo con el baseline MIKnn mediante un protocolo experimental riguroso.
 
 ---
 
-## Phase 1 — Caracterización del Problema (EDA)
+## Fase 1 — Caracterización del Problema (EDA)
 
 **Propósito:** Justificar la dificultad intrínseca de los datasets seleccionados antes de ejecutar ningún modelo. El TFG debe demostrar que el problema no es trivial.
 
@@ -18,10 +19,9 @@ Para cada dataset, calcular:
 Utilizar tanto `hausdorff_distance` como `cauchy_schwarz_distance` para obtener dos perspectivas. El código de partida es `compute_distance_matrix()` de `distances/distance_matrix.py`.
 
 ```python
-# Pseudocódigo orientativo
-dist_matrix = compute_distance_matrix(train_scaled.bags, metric_func)
 # Separar índices de bolsas positivas y negativas según bag.label
 # Extraer submatrices intra e inter clase
+dist_matrix = compute_distance_matrix(train_scaled.bags, metric_func)
 ```
 
 **Métrica de solapamiento a reportar:** ratio de separabilidad:
@@ -61,7 +61,7 @@ bag_ids_sorted = [b.bag_id for b in sorted_bags]
 
 Para cada dataset, generar un boxplot con `matplotlib` mostrando la distribución del número de instancias por bolsa (`len(bag)` para cada `bag` en el dataset completo). Esto justifica la variabilidad y por qué métricas como Hausdorff son sensibles al tamaño de las bolsas.
 
-**Estadísticos a incluir en la tabla resumen del EDA:**
+**Tabla resumen del EDA:**
 
 | Dataset | n_bags | n_pos | n_neg | inst_min | inst_avg | inst_max | inst_std | sep_ratio_hau | sep_ratio_cs |
 |---------|--------|-------|-------|----------|----------|----------|----------|---------------|--------------|
@@ -74,7 +74,7 @@ Determinar para cada dataset cuál de las dos métricas (`hausdorff` o `cauchy_s
 
 ---
 
-## Phase 2 — Optimización de Hiperparámetros (Tuning con Optuna)
+## Fase 2 — Optimización de Hiperparámetros (Tuning con Optuna)
 
 **Propósito:** Encontrar la configuración óptima `(scaler, metric, min_pts, eps)` para cada dataset de forma sistemática y reproducible.
 
@@ -133,7 +133,7 @@ Determinar si existe una configuración "universal" o si el tuning es dataset-es
 
 ---
 
-## Phase 3 — Evaluación de la Calidad del Clustering (CVIs Internos)
+## Fase 3 — Evaluación de la Calidad del Clustering (CVIs Internos)
 
 **Propósito:** Evaluar si los clústeres detectados por MIDBSCAN son geométricamente sólidos, independientemente de las etiquetas reales. Esto es fundamental para validar DBSCAN como algoritmo no supervisado.
 
@@ -160,7 +160,7 @@ results = evaluator.evaluate(dist_matrix, model.labels, bag_ids, dataset=train_s
 
 ### 3.2 Comparativa: configuración óptima vs. configuración subóptima
 
-Para demostrar que el tuning de Phase 2 mejoró la calidad geométrica, calcular los CVIs para:
+Para demostrar que el tuning de Fase 2 mejoró la calidad geométrica, calcular los CVIs para:
 
 - **Modelo A:** Mejor configuración encontrada por Optuna.
 - **Modelo B:** Configuración con eps × 2 (epsilon artificialmente grande, demasiado permisivo).
@@ -195,7 +195,7 @@ Determinar si la estructura de densidad detectada por DBSCAN coincide con la est
 
 ---
 
-## Phase 4 — Clasificación Final y Comparativa (Baseline con MIKnn)
+## Fase 4 — Clasificación Final y Comparativa (Baseline con MIKnn)
 
 **Propósito:** Responder la pregunta central del TFG: ¿es MIDBSCAN competitivo frente a un clasificador supervisado de distancias en problemas MIL?
 
@@ -203,7 +203,7 @@ Determinar si la estructura de densidad detectada por DBSCAN coincide con la est
 
 - **Partición:** 70% train / 30% test, `seed=42` (misma para ambos modelos).
 - **Preprocessing:** Mismos `scaler` y `metric` para ambos modelos en cada dataset.
-- **MIDBSCAN:** Usar los mejores parámetros de Phase 2. El mapeo clúster → clase usa el Algoritmo Húngaro implementado en `evaluation/bcm.py` → `MILEvaluator.hungarian_map_clusters_to_labels()`.
+- **MIDBSCAN:** Usar los mejores parámetros de Fase 2. El mapeo clúster → clase usa el Algoritmo Húngaro implementado en `evaluation/bcm.py` → `MILEvaluator.hungarian_map_clusters_to_labels()`.
 - **MIKnn:** Usar `models/miknn.py` con `k ∈ {1, 3, 5}` y reportar el mejor k por dataset (búsqueda simple en train).
 
 ### 4.2 Métricas a reportar
@@ -264,7 +264,7 @@ Responder si DBSCAN supera a KNN en datasets con estructuras complejas o ruido. 
 
 ---
 
-## Phase 5 — Validación Estadística
+## Fase 5 — Validación Estadística
 
 **Propósito:** Proporcionar rigor científico a las comparaciones del TFG. Un F1 mayor en la tabla no es evidencia suficiente sin una prueba de significancia estadística.
 
@@ -284,7 +284,7 @@ El **test de Wilcoxon** es el apropiado para comparar dos clasificadores sobre m
 from scipy.stats import wilcoxon
 
 f1_dbscan = [0.769, 0.667, 0.753, 0.208, 0.984, 0.984, 0.894, 0.816, 0.786, 0.333]
-f1_knn    = [...]  # Completar con resultados de Phase 4
+f1_knn    = [...]  # Completar con resultados de Fase 4
 
 stat, p_value = wilcoxon(f1_dbscan, f1_knn, alternative='two-sided')
 print(f"Estadístico W = {stat:.4f},  p-valor = {p_value:.4f}")
@@ -312,7 +312,7 @@ donde Z es la estadística estandarizada y N es el número de datasets. Interpre
 
 ### 5.4 Análisis por subgrupos
 
-Repetir el test de Wilcoxon separando los datasets en dos subgrupos según la dificultad identificada en Phase 1:
+Repetir el test de Wilcoxon separando los datasets en dos subgrupos según la dificultad identificada en Fase 1:
 
 - **Subgrupo A — Datasets con sep_ratio > 1.5** (separación clara): `musk1`, `musk2`, `mutagenesis3_atoms`, `mutagenesis3_chains`, `Harddrive1`.
 - **Subgrupo B — Datasets con sep_ratio ≤ 1.5** (solapamiento): `BirdsChestnut`, `BirdsHammonds`, `Thioredoxin`, `Newsgroups1`, `ImageElephant`.
@@ -346,23 +346,24 @@ Redactar la conclusión estadística siguiendo el formato estándar de un paper 
 ## Dependencias entre Fases
 
 ```
-Phase 1 (EDA)
+Fase 1 (EDA)
     │
     ▼
-Phase 2 (Optuna Tuning)  ───────────────────────────────────────────┐
+Fase 2 (Optuna Tuning)  ────────────────────────────────────────────┐
     │                                                               │
     ▼                                                               │
-Phase 3 (CVIs)           ← usa best_params de Phase 2               │
+Fase 3 (CVIs)           ← usa best_params de Fase 2                 │
     │                                                               │
     ▼                                                               │
-Phase 4 (Clasificación)  ← usa best_params de Phase 2, MIKNN      ◄─┘
+Fase 4 (Clasificación)  ← usa best_params de Fase 2, MIKNN       ◄──┘
     │
     ▼
-Phase 5 (Wilcoxon)       ← usa F1-scores de Phase 4
+Fase 5 (Wilcoxon)       ← usa F1-scores de Fase 4
 ```
 
-> Los parámetros de Phase 2 alimentan directamente las Phases 3 y 4. Si se actualizan los best_params (nuevo run de Optuna), se deben reejecutar las phases 3 y 4 completas.
+> Los parámetros de Fase 2 alimentan directamente las Fases 3 y 4. Si se actualizan los best_params (nuevo run de Optuna), se deben reejecutar las Fases 3 y 4 completas.
 
 ---
 
 *Roadmap elaborado para TFG — EPSC. Versión 1.0.*
+*Creado por Andrés Moros Rincón*

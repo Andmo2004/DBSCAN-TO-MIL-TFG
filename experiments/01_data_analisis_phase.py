@@ -75,7 +75,7 @@ def run_phase_1():
     summary_data = []
     
     print(f"\n{'='*70}")
-    print(f"  INICIANDO PHASE 1: EDA Y CARACTERIZACIÓN DEL PROBLEMA")
+    print(f"  INICIANDO FASE 1: EDA Y CARACTERIZACIÓN DEL PROBLEMA")
     print(f"{'='*70}")
     
     scaler = MinMaxScaler()
@@ -178,7 +178,7 @@ def run_phase_1():
         writer.writerows(summary_data)
         
     print(f"\n{'='*70}")
-    print(f"  PHASE 1 COMPLETADA.")
+    print(f"  FASE 1 COMPLETADA.")
     print(f"  -> Gráficos generados en: results/output_heatmaps/ y results/eda/")
     print(f"  -> Resumen de métricas guardado en: {csv_file}")
     print(f"{'='*70}\n")

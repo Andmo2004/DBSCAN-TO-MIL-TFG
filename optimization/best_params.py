@@ -55,32 +55,8 @@ DISTANCES = {
 }
 
 # --- NUEVA LÓGICA DE WARM STARTING ---
-# Diccionario para almacenar configuraciones previas óptimas (Best Known Configurations).
-KNOWN_BESTS = {
-    "musk1":              {"scaler": "MinMaxScaler",   "metric": "hausdorff",      "min_pts": 2, "eps_abs": 2.821350},
-    "musk2":              {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 2, "eps_abs": 10.495062},
-    "ImageElephant":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2, "eps_abs": 0.112952},
-    "BirdsChestnut":      {"scaler": "MinMaxScaler",   "metric": "hausdorff_avg",  "min_pts": 3, "eps_abs": 0.547650},
-    "BirdsHammonds":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2, "eps_abs": 0.005651},
-    "Harddrive1":         {"scaler": "MinMaxScaler",   "metric": "hausdorff_avg",  "min_pts": 2, "eps_abs": 0.193147},
-    "mutagenesis_atoms":  {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 3, "eps_abs": 0.475836},
-    "mutagenesis_chains": {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3, "eps_abs": 0.006637},
-    "Newsgroups1":        {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 2, "eps_abs": 49.300286},
-    "Thioredoxin":        {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2, "eps_abs": 0.001186},
-}
-
-DATASETS_CONFIG = [
-    {"dataset_name": "musk1",              "arff_name": "musk1"},
-    {"dataset_name": "musk2",              "arff_name": "musk2"},
-    {"dataset_name": "ImageElephant",      "arff_name": "ImageElephant"},
-    {"dataset_name": "BirdsChestnut",      "arff_name": "BirdsChestnut-backedChickadee"},
-    {"dataset_name": "BirdsHammonds",      "arff_name": "BirdsHammondsFlycatcher"},
-    {"dataset_name": "Harddrive1",         "arff_name": "Harddrive1"},
-    {"dataset_name": "mutagenesis_atoms",  "arff_name": "mutagenesis3_atoms"},
-    {"dataset_name": "mutagenesis_chains", "arff_name": "mutagenesis3_chains"},
-    {"dataset_name": "Newsgroups1",        "arff_name": "Newsgroups1"},
-    {"dataset_name": "Thioredoxin",        "arff_name": "Thioredoxin"},
-]
+# Importamos configuraciones previas óptimas (Best Known Configurations)
+from config.settings import KNOWN_BESTS, DATASETS_CONFIG
 
 class DistanceMatrixCache:
     """

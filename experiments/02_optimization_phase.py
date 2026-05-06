@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def main():
     print("="*70)
-    print("INICIANDO PHASE 2: OPTIMIZACIÓN DE HIPERPARÁMETROS")
+    print("INICIANDO FASE 2: OPTIMIZACIÓN DE HIPERPARÁMETROS")
     print("="*70)
     
     # Asegurar que la carpeta de resultados para las tramas de optuna existe
@@ -66,7 +66,7 @@ def main():
             print(f"  [!] No se pudieron generar visualizaciones para {dataset_name}: {e}")
             
     print("\n" + "="*70)
-    print("PHASE 2 COMPLETADA")
+    print("FASE 2 COMPLETADA")
     print("Revisar CSV generado en 'results/' y visualizaciones en 'results/optuna_plots/'")
     print("="*70)
 
