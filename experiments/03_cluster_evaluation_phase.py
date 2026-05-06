@@ -22,6 +22,18 @@ from scipy.stats import spearmanr
 from data.midata import MIData
 from models.midbscan import MIDBSCAN
 from evaluation.cvi import InternalCVIEvaluator, SEDIndex, DDIndex, HcIndex, VRCIndex, IIndex
+from distances.matrix_cache import global_persistent_cache
+from distances.hausdorff import hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg
+from distances.probability_distribution import cauchy_schwarz_distance, earth_movers_distance, mahalanobis_distance
+
+DISTANCES = {
+    "hausdorff": hausdorff_distance,
+    "hausdorff_min": hausdorff_distance_min,
+    "hausdorff_avg": hausdorff_distance_avg,
+    "cauchy_schwarz": cauchy_schwarz_distance,
+    "earth_movers": earth_movers_distance,
+    "mahalanobis": mahalanobis_distance
+}
 from config.settings import DATASETS_CONFIG, DATASETS_DIR, RESULTS_DIR
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s - %(message)s")
@@ -44,6 +56,8 @@ F1_SCORES = {
 
 def evaluate_model(
     config_name: str,
+    dataset_name: str,
+    scaler_name: str,
     eps: float,
     min_pts: int,
     metric: str,
@@ -54,9 +68,19 @@ def evaluate_model(
     bag_ids = [bag.bag_id for bag in train_scaled.bags]
     n = len(bag_ids)
     
+    # Obtener nombre del dataset (esto requiere pasar dataset_name, lo haremos cambiando la firma de evaluate_model)
     # MIDBSCAN
     model = MIDBSCAN(epsilon=eps, min_pts=min_pts, metric=metric)
     try:
+        dist_matrix = global_persistent_cache.get(
+            dataset_name=dataset_name,
+            split="train",
+            scaler_name=scaler_name,
+            metric_name=metric,
+            bags=train_scaled.bags,
+            metric_func=DISTANCES[metric]
+        )
+        model._distance_matrix = dist_matrix
         model.fit(train_scaled)
         stats = model.get_statistics()
         num_clusters = stats["num_clusters"]
@@ -138,7 +162,8 @@ def main():
         ]
         
         for conf_name, eps_val in configs_to_run:
-            res = evaluate_model(conf_name, eps_val, min_pts, metric, train_scaled, evaluator)
+            scaler_name_str = "MinMaxScaler" if "MinMaxScaler" in str(scaler_cls) else "StandardScaler"
+            res = evaluate_model(conf_name, name, scaler_name_str, eps_val, min_pts, metric, train_scaled, evaluator)
             res["Dataset"] = name
             all_results.append(res)
             

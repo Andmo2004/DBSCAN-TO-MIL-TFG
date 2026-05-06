@@ -25,6 +25,19 @@ from data.midata import MIData
 from models.midbscan import MIDBSCAN
 from models.miknn import MIKnn
 from evaluation.bcm import MILEvaluator
+from distances.matrix_cache import global_persistent_cache
+from distances.hausdorff import hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg
+from distances.probability_distribution import cauchy_schwarz_distance, earth_movers_distance, mahalanobis_distance
+
+DISTANCES = {
+    "hausdorff": hausdorff_distance,
+    "hausdorff_min": hausdorff_distance_min,
+    "hausdorff_avg": hausdorff_distance_avg,
+    "cauchy_schwarz": cauchy_schwarz_distance,
+    "earth_movers": earth_movers_distance,
+    "mahalanobis": mahalanobis_distance
+}
+
 from config.settings import DATASETS_CONFIG, DATASETS_DIR, RESULTS_DIR
 
 logging.basicConfig(level=logging.WARNING, format="%(levelname)s - %(message)s")
@@ -106,6 +119,16 @@ def main():
         # MIDBSCAN
         # ---------------------------------------------------------
         dbscan = MIDBSCAN(epsilon=best_eps, min_pts=min_pts, metric=metric)
+        scaler_name_str = "MinMaxScaler" if "MinMaxScaler" in str(scaler_cls) else "StandardScaler"
+        dist_matrix = global_persistent_cache.get(
+            dataset_name=name,
+            split="train",
+            scaler_name=scaler_name_str,
+            metric_name=metric,
+            bags=train_scaled.bags,
+            metric_func=DISTANCES[metric]
+        )
+        dbscan._distance_matrix = dist_matrix
         dbscan.fit(train_scaled)
         
         # Predicción en test (cluster labels crudas, incluyendo -1)

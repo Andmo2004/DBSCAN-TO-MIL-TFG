@@ -16,7 +16,7 @@ sys.path.insert(0, project_root)
 
 from data.midata import MIData
 from preprocessing.scaler import MinMaxScaler
-from distances.distance_matrix import compute_distance_matrix
+from distances.matrix_cache import global_persistent_cache
 from distances.hausdorff import hausdorff_distance
 from distances.probability_distribution import cauchy_schwarz_distance
 
@@ -116,9 +116,21 @@ def run_phase_1():
         sorted_bags = sorted(train_scaled.bags, key=lambda b: int(float(b.label)))
         bag_ids_sorted = [b.bag_id for b in sorted_bags]
         
+        # Para reordenar la matriz después de la caché
+        bag_id_to_idx = {b.bag_id: i for i, b in enumerate(train_scaled.bags)}
+        sorted_indices = [bag_id_to_idx[b.bag_id] for b in sorted_bags]
+        
         # 5. Cálculo y Análisis con Hausdorff
-        print("  - Calculando matriz Hausdorff...")
-        dist_hau = compute_distance_matrix(sorted_bags, hausdorff_distance, "hausdorff")
+        print("  - Obteniendo matriz Hausdorff de la caché...")
+        cached_hau = global_persistent_cache.get(
+            dataset_name=dataset_name,
+            split="train",
+            scaler_name="MinMaxScaler",
+            metric_name="hausdorff",
+            bags=train_scaled.bags,
+            metric_func=hausdorff_distance
+        )
+        dist_hau = cached_hau[np.ix_(sorted_indices, sorted_indices)]
         _, _, sep_hau, _ = analyze_distances(dist_hau, sorted_bags)
         
         # Heatmap Hausdorff
@@ -132,8 +144,16 @@ def run_phase_1():
         )
         
         # 6. Cálculo y Análisis con Cauchy-Schwarz
-        print("  - Calculando matriz Cauchy-Schwarz...")
-        dist_cs = compute_distance_matrix(sorted_bags, cauchy_schwarz_distance, "cauchy_schwarz")
+        print("  - Obteniendo matriz Cauchy-Schwarz de la caché...")
+        cached_cs = global_persistent_cache.get(
+            dataset_name=dataset_name,
+            split="train",
+            scaler_name="MinMaxScaler",
+            metric_name="cauchy_schwarz",
+            bags=train_scaled.bags,
+            metric_func=cauchy_schwarz_distance
+        )
+        dist_cs = cached_cs[np.ix_(sorted_indices, sorted_indices)]
         _, _, sep_cs, _ = analyze_distances(dist_cs, sorted_bags)
         
         # Heatmap Cauchy-Schwarz
