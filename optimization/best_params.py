@@ -57,16 +57,16 @@ DISTANCES = {
 # --- NUEVA LÓGICA DE WARM STARTING ---
 # Diccionario para almacenar configuraciones previas óptimas (Best Known Configurations).
 KNOWN_BESTS = {
-    "musk1":              {"scaler": "MinMaxScaler",   "metric": "hausdorff",      "min_pts": 2,  "eps_abs": 2.1673},
-    "musk2":              {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3,  "eps_abs": 0.02026},
-    "ImageElephant":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2,  "eps_abs": 0.11840},
-    "BirdsChestnut":      {"scaler": "StandardScaler", "metric": "cauchy_schwarz", "min_pts": 10, "eps_abs": 0.2988},
-    "BirdsHammonds":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2,  "eps_abs": 0.00565},
-    "Harddrive1":         {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3,  "eps_abs": 0.003467},
-    "mutagenesis_atoms":  {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 3,  "eps_abs": 0.4748},
-    "mutagenesis_chains": {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3,  "eps_abs": 0.006638},
-    "Newsgroups1":        {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 2,  "eps_abs": 50.434},
-    "Thioredoxin":        {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2,  "eps_abs": 0.001185},
+    "musk1":              {"scaler": "MinMaxScaler",   "metric": "hausdorff",      "min_pts": 2, "eps_abs": 2.821350},
+    "musk2":              {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 2, "eps_abs": 10.495062},
+    "ImageElephant":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2, "eps_abs": 0.112952},
+    "BirdsChestnut":      {"scaler": "MinMaxScaler",   "metric": "hausdorff_avg",  "min_pts": 3, "eps_abs": 0.547650},
+    "BirdsHammonds":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2, "eps_abs": 0.005651},
+    "Harddrive1":         {"scaler": "MinMaxScaler",   "metric": "hausdorff_avg",  "min_pts": 2, "eps_abs": 0.193147},
+    "mutagenesis_atoms":  {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 3, "eps_abs": 0.475836},
+    "mutagenesis_chains": {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3, "eps_abs": 0.006637},
+    "Newsgroups1":        {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 2, "eps_abs": 49.300286},
+    "Thioredoxin":        {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2, "eps_abs": 0.001186},
 }
 
 DATASETS_CONFIG = [
