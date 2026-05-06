@@ -16,7 +16,8 @@ class PersistentDistanceMatrixCache:
         os.makedirs(CACHE_DIR, exist_ok=True)
         self._memory_cache = {}
 
-    def get(self, dataset_name: str, split: str, scaler_name: str, metric_name: str, bags: list, metric_func=None) -> np.ndarray:
+    def get(self, dataset_name: str, split: str, scaler_name: str, metric_name: str, bags: list, metric_func=None, seed=42
+    ) -> np.ndarray:
         key = (dataset_name, split, scaler_name, metric_name)
         
         # 1. Mirar en memoria

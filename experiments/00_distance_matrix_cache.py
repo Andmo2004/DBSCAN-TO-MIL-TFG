@@ -40,6 +40,9 @@ def precompute_matrices():
     print("=" * 80)
     print("PRECOMPUTANDO MATRICES DE DISTANCIA (CACHÉ PERSISTENTE)")
     print("=" * 80)
+
+    # Seed
+    seed = 42
     
     for config in DATASETS_CONFIG:
         dataset_name = config["dataset_name"]
@@ -52,7 +55,7 @@ def precompute_matrices():
             continue
             
         dataset_full = MIData.from_arff(path)
-        train_data, _ = dataset_full.split_data(percentage_train=70, seed=42)
+        train_data, _ = dataset_full.split_data(percentage_train=70, seed=seed)
         
         available_metrics = list(DISTANCES.keys())
         if dataset_name in ["Harddrive1", "Thioredoxin", "Newsgroups1"]:
@@ -73,7 +76,8 @@ def precompute_matrices():
                     scaler_name=scaler_name,
                     metric_name=metric_name,
                     bags=scaled_train.bags,
-                    metric_func=metric_func
+                    metric_func=metric_func,
+                    seed=seed
                 )
                 
         # Liberar memoria de la caché local para el siguiente dataset (ya está guardado en disco)
