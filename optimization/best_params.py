@@ -189,6 +189,7 @@ def run_optuna_search(n_trials: int = 100):
     os.makedirs("results", exist_ok=True)
     
     results = []
+    studies = {}
     
     print(f"\n{'='*70}")
     print(f"  INICIANDO BÚSQUEDA OPTUNA ({n_trials} trials por dataset)")
@@ -298,6 +299,8 @@ def run_optuna_search(n_trials: int = 100):
             "noise_pct": noise_pct
         })
         
+        studies[dataset_name] = study
+        
     # Guardar todos los mejores en CSV
     if results:
         ts = datetime.now().strftime("%d%m%Y%H%M")
@@ -317,6 +320,8 @@ def run_optuna_search(n_trials: int = 100):
         print(f"{'='*70}\n")
     else:
         print("\n  [!] No se generaron resultados para guardar.\n")
+
+    return results, studies
 
 
 if __name__ == '__main__':

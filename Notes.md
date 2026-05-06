@@ -81,3 +81,6 @@ Thioredoxin sube de 0.154 a 0.333 con MM+CS — sigue siendo el dataset más dif
 |  SED      : 33.854300  (↓ mejor)|
 
 Tener 40.6% de ruido es bastante alto. Significa que casi la mitad de las bolsas no quedaron asignadas a ningún cluster, y esas bolsas no contribuyen al SED. Esto es importante tenerlo en cuenta para comparar SED entre configuraciones, porque un modelo con menos ruido y SED ligeramente mayor puede estar describiendo mejor el dataset que uno con SED bajo pero mucho ruido.
+
+___
+Durante la fase de optimización de hiperparámetros, se identificó que la métrica Earth Mover's Distance (EMD) presentaba un cuello de botella crítico ($O(V^3 \log V)$) para datasets con alta cardinalidad de instancias como Harddrive1, haciendo computacionalmente inviable el cálculo de la matriz de distancias. Como estrategia de mitigación, se implementó una selección dinámica de métricas, restringiendo EMD a datasets de menor envergadura y primando distancias como Hausdorff o Cauchy-Schwarz para garantizar la viabilidad organizativa del modelo
