@@ -55,51 +55,10 @@ DISTANCES = {
 }
 
 # --- NUEVA LÓGICA DE WARM STARTING ---
-# Diccionario para almacenar configuraciones previas óptimas (Best Known Configurations).
-KNOWN_BESTS = {
-    "musk1":              {"scaler": "MinMaxScaler",   "metric": "hausdorff",      "min_pts": 2,  "eps_abs": 2.1673},
-    "musk2":              {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3,  "eps_abs": 0.02026},
-    "ImageElephant":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2,  "eps_abs": 0.11840},
-    "BirdsChestnut":      {"scaler": "StandardScaler", "metric": "cauchy_schwarz", "min_pts": 10, "eps_abs": 0.2988},
-    "BirdsHammonds":      {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2,  "eps_abs": 0.00565},
-    "Harddrive1":         {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3,  "eps_abs": 0.003467},
-    "mutagenesis_atoms":  {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 3,  "eps_abs": 0.4748},
-    "mutagenesis_chains": {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 3,  "eps_abs": 0.006638},
-    "Newsgroups1":        {"scaler": "StandardScaler", "metric": "hausdorff",      "min_pts": 2,  "eps_abs": 50.434},
-    "Thioredoxin":        {"scaler": "MinMaxScaler",   "metric": "cauchy_schwarz", "min_pts": 2,  "eps_abs": 0.001185},
-}
+# Importamos configuraciones previas óptimas (Best Known Configurations)
+from config.settings import KNOWN_BESTS, DATASETS_CONFIG
 
-DATASETS_CONFIG = [
-    {"dataset_name": "musk1",              "arff_name": "musk1"},
-    {"dataset_name": "musk2",              "arff_name": "musk2"},
-    {"dataset_name": "ImageElephant",      "arff_name": "ImageElephant"},
-    {"dataset_name": "BirdsChestnut",      "arff_name": "BirdsChestnut-backedChickadee"},
-    {"dataset_name": "BirdsHammonds",      "arff_name": "BirdsHammondsFlycatcher"},
-    {"dataset_name": "Harddrive1",         "arff_name": "Harddrive1"},
-    {"dataset_name": "mutagenesis_atoms",  "arff_name": "mutagenesis3_atoms"},
-    {"dataset_name": "mutagenesis_chains", "arff_name": "mutagenesis3_chains"},
-    {"dataset_name": "Newsgroups1",        "arff_name": "Newsgroups1"},
-    {"dataset_name": "Thioredoxin",        "arff_name": "Thioredoxin"},
-]
-
-class DistanceMatrixCache:
-    """
-    Caché para almacenar las matrices de distancias y evitar recalcularlas 
-    en cada trial de Optuna para la misma combinación de dataset + scaler + métrica.
-    """
-    def __init__(self):
-        self._cache = {}
-
-    def get(self, dataset_name: str, split: str, scaler_name: str, metric_name: str, bags: list) -> np.ndarray:
-        key = (dataset_name, split, scaler_name, metric_name)
-        if key not in self._cache:
-            metric_func = DISTANCES[metric_name]
-            logger.warning(f"[{dataset_name}] Calculando matriz de distancias para {scaler_name} + {metric_name}...")
-            self._cache[key] = compute_distance_matrix(bags, metric_func, metric_name)
-        return self._cache[key]
-
-# Instancia global de caché
-global_cache = DistanceMatrixCache()
+from distances.matrix_cache import global_persistent_cache
 
 
 def create_objective(dataset: MIData, dataset_name: str):
@@ -134,12 +93,13 @@ def create_objective(dataset: MIData, dataset_name: str):
         scaled_dataset = scaled_datasets_cache[scaler_name]
 
         # 2. Obtener matriz de distancias desde la caché
-        dist_matrix = global_cache.get(
+        dist_matrix = global_persistent_cache.get(
             dataset_name=dataset_name, 
             split="train", 
             scaler_name=scaler_name, 
             metric_name=metric_name, 
-            bags=scaled_dataset.bags
+            bags=scaled_dataset.bags,
+            metric_func=DISTANCES[metric_name]
         )
 
         # 3. Calcular eps absoluto a partir del percentil
@@ -189,6 +149,7 @@ def run_optuna_search(n_trials: int = 100):
     os.makedirs("results", exist_ok=True)
     
     results = []
+    studies = {}
     
     print(f"\n{'='*70}")
     print(f"  INICIANDO BÚSQUEDA OPTUNA ({n_trials} trials por dataset)")
@@ -199,7 +160,7 @@ def run_optuna_search(n_trials: int = 100):
         arff_name = config["arff_name"]
         
         print(f"\n► Procesando Dataset: {dataset_name}...")
-        global_cache._cache.clear()
+        global_persistent_cache.clear_memory()
         path = os.path.join("datasets", f"{arff_name}.arff")
         if not os.path.exists(path):
             print(f"  [!] No se encontró el archivo: {path}. Omitiendo.")
@@ -229,12 +190,13 @@ def run_optuna_search(n_trials: int = 100):
             scaled_dataset = scaler_class().fit_transform(train_data)
             
             # 2. Obtener la matriz de distancias desde tu caché
-            dist_matrix = global_cache.get(
+            dist_matrix = global_persistent_cache.get(
                 dataset_name=dataset_name, 
                 split="train", 
                 scaler_name=kb["scaler"], 
                 metric_name=kb["metric"], 
-                bags=scaled_dataset.bags
+                bags=scaled_dataset.bags,
+                metric_func=DISTANCES[kb["metric"]]
             )
             
             # 3. Calcular a qué percentil equivale exactamente tu eps_abs
@@ -298,6 +260,8 @@ def run_optuna_search(n_trials: int = 100):
             "noise_pct": noise_pct
         })
         
+        studies[dataset_name] = study
+        
     # Guardar todos los mejores en CSV
     if results:
         ts = datetime.now().strftime("%d%m%Y%H%M")
@@ -317,6 +281,8 @@ def run_optuna_search(n_trials: int = 100):
         print(f"{'='*70}\n")
     else:
         print("\n  [!] No se generaron resultados para guardar.\n")
+
+    return results, studies
 
 
 if __name__ == '__main__':

@@ -15,12 +15,20 @@ Estrategia:
 from typing import Callable, Dict, List, Optional, Tuple, Any
 import numpy as np
 import logging
+import os
+import sys
 from collections import Counter
+
+# Configurar PYTHONPATH para ejecución individual
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
  
 from data.bag import Bag
 from data.midata import MIData
-from distances.hausdorff import hausdorff_distance
-from distances.cauchy_schwarz import cauchy_schwarz_distance
+from distances.hausdorff import hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg
+from distances.probability_distribution import cauchy_schwarz_distance, earth_movers_distance, mahalanobis_distance
 from distances.distance_matrix import compute_distance_matrix
  
 logger = logging.getLogger(__name__)
@@ -32,7 +40,11 @@ class MIKnn:
 
     _METRICS_: Dict[str, Callable[[Bag, Bag], float]] = {
         "hausdorff":      hausdorff_distance,
+        "hausdorff_min":  hausdorff_distance_min,
+        "hausdorff_avg":  hausdorff_distance_avg,
         "cauchy_schwarz": cauchy_schwarz_distance,
+        "earth_movers":   earth_movers_distance,
+        "mahalanobis":    mahalanobis_distance,
     } 
 
     def __init__(self, k: int = 3, metric: str = "hausdorff"):
@@ -42,7 +54,8 @@ class MIKnn:
         :param k:      Número de vecinos más cercanos a considerar.
                        Debe ser >= 1.
         :param metric: Nombre de la función de distancia entre bolsas.
-                       Valores válidos: 'hausdorff', 'cauchy_schwarz'.
+                       Valores válidos: 'hausdorff', 'hausdorff_min', 'hausdorff_avg', 
+                       'cauchy_schwarz', 'earth_movers', 'mahalanobis'.
  
         :raises ValueError: Si k < 1 o si la métrica no está registrada.
         """
