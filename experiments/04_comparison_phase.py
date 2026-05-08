@@ -44,7 +44,7 @@ logging.basicConfig(level=logging.WARNING, format="%(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 # Datasets representativos para matriz de confusión
-REP_DATASETS = ["musk1", "BirdsHammonds", "Thioredoxin"]
+REP_DATASETS = ["musk1", "BirdsHammonds", "Thioredoxin", "Newsgroups1"]
 
 def plot_confusion_matrix(y_true, y_pred, model_name, dataset_name, out_dir):
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
@@ -90,6 +90,7 @@ def main():
     all_results = []
     
     for config in DATASETS_CONFIG:
+        
         name = config["dataset_name"]
         arff_name = config["arff_name"]
         scaler_cls = config["best_scaler"]
