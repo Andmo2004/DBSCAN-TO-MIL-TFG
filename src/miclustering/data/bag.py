@@ -4,17 +4,13 @@ import numpy as np
 
 
 class Bag:
-    '''
-    - Clase Bag: 
-        atributos: 
-            bag_id: identificador único de la bolsa, instances: lista de objetos Instance. 
-            label o class: etiqueta asociada a la bolsa. 
-        Métodos: 
-            get_instance(i): devuelve la instancia i, 
-            get_num_instances(): número de instancias en la bolsa, 
-            add_instance(instance): añade una instancia, 
-            as_matrix(): devuelve las instancias como matriz NumPy (n_instancias * n_atributos).
-    '''
+    """Clase Bag.
+
+    Attributes:
+        bag_id: identificador único de la bolsa.
+        instances: lista de objetos Instance.
+        label: etiqueta asociada a la bolsa.
+    """
     _instances: List['Instance']
 
     def __init__(self, bag_id: Any, label: Any, instances: Optional[List['Instance']] = None):
@@ -26,27 +22,19 @@ class Bag:
             raise TypeError("Todos los elementos deben ser instancias de Instance")
 
     def __iter__(self):
-        """
-        Permite iterar sobre las instancias: for inst in bag.
-        """
+        """Permite iterar sobre las instancias: for inst in bag."""
         return iter(self._instances)
     
     def __len__(self) -> int:
-        """
-        Permite usar len(bag) para obtener el número de instancias.
-        """
+        """Permite usar len(bag) para obtener el número de instancias."""
         return len(self._instances)
 
     def __contains__(self, instance):
-        """
-        Permite usar 'in': instance in bag.
-        """
+        """Permite usar 'in': instance in bag."""
         return instance in self._instances
 
     def __getitem__(self, index: int) -> 'Instance':
-        """
-        Permite acceder a las instancias con corchetes: bag[0]
-        """
+        """Permite acceder a las instancias con corchetes: bag[0]."""
         return self.get_instance(index)
 
     def __eq__(self, other):
@@ -64,33 +52,39 @@ class Bag:
         return f"<Bag ID: {self._bag_id} | Label: {self._label} | Instances: {num_inst}>"
 
     def get_instance(self, i:int) -> 'Instance':
-        """
-        Devuelve la instancia i-ésima de la bolsa.
-        :param i: Índice de la instancia.
-        :return: Objeto Instance.
+        """Devuelve la instancia i-ésima de la bolsa.
+
+        Args:
+            i: Índice de la instancia.
+
+        Returns:
+            Objeto Instance.
         """
         if 0 <= i < len(self._instances):
             return self._instances[i]
         raise IndexError(f"Índice {i} fuera de rango para la bolsa {self._bag_id}.")
     
     def get_num_instances(self) -> int:
-        """
-        Devuelve el número de instancias en la bolsa.
-        :return: Número de instancias (int).
+        """Devuelve el número de instancias en la bolsa.
+
+        Returns:
+            Número de instancias (int).
         """
         return len(self._instances)
     
     def add_instance(self, instance: 'Instance'):
-        """
-        Añade una instancia a la bolsa.
-        :param instance: Objeto Instance a añadir.
+        """Añade una instancia a la bolsa.
+
+        Args:
+            instance: Objeto Instance a añadir.
         """
         self._instances.append(instance)
 
     def as_matrix(self) -> np.ndarray:
-        """
-        Devuelve las instancias como una matriz NumPy. (n_instancias * n_atributos)
-        :return: Matriz NumPy con las instancias.
+        """Devuelve las instancias como una matriz NumPy. (n_instancias * n_atributos)
+
+        Returns:
+            Matriz NumPy con las instancias.
         """
         if not self._instances:
             return np.array([]).reshape(0, len(self._instances[0].values) if self._instances else 0)

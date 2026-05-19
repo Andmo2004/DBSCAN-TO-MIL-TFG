@@ -20,16 +20,15 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
     NOISE_LABEL = -1
 
     def __init__(self, epsilon: float, min_pts: int, metric: str = 'hausdorff'):
-        """
-        Constructor del modelo MIDBSCAN
+        """Constructor del modelo MIDBSCAN.
         
-        :param self:
-        :param epsilon: (float) Distancia máxima entre dos muestras para que se consideren en la vecindad.
-        :param min_pts: (int) El número de muestras mínimo en vecindad para que un punto se considere núcleo.
-        :param metric: (str) métrica de distanci usada
+        Args:
+            epsilon: Distancia máxima entre dos muestras para que se consideren en la vecindad.
+            min_pts: El número de muestras mínimo en vecindad para que un punto se considere núcleo.
+            metric: Métrica de distancia usada.
 
-        :Raises ValueError: Si epsilon <= 0 o min_pts < 1
-
+        Raises:
+            ValueError: Si epsilon <= 0 o min_pts < 1.
         """
 
         if epsilon <= 0:
@@ -129,11 +128,13 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
             return metrics_registry[name]
 
     def _compute_distance_matrix(self, bags: List[Bag]) -> np.ndarray:
-        """
-        Calcula la matriz de distancias usando el módulo externo.
+        """Calcula la matriz de distancias usando el módulo externo.
         
-        :param bags: (List[Bag]) Lista de Bolsas
-        :return: (ndarray) Matriz numpy de distancias (N X N)
+        Args:
+            bags: Lista de Bolsas.
+
+        Returns:
+            Matriz numpy de distancias (N X N).
         """
         return compute_distance_matrix(bags, self._metric_func, self._metric_name)
 
@@ -143,14 +144,16 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
         self._core_bag_labels[bag.bag_id] = cluster_id
 
     def fit(self, dataset: MIData):
-        """
-        Entrenar el modelo DBSCAN, con el dataset
+        """Entrenar el modelo DBSCAN, con el dataset.
 
-        :param dataset:(MIData) Objeto MIData con las bolsas de entrenamiento
-        :return: Retorna la instancia del modelo para permitir encadenamiento.
+        Args:
+            dataset: Objeto MIData con las bolsas de entrenamiento.
 
-        :raises ValueError: Si el dataset está vacío
+        Returns:
+            Instancia del modelo para permitir encadenamiento.
 
+        Raises:
+            ValueError: Si el dataset está vacío.
         """
 
         if dataset.get_num_bags() == 0:
@@ -263,15 +266,17 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
                     bag_labels[bag_id] = cluster_id
         
     def predict(self, test_dataset: MIData) -> Dict[str, int]:
-        """
-        Predice etiquetas para un nuevo dataset basándose en los clústeres aprendidos.
+        """Predice etiquetas para un nuevo dataset basándose en los clústeres aprendidos.
 
-        :param test_dataset: (MIData) Dataset de test
-        :return: (Dict[str, int]) Diccionario de predicciones
+        Args:
+            test_dataset: Dataset de test.
+
+        Returns:
+            Diccionario de predicciones {bag_id: cluster_id}.
         
-        :raises RuntimeError: Si el modelo no ha sido entrenado.
-        :raises ValueError: Si el dataset está vacío.
-
+        Raises:
+            RuntimeError: Si el modelo no ha sido entrenado.
+            ValueError: Si el dataset está vacío.
         """
 
         if not self._fitted:
@@ -323,38 +328,43 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
         return getattr(self, "labels", {})
     
     def get_cluster_sizes(self) -> Dict[int, int]:
-            """
-            Devuelve el conteo de elementos por cluster.
-            :returns: (Dict[int, int]) Diccionario {cluster_id: cantidad}.
+            """Devuelve el conteo de elementos por cluster.
+
+            Returns:
+                Diccionario {cluster_id: cantidad}.
             """
             if not self._fitted:
                 return {}
             return dict(Counter(self._labels.values()))
 
     def get_noise_points(self) -> List[str]:
-            """
-            Devuelve una lista con los IDs de las bolsas consideradas ruido.
-            :returns: (List[str]) Lista de strings (bag_ids).
+            """Devuelve una lista con los IDs de las bolsas consideradas ruido.
+
+            Returns:
+                Lista de strings (bag_ids).
             """
             if not self._fitted:
                 return []
             return [bid for bid, label in self._labels.items() if label == self.NOISE_LABEL]
 
     def get_cluster_members(self, cluster_id: int) -> List[str]:
-            """
-            Devuelve los IDs de las bolsas que pertenecen a un cluster específico.
+            """Devuelve los IDs de las bolsas que pertenecen a un cluster específico.
             
-            :param cluster_id: (int) ID del cluster a consultar.
-            :returns: (List[str]) Lista de bag_ids.
+            Args:
+                cluster_id: ID del cluster a consultar.
+
+            Returns:
+                Lista de bag_ids.
             """
             if not self._fitted:
                 return []
             return [bid for bid, label in self._labels.items() if label == cluster_id]                 
     
     def get_statistics(self) -> Dict[str, Any]:
-        """
-        Genera un reporte completo de estadísticas del modelo entrenado.
-        :returns: (Dict[str, Any]) Diccionario con métricas detalladas.
+        """Genera un reporte completo de estadísticas del modelo entrenado.
+
+        Returns:
+            Diccionario con métricas detalladas.
         """
         if not self._fitted:
             return {"status": "not_fitted"}

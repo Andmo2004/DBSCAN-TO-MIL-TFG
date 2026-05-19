@@ -19,13 +19,13 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, k: int, metric: str = 'hausdorff', max_iters: int = 100, random_state: Optional[int] = None):
-        """
-        Constructor del modelo MIKMedoids.
+        """Constructor del modelo MIKMedoids.
         
-        :param k: (int) Número de clústeres.
-        :param metric: (str) Métrica de distancia a utilizar.
-        :param max_iters: (int) Número máximo de iteraciones.
-        :param random_state: (int) Semilla para la inicialización aleatoria.
+        Args:
+            k: Número de clústeres.
+            metric: Métrica de distancia a utilizar.
+            max_iters: Número máximo de iteraciones.
+            random_state: Semilla para la inicialización aleatoria.
         """
         if k < 1:
             raise ValueError(f"El parámetro 'k' debe ser >= 1. Recibido: {k}")

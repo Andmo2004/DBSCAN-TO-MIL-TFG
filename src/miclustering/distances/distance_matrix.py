@@ -10,13 +10,15 @@ logger = logging.getLogger(__name__)
 def compute_distance_matrix(bags: List[Bag], 
                            metric_func: Callable[[Bag, Bag], float], 
                            metric_name: str = "custom") -> np.ndarray:
-    """
-    Calcula la matriz de distancias simétrica usando la métrica especificada.
+    """Calcula la matriz de distancias simétrica usando la métrica especificada.
     
-    :param bags: (List[Bag]) Lista de Bolsas
-    :param metric_func: (Callable) Función de distancia que acepta dos Bags
-    :param metric_name: (str) Nombre de la métrica (solo para logging)
-    :return: (ndarray) Matriz numpy de distancias (N X N)
+    Args:
+        bags: Lista de Bolsas.
+        metric_func: Función de distancia que acepta dos Bags.
+        metric_name: Nombre de la métrica (solo para logging).
+
+    Returns:
+        Matriz numpy de distancias (N X N).
     """
     
     num_bags = len(bags)

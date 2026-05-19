@@ -2,29 +2,31 @@ import numpy as np
 from typing import List, Tuple, Optional, Any
 
 class Attribute:
-    '''
-    - Clase Attribute: 
-        atributos: 
-            name: nombre del atributo, 
-            type: tipo de dato (cadena, nominal, entero, real, fecha). 
-            Según el tipo: 
-                values: lista de valores posibles (solo si es nominal), 
-                data_format: formato (por ejemplo, para fechas), intervalo de valores enteros.
-        Propósito: definir el esquema de cada columna del dataset.
-    '''
+    """Clase Attribute.
+    
+    Propósito: definir el esquema de cada columna del dataset.
+    
+    Attributes:
+        name: nombre del atributo.
+        type: tipo de dato (cadena, nominal, entero, real, fecha).
+        values: lista de valores posibles (solo si es nominal).
+        data_format: formato (por ejemplo, para fechas).
+        val_range: intervalo de valores enteros o reales.
+    """
     def __init__(self, 
                  name: str, 
                  attr_type: str, 
                  values: Optional[List[Any]] = None, 
                  data_format: Optional[str] = None, 
                  val_range: Optional[Tuple[float, float]] = None):
-        """
-        Constructor del Atributo.
-        :param name: Nombre del atributo (string).
-        :param attr_type: Tipo de dato (string): 'string', 'nominal', 'integer', 'real', 'date'.
-        :param values: Lista de valores posibles (solo si es nominal).
-        :param data_format: Formato específico (por ejemplo, para fechas).
-        :param int_range: Tupla (min, max) si el tipo es entero y se quiere definir un rango.
+        """Constructor del Atributo.
+
+        Args:
+            name: Nombre del atributo (string).
+            attr_type: Tipo de dato (string): 'string', 'nominal', 'integer', 'real', 'date'.
+            values: Lista de valores posibles (solo si es nominal).
+            data_format: Formato específico (por ejemplo, para fechas).
+            val_range: Tupla (min, max) si se quiere definir un rango.
         """
         self._name = name
         self._type = attr_type

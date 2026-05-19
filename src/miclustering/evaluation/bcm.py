@@ -11,8 +11,8 @@ from miclustering.data.midata import MIData
 logger = logging.getLogger(__name__)
 
 class MILEvaluator:
-    """
-    Clase para evaluar resultados de algoritmos MIL.
+    """Clase para evaluar resultados de algoritmos MIL.
+    
     Transforma resultados de clustering en métricas de clasificación binaria (BCM).
     """
     @staticmethod
@@ -20,23 +20,7 @@ class MILEvaluator:
         y_true: np.ndarray,
         y_pred: np.ndarray
     ) -> Tuple[np.ndarray, Dict[int, int]]:
-        """
-        Refs:
-            - Kuhn, H. W. (1955). The Hungarian method for the assignment problem. 
-              Naval Research Logistics Quarterly, 2(1:2), 83:97.
-              https://doi.org/10.1002/nav.3800020109
-
-            - Munkres, J. (1957). Algorithms for the assignment and transportation problems. 
-              Journal of the Society for Industrial and Applied Mathematics, 5(1), 32:38.
-              (scipy.optimize.linear_sum_assignment)
-
-                    "
-                    El algoritmo también se conoce como Kuhn Munkres o Munkres assignment algorithm. 
-                        La complejidad del algoritmo original era O(n⁴), pero Edmonds, Karp y Tomizawa 
-                        lo modificaron independientemente para alcanzar O(n³).
-                    "
-
-        Asigna etiquetas a clusters usando el algoritmo Húngaro (asignación óptima global).
+        """Asigna etiquetas a clusters usando el algoritmo Húngaro (asignación óptima global).
         
         El majority voting local falla cuando todos los clusters tienen mayoría de la misma
         clase: todos se mapean a 0 o todos a 1. El algoritmo Húngaro maximiza el acuerdo
@@ -49,9 +33,23 @@ class MILEvaluator:
           - Si hay más clusters que clases, los clusters sin asignación única se resuelven
             por majority voting local como fallback.
 
-        :returns: (Tuple[np.ndarray, Dict[int, int]])
-            y_pred_mapped: Array con las predicciones traducidas a 0/1.
-            mapping: Diccionario {cluster_id: clase_asignada}.
+        Refs:
+            - Kuhn, H. W. (1955). The Hungarian method for the assignment problem. 
+              Naval Research Logistics Quarterly, 2(1:2), 83:97.
+              https://doi.org/10.1002/nav.3800020109
+
+            - Munkres, J. (1957). Algorithms for the assignment and transportation problems. 
+              Journal of the Society for Industrial and Applied Mathematics, 5(1), 32:38.
+              (scipy.optimize.linear_sum_assignment)
+
+        Args:
+            y_true: Array de NumPy con las etiquetas reales.
+            y_pred: Array de NumPy con las etiquetas predichas (clusters).
+
+        Returns:
+            Tuple[np.ndarray, Dict[int, int]]:
+                y_pred_mapped: Array con las predicciones traducidas a 0/1.
+                mapping: Diccionario {cluster_id: clase_asignada}.
         """
         clusters = np.unique(y_pred)
         # Separamos ruido (-1) para tratarlo aparte
@@ -119,13 +117,18 @@ class MILEvaluator:
 
     @staticmethod
     def map_clusters_to_labels(y_true: np.ndarray, y_pred: np.ndarray) -> Tuple[np.ndarray, Dict[int, int]]:
-        """
-        Asigna a cada clúster la etiqueta real más frecuente (Majority Voting).
-        Esto permite evaluar un algoritmo no supervisado como si fuera supervisado.
+        """Asigna a cada clúster la etiqueta real más frecuente (Majority Voting).
         
-        :returns: (Tuple[np.ndarray, Dict[int, int]])
-            y_pred_mapped: Array con las predicciones traducidas a 0/1.
-            mapping: Diccionario {cluster_id: clase_asignada}.
+        Esto permite evaluar un algoritmo no supervisado como si fuera supervisado.
+
+        Args:
+            y_true: Etiquetas reales.
+            y_pred: Etiquetas predichas.
+        
+        Returns:
+            Tuple[np.ndarray, Dict[int, int]]:
+                y_pred_mapped: Array con las predicciones traducidas a 0/1.
+                mapping: Diccionario {cluster_id: clase_asignada}.
         """
         y_pred_mapped = np.zeros_like(y_pred)
         mapping = {}

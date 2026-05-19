@@ -7,22 +7,18 @@ logger = logging.getLogger(__name__)
 
 
 class MIData:
-    '''
-        - Clase MIData: 
-            atributos: 
-                bags: lista de objetos Bag, 
-                name: nombre del dataset. 
-            Métodos: 
-                get_bag(i): devuelve la bolsa i, 
-                get_num_bags(): número total de bolsas, 
-                split_data(percentage_train, seed): divide el dataset en entrenamiento y prueba 
-                    (podemos implementar diferentes opciones).
-    '''
+    """Clase MIData.
+
+    Attributes:
+        bags: lista de objetos Bag.
+        name: nombre del dataset.
+    """
     def __init__(self, bags: List['Bag'], name: str):
-        """
-        Constructor del dataset multi-instancia.        
-        :param bags: lista de objetos Bag.
-        :param name: Nombre del dataset.
+        """Constructor del dataset multi-instancia.
+
+        Args:
+            bags: lista de objetos Bag.
+            name: Nombre del dataset.
         """
         self._bags = bags
         self._name = name
@@ -33,8 +29,7 @@ class MIData:
                   dataset_name: Optional[str] = None,
                   bag_column: str = 'bag',
                   class_column: str = 'class') -> 'MIData':
-        """
-        Carga un dataset MIL desde un archivo ARFF.
+        """Carga un dataset MIL desde un archivo ARFF.
         
         Este método de clase (factory method) permite crear una instancia de MIData
         directamente desde un archivo ARFF sin necesidad de instanciar manualmente
@@ -46,12 +41,12 @@ class MIData:
             bag_column: Nombre de la columna con estructura relacional (default: 'bag').
             class_column: Nombre de la columna con etiquetas (default: 'class').
             
-        :returns: Objeto MIData con el dataset cargado.
+        Returns:
+            Objeto MIData con el dataset cargado.
             
-        :raises:
+        Raises:
             FileNotFoundError: Si el archivo no existe.
             ValueError: Si el formato es inválido o faltan columnas requeridas.
-            
         """
         # Importación local para evitar dependencias circulares
         from miclustering.data.arff_reader import ArffToMIData
@@ -76,21 +71,15 @@ class MIData:
         return self._name
 
     def __len__(self) -> int:
-            """
-            Permite usar len(dataset) para obtener el número de bolsas.
-            """
-            return len(self._bags)
+        """Permite usar len(dataset) para obtener el número de bolsas."""
+        return len(self._bags)
 
     def __iter__(self):
-        """
-        Permite iterar sobre las bolsas: for bag in dataset.
-        """
+        """Permite iterar sobre las bolsas: for bag in dataset."""
         return iter(self._bags)
 
     def __contains__(self, bag):
-        """
-        Permite usar 'in': bag in dataset.
-        """
+        """Permite usar 'in': bag in dataset."""
         return bag in self._bags
 
     def __getitem__(self, index: int) -> 'Bag':
@@ -109,28 +98,35 @@ class MIData:
         return f"MIData '{self._name}' ({len(self._bags)} bags)"
 
     def get_bag(self, i: int) -> 'Bag':
-        """
-        Devuelve la bolsa i-ésima del dataset.
-        :param i: Índice de la bolsa.
-        :return: Objeto Bag.
+        """Devuelve la bolsa i-ésima del dataset.
+
+        Args:
+            i: Índice de la bolsa.
+
+        Returns:
+            Objeto Bag.
         """
         if 0 <= i < len(self.bags):
             return self.bags[i]
         raise IndexError(f"Índice {i} fuera de rango para el dataset {self.name}.")
     
     def get_num_bags(self) -> int:
-        """
-        Devuelve el número total de bolsas en el dataset.
-        :return: Número de bolsas (int).
+        """Devuelve el número total de bolsas en el dataset.
+
+        Returns:
+            Número de bolsas (int).
         """
         return len(self.bags)
     
     def split_data(self, percentage_train: float, seed: int = 1234) -> Tuple['MIData', 'MIData']:
-        """
-        Divide el dataset en conjuntos de entrenamiento y prueba.
-        :param percentage_train: Porcentaje de bolsas para el conjunto de entrenamiento (0-100).
-        :param seed: Semilla para la aleatorización.
-        :return: Tupla (MIData_train, MIData_test).
+        """Divide el dataset en conjuntos de entrenamiento y prueba.
+
+        Args:
+            percentage_train: Porcentaje de bolsas para el conjunto de entrenamiento (0-100).
+            seed: Semilla para la aleatorización.
+
+        Returns:
+            Tupla (MIData_train, MIData_test).
         """
         random.seed(seed)
         
@@ -148,24 +144,27 @@ class MIData:
         return mi_data_train, mi_data_test
     
     def get_labels(self) -> List:
-        """
-        Obtiene todas las etiquetas del dataset.
-        :return: Lista con las etiquetas de todas las bolsas.
+        """Obtiene todas las etiquetas del dataset.
+
+        Returns:
+            Lista con las etiquetas de todas las bolsas.
         """
         return [bag.label for bag in self._bags]
 
     def get_positive_bags(self) -> List['Bag']:
-        """
-        Obtiene todas las bolsas con etiqueta positiva.
-        :return: Lista de bolsas con etiqueta positiva (típicamente '1' o 'positive').
+        """Obtiene todas las bolsas con etiqueta positiva.
+
+        Returns:
+            Lista de bolsas con etiqueta positiva (típicamente '1' o 'positive').
         """
         positive_labels = {'1', 1, 'positive', 'pos', True}
         return [bag for bag in self._bags if bag.label in positive_labels]
 
     def get_negative_bags(self) -> List['Bag']:
-        """
-        Obtiene todas las bolsas con etiqueta negativa.
-        :return: Lista de bolsas con etiqueta negativa (típicamente '0' o 'negative').
+        """Obtiene todas las bolsas con etiqueta negativa.
+
+        Returns:
+            Lista de bolsas con etiqueta negativa (típicamente '0' o 'negative').
         """
         negative_labels = {'0', 0, 'negative', 'neg', False}
         return [bag for bag in self._bags if bag.label in negative_labels]

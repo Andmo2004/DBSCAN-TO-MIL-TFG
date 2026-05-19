@@ -4,8 +4,7 @@ from scipy.optimize import linprog
 from miclustering.data.bag import Bag
 
 def cauchy_schwarz_distance(bag1: Bag, bag2: Bag) -> float:
-    """
-    Calcula la distancia basada en Cauchy-Schwarz entre dos bolsas.
+    """Calcula la distancia basada en Cauchy-Schwarz entre dos bolsas.
     
     La distancia de Cauchy-Schwarz se define como:
     d(A, B) = 1 - (⟨A, B⟩ / (||A|| * ||B||))
@@ -14,6 +13,13 @@ def cauchy_schwarz_distance(bag1: Bag, bag2: Bag) -> float:
     
     Para bolsas, agregamos las instancias en un único vector representativo
     (por ejemplo, usando la media).
+
+    Args:
+        bag1: Primera bolsa.
+        bag2: Segunda bolsa.
+
+    Returns:
+        Distancia de Cauchy-Schwarz entre las dos bolsas.
     """
     # Obtenemos matrices numpy
     mat1 = bag1.as_matrix()
@@ -51,8 +57,7 @@ def cauchy_schwarz_distance(bag1: Bag, bag2: Bag) -> float:
     return float(distance)
 
 def earth_movers_distance(bag1: Bag, bag2: Bag) -> float:
-    """
-    Distancia Earth Mover's Distance (EMD) entre dos bolsas.
+    """Distancia Earth Mover's Distance (EMD) entre dos bolsas.
  
     Definición formal (ec. 3.27):
         D_EDM(A, B) = sum_{a in A, b in B} f(a,b) * d(a,b)
@@ -69,6 +74,12 @@ def earth_movers_distance(bag1: Bag, bag2: Bag) -> float:
     Cada instancia tiene masa uniforme 1/n_a (bolsa A) y 1/n_b (bolsa B).
     El problema se formula como un Programa Lineal y se resuelve con scipy.
 
+    Args:
+        bag1: Primera bolsa.
+        bag2: Segunda bolsa.
+
+    Returns:
+        Distancia EMD entre las dos bolsas.
     """
     mat1 = bag1.as_matrix()
     mat2 = bag2.as_matrix()
@@ -134,8 +145,7 @@ def earth_movers_distance(bag1: Bag, bag2: Bag) -> float:
     return float(result.fun)
 
 def mahalanobis_distance(bag1: Bag, bag2: Bag) -> float:
-    """
-    Distancia de Mahalanobis entre dos bolsas.
+    """Distancia de Mahalanobis entre dos bolsas.
  
     Definición formal (ec. 3.28):
         D_Mahalanobis(A, B) = (μ_a - μ_b)^T * (½Σ_a + ½Σ_b)^{-1} * (μ_a - μ_b)
@@ -146,7 +156,13 @@ def mahalanobis_distance(bag1: Bag, bag2: Bag) -> float:
  
     La matriz combinada (½Σ_a + ½Σ_b) es la covarianza promediada de ambas
     distribuciones gaussianas que aproximan las bolsas.
- 
+
+    Args:
+        bag1: Primera bolsa.
+        bag2: Segunda bolsa.
+
+    Returns:
+        Distancia de Mahalanobis entre las dos bolsas.
     """
     mat1 = bag1.as_matrix()
     mat2 = bag2.as_matrix()

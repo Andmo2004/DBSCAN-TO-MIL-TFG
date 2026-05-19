@@ -38,46 +38,57 @@ class BaseScaler:
         return self._numeric_indices.copy()
     
     def fit(self, dataset: MIData) -> 'BaseScaler':
-        """
-        Aprende los parámetros de transformación desde el dataset.
+        """Aprende los parámetros de transformación desde el dataset.
 
-        :param dataset: (MIData) Dataset de entrenamiento
-        :returns: (Self) para encadenamiento de métodos
+        Args:
+            dataset: Dataset de entrenamiento.
 
-        :raises NotImplementedError: Debe ser implementado por subclases.
+        Returns:
+            Self para encadenamiento de métodos.
+
+        Raises:
+            NotImplementedError: Debe ser implementado por subclases.
         """
         raise NotImplementedError("Las subclases deben implementar fit()")
     
     def transform(self, dataset: MIData, inplace: bool = False) -> MIData:
-        """
-        Aplica la transformación al dataset.
+        """Aplica la transformación al dataset.
         
-        :param dataset: (MIData) Dataset a transformar
-        :param inplace: (bool) Si True, modifica el dataset original, si False, crea copia.
-        :return:  (MIData) Dataset Transformado
+        Args:
+            dataset: Dataset a transformar.
+            inplace: Si True, modifica el dataset original, si False, crea copia.
 
-        :raises NotImplementedError: Debe ser implementado por subclases.
+        Returns:
+            Dataset transformado.
+
+        Raises:
+            NotImplementedError: Debe ser implementado por subclases.
         """
         raise NotImplementedError("Las subclases deben implementar fit()")
     
     def fit_transform(self, dataset: MIData) -> MIData:
-        """
-        Entrena y transforma en un solo paso.
+        """Entrena y transforma en un solo paso.
         
-        :param dataset: (MIData) Dataset a transformar
-        :return: (MIData) Datset transformado
+        Args:
+            dataset: Dataset a transformar.
+
+        Returns:
+            Dataset transformado.
         """
         self.fit(dataset)
         return self.transform(dataset)
     
     def _extract_schema(self, dataset: MIData) -> List[Attribute]:
-        """
-        Extrae el esquema de atributos del dataset.
+        """Extrae el esquema de atributos del dataset.
         
-        :param dataset: (MIData) Dataset del cual extraer esquema.
-        :return: (List[Attribute]) Lista de atributos.
+        Args:
+            dataset: Dataset del cual extraer esquema.
+
+        Returns:
+            Lista de atributos.
             
-        :raises ValueError: Si el dataset está vacío.
+        Raises:
+            ValueError: Si el dataset está vacío.
         """
         if len(dataset) == 0:
             raise ValueError("El dataset está vacío")
@@ -108,12 +119,12 @@ class BaseScaler:
         return indices
     
     def _validate_schema(self, dataset: MIData):
-        """
-        Valida que el dataset tenga el mismo esquema que el entrenamiento.
+        """Valida que el dataset tenga el mismo esquema que el entrenamiento.
         
-        :param dataset: (MIData) Dataset a validar.
+        Args:
+            dataset: Dataset a validar.
         
-        :raises:
+        Raises:
             RuntimeError: Si no está entrenado.
             ValueError: Si el esquema no coincide.
         """
@@ -142,13 +153,16 @@ class BaseScaler:
     
 
     def _collect_numeric_data(self, dataset: MIData) -> np.ndarray:
-        """
-        Recolecta todos los valores numéricos del dataset en una matriz.
+        """Recolecta todos los valores numéricos del dataset en una matriz.
         
-        :param dataset: (MIData) Dataset del cual extraer datos.
-        :return: (np.ndarray) Matriz numpy (total_instances x num_numeric_features).
+        Args:
+            dataset: Dataset del cual extraer datos.
+
+        Returns:
+            Matriz numpy (total_instances x num_numeric_features).
         
-        :raise ValueError: Si no se encuentran instancias en el dataset.
+        Raises:
+            ValueError: Si no se encuentran instancias en el dataset.
         """ 
 
         all_values = []
@@ -171,12 +185,14 @@ class BaseScaler:
         return numeric_mat        
 
     def _create_transformed_dataset(self, original: MIData, transform_fn) -> MIData:
-        """
-        Crea un nuevo dataset aplicando una función de transformación.
+        """Crea un nuevo dataset aplicando una función de transformación.
         
-        :param original: (MIData) Dataset original.
-        :param transform_fn: (func) Función que transforma valores numéricos.
-        :returns: (MIData) Nuevo dataset transformado.
+        Args:
+            original: Dataset original.
+            transform_fn: Función que transforma valores numéricos.
+
+        Returns:
+            Nuevo dataset transformado.
         """
 
         new_bags = []
@@ -226,12 +242,13 @@ class MinMaxScaler(BaseScaler):
     """
 
     def __init__(self, feature_range: Tuple[float, float] = (0, 1)):
-        """
-        Constructor del MinMaxScaler.
+        """Constructor del MinMaxScaler.
         
-        :param feature_range: (Tuple[float, float]) Rango objetivo (min, max).
+        Args:
+            feature_range: Rango objetivo (min, max).
             
-        :raises ValueError: Si el rango no es válido.
+        Raises:
+            ValueError: Si el rango no es válido.
         """
 
         super().__init__()
@@ -263,13 +280,16 @@ class MinMaxScaler(BaseScaler):
         return self._data_min + self._data_range
 
     def fit(self, dataset: MIData) -> 'MinMaxScaler':
-        """
-        Aprende los valores mínimos y máximos del dataset.
+        """Aprende los valores mínimos y máximos del dataset.
         
-        :param dataset: Dataset de entrenamiento.  
-        :return: Self para encadenamiento.
+        Args:
+            dataset: Dataset de entrenamiento.  
+
+        Returns:
+            Self para encadenamiento.
             
-        :raises ValueError: Si el dataset está vacío.
+        Raises:
+            ValueError: Si el dataset está vacío.
         """
 
         logger.info(f"Entrenando MinMaxScaler en dataset '{dataset.name}'")
@@ -309,15 +329,16 @@ class MinMaxScaler(BaseScaler):
         return self
     
     def transform(self, dataset: MIData, inplace: bool = False) -> MIData:
-        """
-        Aplica la transformación Min-Max al dataset.
+        """Aplica la transformación Min-Max al dataset.
         
-        :param dataset: (MIData) Dataset a transformar.
-        :param inplace: (bool) Si True, modifica el dataset original (NO RECOMENDADO).
+        Args:
+            dataset: Dataset a transformar.
+            inplace: Si True, modifica el dataset original (NO RECOMENDADO).
             
-        :returns: (MIData) Dataset transformado.
+        Returns:
+            Dataset transformado.
             
-        :raises:
+        Raises:
             RuntimeError: Si no está entrenado.
             ValueError: Si el esquema no coincide.
         """
@@ -369,12 +390,14 @@ class MinMaxScaler(BaseScaler):
             )
 
     def inverse_transform(self, dataset: MIData, inplace: bool = False) -> MIData:
-        """
-        Revierte la transformación Min-Max.
+        """Revierte la transformación Min-Max.
         
-        :param dataset: (MIData) Dataset en escala transformada.
-        :param inplace: (bool) Si True, modifica el dataset original.
-        :returns: (MIData) Dataset en escala original.
+        Args:
+            dataset: Dataset en escala transformada.
+            inplace: Si True, modifica el dataset original.
+
+        Returns:
+            Dataset en escala original.
         """
         self._validate_schema(dataset)
         
@@ -445,13 +468,16 @@ class StandardScaler(BaseScaler):
         return self._std.copy() if self._std is not None else None
     
     def fit(self, dataset: MIData) -> 'StandardScaler':
-        """
-        Aprende la media y desviación estándar del dataset.
+        """Aprende la media y desviación estándar del dataset.
         
-        :param dataset: (MIData) Dataset de entrenamiento.
-        :return: Self para el encadenamiento.
+        Args:
+            dataset: Dataset de entrenamiento.
+
+        Returns:
+            Self para el encadenamiento.
             
-        :raises ValueError: Si el dataset está vacío.
+        Raises:
+            ValueError: Si el dataset está vacío.
         """
         logger.info(f"Entrenando StandardScaler en dataset '{dataset.name}'")
         
@@ -490,14 +516,16 @@ class StandardScaler(BaseScaler):
         return self
     
     def transform(self, dataset: MIData, inplace: bool = False) -> MIData:
-        """
-        Aplica la estandarización (Z-score) al dataset.
+        """Aplica la estandarización (Z-score) al dataset.
         
-        :param dataset: (MIData) Dataset en escala transformada.
-        :param inplace: (bool) Si True, modifica el dataset original.
-        :returns: (MIData) Dataset en escala original.
+        Args:
+            dataset: Dataset en escala transformada.
+            inplace: Si True, modifica el dataset original.
+
+        Returns:
+            Dataset en escala original.
             
-        :raises:
+        Raises:
             RuntimeError: Si no está entrenado.
             ValueError: Si el esquema no coincide.
         """
@@ -540,12 +568,14 @@ class StandardScaler(BaseScaler):
             )
     
     def inverse_transform(self, dataset: MIData, inplace: bool = False) -> MIData:
-        """
-        Revierte la estandarización.
+        """Revierte la estandarización.
         
-        :param dataset: (MIData) Dataset en escala estandarizado.
-        :param inplace: (bool) Si True, modifica el dataset original.
-        :returns: (MIData) Dataset sin estandarizar original.
+        Args:
+            dataset: Dataset en escala estandarizado.
+            inplace: Si True, modifica el dataset original.
+
+        Returns:
+            Dataset sin estandarizar original.
         """
         self._validate_schema(dataset)
         

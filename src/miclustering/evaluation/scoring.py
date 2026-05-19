@@ -34,9 +34,7 @@ def score_labels(
     predicted_labels: Dict[str, int],
     imbalance_ratio: float = 1.0,
 ) -> float:
-    """
-    Calcula un score combinado para una configuración DBSCAN dada sobre
-    el conjunto de entrenamiento.
+    """Calcula un score combinado para una configuración DBSCAN dada sobre el conjunto de entrenamiento.
 
     Criterios (en orden de importancia):
       1. Penalización por casos degenerados:
@@ -45,10 +43,13 @@ def score_labels(
       2. Maximizar F1 (usando Hungarian mapping contra las etiquetas reales).
       3. Desempate: penalizar exceso de ruido y exceso de fragmentación.
 
-    :param dataset:          MIData con etiquetas ground-truth en bag.label.
-    :param predicted_labels: Dict {bag_id: cluster_id} producido por MIDBSCAN.
-    :param imbalance_ratio:  Ratio de desbalanceo para decidir métrica (macro/binary).
-    :returns:                Score en [0, 1] (mayor es mejor).
+    Args:
+        dataset: MIData con etiquetas ground-truth en bag.label.
+        predicted_labels: Dict {bag_id: cluster_id} producido por MIDBSCAN.
+        imbalance_ratio: Ratio de desbalanceo para decidir métrica (macro/binary).
+
+    Returns:
+        Score en [0, 1] (mayor es mejor).
     """
     y_true, y_pred = [], []
     for bag in dataset.bags:

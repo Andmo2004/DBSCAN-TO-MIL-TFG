@@ -13,13 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 class ArffToMIData:
-    """
-    Transformador que convierte archivos ARFF a objetos MIData.
+    """Transformador que convierte archivos ARFF a objetos MIData.
     
     Esta clase maneja la carga y conversión de datasets Multi-Instance Learning
     desde el formato ARFF estándar.
     
-    :attributes:
+    Attributes:
         DEFAULT_BAG_COLUMN: Nombre por defecto de la columna relacional.
         DEFAULT_CLASS_COLUMN: Nombre por defecto de la columna de etiquetas.
         DEFAULT_ENCODING: Codificación por defecto para leer archivos.
@@ -33,12 +32,12 @@ class ArffToMIData:
                  bag_column: str = DEFAULT_BAG_COLUMN,
                  class_column: str = DEFAULT_CLASS_COLUMN,
                  encoding: str = DEFAULT_ENCODING):
-        """
-        Inicializa el transformador ARFF a MIData.
+        """Inicializa el transformador ARFF a MIData.
 
-        :param bag_column: (str) Nombre de la columna con la estructura relacional.
-        :param class_column: (str) Nombre de la columna con las etiquetas.
-        :param encoding: (str) Codificación del archivo.
+        Args:
+            bag_column: Nombre de la columna con la estructura relacional.
+            class_column: Nombre de la columna con las etiquetas.
+            encoding: Codificación del archivo.
         """
         self._bag_column = bag_column
         self._class_column = class_column
@@ -62,14 +61,18 @@ class ArffToMIData:
         return self._encoding
     
     def load(self, file_path: str, dataset_name: Optional[str] = None) -> MIData:
-        """
-        Carga un archivo ARFF y lo convierte a un objeto MIData.
+        """Carga un archivo ARFF y lo convierte a un objeto MIData.
 
-        :param file_path: (str) Ruta al archivo ARFF.
-        :param dataset_name: (Optional[str]) Nombre del dataset (si es None, usa el nombre del archivo).
-        :return: (MIData) Objeto MIData con el dataset cargado.
-        :raises FileNotFoundError: Si el archivo no existe.
-        :raises ValueError: Si el formato es inválido o faltan columnas requeridas.
+        Args:
+            file_path: Ruta al archivo ARFF.
+            dataset_name: Nombre del dataset (si es None, usa el nombre del archivo).
+
+        Returns:
+            Objeto MIData con el dataset cargado.
+
+        Raises:
+            FileNotFoundError: Si el archivo no existe.
+            ValueError: Si el formato es inválido o faltan columnas requeridas.
         """
 
         # Validamos que el archivo existe
@@ -109,12 +112,16 @@ class ArffToMIData:
         return f"ARFF to MIData Transformer"
 
     def _load_arff_file(self, file_path: str) -> tuple:
-        """
-        Carga el archivo ARFF usando scipy y lo convierte en DataFrame.
+        """Carga el archivo ARFF usando scipy y lo convierte en DataFrame.
 
-        :param file_path: (str) Ruta al archivo.
-        :return: (tuple) Tupla (DataFrame, metadata).
-        :raises ValueError: Si hay error al parsear el archivo.
+        Args:
+            file_path: Ruta al archivo.
+
+        Returns:
+            Tupla (DataFrame, metadata).
+
+        Raises:
+            ValueError: Si hay error al parsear el archivo.
         """
         try:
             data, meta = arff.loadarff(file_path)
@@ -127,12 +134,14 @@ class ArffToMIData:
             raise ValueError(error_msg)
     
     def _validate_structure(self, df: pd.DataFrame, file_path: str):
-        """
-        Valida que el DataFrame tenga la estructura MIL requerida.
+        """Valida que el DataFrame tenga la estructura MIL requerida.
 
-        :param df: (pd.DataFrame) DataFrame con los datos.
-        :param file_path: (str) Ruta del archivo (para mensajes de error).
-        :raises ValueError: Si falta alguna columna requerida o la estructura es inválida.
+        Args:
+            df: DataFrame con los datos.
+            file_path: Ruta del archivo (para mensajes de error).
+
+        Raises:
+            ValueError: Si falta alguna columna requerida o la estructura es inválida.
         """
         # Validamos la columna de ID (primera columna)
         if len(df.columns) < 3:
@@ -158,12 +167,16 @@ class ArffToMIData:
         logger.debug("Validación de estructura completada exitosamente")
     
     def _extract_instance_schema(self, file_path: str) -> List[Attribute]:
-        """
-        Extrae el esquema de atributos de las instancias desde el archivo ARFF.
+        """Extrae el esquema de atributos de las instancias desde el archivo ARFF.
 
-        :param file_path: (str) Ruta al archivo ARFF.
-        :return: (List[Attribute]) Lista de objetos Attribute con el esquema.
-        :raises ValueError: Si no se encuentra la estructura relacional.
+        Args:
+            file_path: Ruta al archivo ARFF.
+
+        Returns:
+            Lista de objetos Attribute con el esquema.
+
+        Raises:
+            ValueError: Si no se encuentra la estructura relacional.
         """
         logger.info(f"Extrayendo esquema de instancias desde '{file_path}'")
         
@@ -217,11 +230,13 @@ class ArffToMIData:
         return attributes
     
     def _parse_attribute_line(self, line: str) -> Optional[Attribute]:
-        """
-        Parsea una línea de definición de atributo ARFF.
+        """Parsea una línea de definición de atributo ARFF.
 
-        :param line: (str) Línea con formato "@attribute nombre tipo".
-        :return: (Optional[Attribute]) Objeto Attribute o None si no se puede parsear.
+        Args:
+            line: Línea con formato "@attribute nombre tipo".
+
+        Returns:
+            Objeto Attribute o None si no se puede parsear.
         """
         parts = line.split()
         if len(parts) < 3:
@@ -297,12 +312,14 @@ class ArffToMIData:
         return bags
     
     def _build_instances(self, raw_instances, schema: List[Attribute]) -> List[Instance]:
-        """
-        Construye lista de instancias desde datos crudos.
+        """Construye lista de instancias desde datos crudos.
 
-        :param raw_instances: (np.ndarray) Array numpy con las instancias crudas.
-        :param schema: (List[Attribute]) Esquema de los atributos.
-        :return: (List[Instance]) Lista de objetos Instance.
+        Args:
+            raw_instances: Array numpy con las instancias crudas.
+            schema: Esquema de los atributos.
+
+        Returns:
+            Lista de objetos Instance.
         """
         instances = []
         for raw_inst in raw_instances:
@@ -312,11 +329,13 @@ class ArffToMIData:
         return instances
     
     def _decode_if_bytes(self, value):
-        """
-        Decodifica un valor si es de tipo bytes.
+        """Decodifica un valor si es de tipo bytes.
 
-        :param value: (Any) Valor a decodificar.
-        :return: (Any) Valor decodificado o valor original.
+        Args:
+            value: Valor a decodificar.
+
+        Returns:
+            Valor decodificado o valor original.
         """
         return value.decode(self._encoding) if isinstance(value, bytes) else value
     
@@ -328,14 +347,16 @@ def load_arff_dataset(file_path: str,
                      dataset_name: Optional[str] = None,
                      bag_column: str = ArffToMIData.DEFAULT_BAG_COLUMN,
                      class_column: str = ArffToMIData.DEFAULT_CLASS_COLUMN) -> MIData:
-    """
-    Carga un dataset ARFF y lo transforma en un objeto MIData.
+    """Carga un dataset ARFF y lo transforma en un objeto MIData.
 
-    :param file_path: (str) Ruta al archivo ARFF.
-    :param dataset_name: (Optional[str]) Nombre del dataset.
-    :param bag_column: (str) Nombre de la columna relacional.
-    :param class_column: (str) Nombre de la columna de etiquetas.
-    :return: (MIData) Objeto MIData cargado.
+    Args:
+        file_path: Ruta al archivo ARFF.
+        dataset_name: Nombre del dataset.
+        bag_column: Nombre de la columna relacional.
+        class_column: Nombre de la columna de etiquetas.
+
+    Returns:
+        Objeto MIData cargado.
     """
     loader = ArffToMIData(bag_column=bag_column, class_column=class_column)
     return loader.load(file_path, dataset_name)

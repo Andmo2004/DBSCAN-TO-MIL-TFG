@@ -20,13 +20,13 @@ class MIKMeans(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, k: int, metric: str = 'hausdorff', max_iters: int = 100, random_state: Optional[int] = None):
-        """
-        Constructor del modelo MIKMeans.
+        """Constructor del modelo MIKMeans.
         
-        :param k: (int) Número de clústeres.
-        :param metric: (str) Métrica de distancia a utilizar entre bolsas y centroides.
-        :param max_iters: (int) Número máximo de iteraciones.
-        :param random_state: (int) Semilla para la inicialización aleatoria.
+        Args:
+            k: Número de clústeres.
+            metric: Métrica de distancia a utilizar entre bolsas y centroides.
+            max_iters: Número máximo de iteraciones.
+            random_state: Semilla para la inicialización aleatoria.
         """
         if k < 1:
             raise ValueError(f"El parámetro 'k' debe ser >= 1. Recibido: {k}")

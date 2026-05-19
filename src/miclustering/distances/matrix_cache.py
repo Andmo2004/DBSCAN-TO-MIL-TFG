@@ -11,9 +11,7 @@ DEFAULT_CACHE_DIR = os.path.join(os.getcwd(), ".miclustering_cache", "distance_m
 CACHE_DIR = os.environ.get("MICLUSTERING_CACHE_DIR", DEFAULT_CACHE_DIR)
 
 class PersistentDistanceMatrixCache:
-    """
-    Caché para almacenar matrices de distancias en disco y evitar recalcularlas.
-    """
+    """Caché para almacenar matrices de distancias en disco y evitar recalcularlas."""
     def __init__(self):
         os.makedirs(CACHE_DIR, exist_ok=True)
         self._memory_cache = {}

@@ -32,10 +32,14 @@ from miclustering.data.bag import Bag
 #     return max(h_A_B, h_B_A)
 
 def _distance_matrix(bag1: Bag, bag2: Bag):
-    """
-    Calcula la matriz de distancias euclidianas entre las instancias de dos bolsas.
-    Devuelve (mat1, mat2, d_matrix) 
-    o (None, None, None) si alguna bolsa está vacía.
+    """Calcula la matriz de distancias euclidianas entre las instancias de dos bolsas.
+
+    Args:
+        bag1: Primera bolsa.
+        bag2: Segunda bolsa.
+
+    Returns:
+        Tupla (mat1, mat2, d_matrix) o (None, None, None) si alguna bolsa está vacía.
     """
     mat1 = bag1.as_matrix()
     mat2 = bag2.as_matrix()
@@ -44,8 +48,7 @@ def _distance_matrix(bag1: Bag, bag2: Bag):
     return mat1, mat2, cdist(mat1, mat2, metric='euclidean')
 
 def hausdorff_distance(bag1: Bag, bag2: Bag) -> float:
-    """
-    Distancia de Hausdorff MÁXIMA (simétrica) entre dos bolsas.
+    """Calcula la distancia de Hausdorff máxima (simétrica) entre dos bolsas.
  
     Definición formal (ec. 3.19 - 3.20):
         D_Hausdorff-max(A, B) = max{ h(A,B), h(B,A) }
@@ -54,7 +57,13 @@ def hausdorff_distance(bag1: Bag, bag2: Bag) -> float:
     Para cada instancia de A se busca su vecino más cercano en B (min_{b in B}).
     Se toma el peor caso (max_{a in A}).
     La distancia simétrica toma el máximo de ambas direcciones.
- 
+
+    Args:
+        bag1: Primera bolsa.
+        bag2: Segunda bolsa.
+
+    Returns:
+        Distancia de Hausdorff simétrica entre las dos bolsas.
     """
     _, _, d_matrix = _distance_matrix(bag1, bag2)
     if d_matrix is None:
@@ -68,14 +77,19 @@ def hausdorff_distance(bag1: Bag, bag2: Bag) -> float:
     return max(h_A_B, h_B_A)
 
 def hausdorff_distance_min(bag1: Bag, bag2: Bag) -> float:
-    """
-    Distancia de Hausdorff mínima entre dos bolsas.
+    """Calcula la distancia de Hausdorff mínima entre dos bolsas.
  
     Definición formal (ec. 3.18):
         D_Hausdorff-min(A, B) = min_{a in A} min_{b in B} d(a,b)
  
     Mínimo absoluto de la matriz de distancias cruzadas.
- 
+
+    Args:
+        bag1: Primera bolsa.
+        bag2: Segunda bolsa.
+
+    Returns:
+        Distancia de Hausdorff mínima entre las dos bolsas.
     """
     _, _, d_matrix = _distance_matrix(bag1, bag2)
     if d_matrix is None:
@@ -86,8 +100,7 @@ def hausdorff_distance_min(bag1: Bag, bag2: Bag) -> float:
 
 
 def hausdorff_distance_avg(bag1: Bag, bag2: Bag) -> float:
-    """
-    Distancia de Hausdorff PROMEDIO entre dos bolsas.
+    """Calcula la distancia de Hausdorff PROMEDIO entre dos bolsas.
  
     Definición formal (ec. 3.21):
  
@@ -99,6 +112,12 @@ def hausdorff_distance_avg(bag1: Bag, bag2: Bag) -> float:
     Ídem para cada instancia de B hacia A.
     El resultado se normaliza por el número total de instancias de ambas bolsas.
 
+    Args:
+        bag1: Primera bolsa.
+        bag2: Segunda bolsa.
+
+    Returns:
+        Distancia de Hausdorff promedio entre las dos bolsas.
     """
     mat1, mat2, d_matrix = _distance_matrix(bag1, bag2)
     if d_matrix is None:

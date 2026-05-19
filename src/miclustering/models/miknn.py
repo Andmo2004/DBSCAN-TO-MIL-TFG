@@ -49,16 +49,16 @@ class MIKnn(BaseEstimator, ClassifierMixin):
     } 
 
     def __init__(self, k: int = 3, metric: str = "hausdorff"):
-        """
-        Constructor del clasificador MIKnn.
+        """Constructor del clasificador MIKnn.
  
-        :param k:      Número de vecinos más cercanos a considerar.
-                       Debe ser >= 1.
-        :param metric: Nombre de la función de distancia entre bolsas.
-                       Valores válidos: 'hausdorff', 'hausdorff_min', 'hausdorff_avg', 
-                       'cauchy_schwarz', 'earth_movers', 'mahalanobis'.
+        Args:
+            k: Número de vecinos más cercanos a considerar. Debe ser >= 1.
+            metric: Nombre de la función de distancia entre bolsas.
+                    Valores válidos: 'hausdorff', 'hausdorff_min', 'hausdorff_avg', 
+                    'cauchy_schwarz', 'earth_movers', 'mahalanobis'.
  
-        :raises ValueError: Si k < 1 o si la métrica no está registrada.
+        Raises:
+            ValueError: Si k < 1 o si la métrica no está registrada.
         """
         if k < 1:
             raise ValueError(
@@ -108,16 +108,19 @@ class MIKnn(BaseEstimator, ClassifierMixin):
     # ── Publico ──────────────────────────────────────────────────────
  
     def fit(self, dataset: MIData) -> "MIKnn":
-        """
-        Memoriza el conjunto de entrenamiento (lazy learning).
+        """Memoriza el conjunto de entrenamiento (lazy learning).
  
         k-NN es un algoritmo de aprendizaje perezoso: fit() únicamente
         almacena las bolsas y sus etiquetas; no construye ningún modelo.
  
-        :param dataset: MIData con las bolsas y etiquetas de entrenamiento.
-        :returns:       Self, para encadenamiento de métodos.
+        Args:
+            dataset: MIData con las bolsas y etiquetas de entrenamiento.
+
+        Returns:
+            Self, para encadenamiento de métodos.
  
-        :raises ValueError: Si el dataset está vacío.
+        Raises:
+            ValueError: Si el dataset está vacío.
         """
         if dataset.get_num_bags() == 0:
             raise ValueError("El dataset de entrenamiento está vacío.")
@@ -141,19 +144,22 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         return self
     
     def predict(self, dataset: MIData) -> Dict[str, int]:
-        """
-        Predice la etiqueta de clase para cada bolsa del dataset.
+        """Predice la etiqueta de clase para cada bolsa del dataset.
  
         Para cada bolsa de test:
           1. Calcula la distancia a todas las bolsas de train.
           2. Selecciona los k vecinos más cercanos.
           3. Asigna la clase mayoritaria (con desempate por distancia).
  
-        :param dataset: MIData con las bolsas a clasificar.
-        :returns:       Diccionario {bag_id: clase_predicha (0 ó 1)}.
+        Args:
+            dataset: MIData con las bolsas a clasificar.
+
+        Returns:
+            Diccionario {bag_id: clase_predicha (0 ó 1)}.
  
-        :raises RuntimeError: Si el modelo no ha sido entrenado.
-        :raises ValueError:   Si el dataset está vacío.
+        Raises:
+            RuntimeError: Si el modelo no ha sido entrenado.
+            ValueError: Si el dataset está vacío.
         """
         self._check_fitted()
  
@@ -173,30 +179,35 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         return predictions
     
     def predict_bag(self, bag: Bag) -> int:
-        """
-        Predice la etiqueta de una única bolsa.
+        """Predice la etiqueta de una única bolsa.
  
-        :param bag: Objeto Bag a clasificar.
-        :returns:   Clase predicha (int, normalmente 0 ó 1).
+        Args:
+            bag: Objeto Bag a clasificar.
+
+        Returns:
+            Clase predicha (int, normalmente 0 ó 1).
  
-        :raises RuntimeError: Si el modelo no ha sido entrenado.
+        Raises:
+            RuntimeError: Si el modelo no ha sido entrenado.
         """
         self._check_fitted()
         distances = self._compute_distances_to_train(bag)
         return self._classify(distances)    
     
     def predict_proba(self, dataset: MIData) -> Dict[str, Dict[int, float]]:
-        """
-        Estima la probabilidad de cada clase mediante la proporción de votos
+        """Estima la probabilidad de cada clase mediante la proporción de votos
         de los k vecinos.
  
-        :param dataset: MIData con las bolsas a clasificar.
-        :returns:
+        Args:
+            dataset: MIData con las bolsas a clasificar.
+
+        Returns:
             Diccionario {bag_id: {clase: proporción_de_votos}}.
             Ejemplo: {"bag_001": {0: 0.33, 1: 0.67}}
  
-        :raises RuntimeError: Si el modelo no ha sido entrenado.
-        :raises ValueError:   Si el dataset está vacío.
+        Raises:
+            RuntimeError: Si el modelo no ha sido entrenado.
+            ValueError: Si el dataset está vacío.
         """
         self._check_fitted()
  
@@ -232,16 +243,18 @@ class MIKnn(BaseEstimator, ClassifierMixin):
     def get_neighbors(
         self, bag: Bag
     ) -> List[Tuple[str, int, float]]:
-        """
-        Devuelve los k vecinos más cercanos de una bolsa junto con sus
+        """Devuelve los k vecinos más cercanos de una bolsa junto con sus
         etiquetas y distancias.
  
-        :param bag: Bolsa de consulta.
-        :returns:
+        Args:
+            bag: Bolsa de consulta.
+
+        Returns:
             Lista de tuplas (bag_id, etiqueta, distancia) ordenada de menor
             a mayor distancia.
  
-        :raises RuntimeError: Si el modelo no ha sido entrenado.
+        Raises:
+            RuntimeError: Si el modelo no ha sido entrenado.
         """
         self._check_fitted()
         distances = self._compute_distances_to_train(bag)
@@ -257,15 +270,15 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         ]
  
     def get_statistics(self) -> Dict[str, Any]:
-        """
-        Devuelve un resumen del estado del modelo.
+        """Devuelve un resumen del estado del modelo.
  
-        :returns: Diccionario con claves:
-            - ``k``            : número de vecinos.
-            - ``metric``       : nombre de la métrica.
-            - ``n_train_bags`` : bolsas de entrenamiento almacenadas.
-            - ``label_counts`` : distribución de clases en train.
-            - ``fitted``       : bool.
+        Returns:
+            Diccionario con claves:
+                - ``k``            : número de vecinos.
+                - ``metric``       : nombre de la métrica.
+                - ``n_train_bags`` : bolsas de entrenamiento almacenadas.
+                - ``label_counts`` : distribución de clases en train.
+                - ``fitted``       : bool.
         """
         if not self._fitted:
             return {"fitted": False}
@@ -282,11 +295,13 @@ class MIKnn(BaseEstimator, ClassifierMixin):
     # ── Métodos internos ──────────────────────────────────────────────────────
  
     def _compute_distances_to_train(self, test_bag: Bag) -> np.ndarray:
-        """
-        Calcula la distancia de test_bag a cada bolsa de entrenamiento.
+        """Calcula la distancia de test_bag a cada bolsa de entrenamiento.
  
-        :param test_bag: Bolsa de consulta.
-        :returns:        Array (n_train,) con las distancias.
+        Args:
+            test_bag: Bolsa de consulta.
+
+        Returns:
+            Array (n_train,) con las distancias.
         """
         distances = np.empty(len(self._train_bags), dtype=float)
         for i, train_bag in enumerate(self._train_bags):
@@ -296,11 +311,12 @@ class MIKnn(BaseEstimator, ClassifierMixin):
     def _get_k_neighbors(
         self, distances: np.ndarray
     ) -> List[Tuple[int, float]]:
-        """
-        Selecciona los k vecinos más cercanos.
+        """Selecciona los k vecinos más cercanos.
  
-        :param distances: Array (n_train,) con distancias al bag de consulta.
-        :returns:
+        Args:
+            distances: Array (n_train,) con distancias al bag de consulta.
+
+        Returns:
             Lista de (índice_en_train, distancia) ordenada de menor a mayor,
             con longitud min(k, n_train).
         """
@@ -310,16 +326,18 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         return [(int(idx), float(distances[idx])) for idx in sorted_idx]
  
     def _classify(self, distances: np.ndarray) -> int:
-        """
-        Asigna la clase a un bag a partir de su vector de distancias a train.
+        """Asigna la clase a un bag a partir de su vector de distancias a train.
  
         Estrategia:
           1. Majority voting sobre los k vecinos.
           2. Desempate: gana la clase con menor distancia acumulada
              entre sus representantes en el vecindario.
  
-        :param distances: Array (n_train,) con distancias al bag de consulta.
-        :returns:         Clase predicha (int).
+        Args:
+            distances: Array (n_train,) con distancias al bag de consulta.
+
+        Returns:
+            Clase predicha (int).
         """
         neighbors = self._get_k_neighbors(distances)
  
@@ -346,21 +364,23 @@ class MIKnn(BaseEstimator, ClassifierMixin):
  
     @staticmethod
     def _parse_label(raw_label: Any) -> int:
-        """
-        Convierte etiquetas de bolsa (str, float, int, bytes) a int.
+        """Convierte etiquetas de bolsa (str, float, int, bytes) a int.
  
-        :param raw_label: Etiqueta en formato crudo (e.g. '1.0', b'0', 1).
-        :returns:         Etiqueta como int.
+        Args:
+            raw_label: Etiqueta en formato crudo (e.g. '1.0', b'0', 1).
+
+        Returns:
+            Etiqueta como int.
         """
         if isinstance(raw_label, bytes):
             raw_label = raw_label.decode("utf-8")
         return int(float(raw_label))
  
     def _check_fitted(self):
-        """
-        Lanza RuntimeError si el modelo no ha sido entrenado.
+        """Lanza RuntimeError si el modelo no ha sido entrenado.
  
-        :raises RuntimeError: Si ``is_fitted`` es False.
+        Raises:
+            RuntimeError: Si ``is_fitted`` es False.
         """
         if not self._fitted:
             raise RuntimeError(

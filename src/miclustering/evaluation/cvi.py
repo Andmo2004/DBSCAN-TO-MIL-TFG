@@ -69,14 +69,17 @@ class BaseCVI:
         bag_ids: List[str],
         X: Optional[np.ndarray] = None,
     ) -> float:
-        """
-        Calcula el índice de validación interna.
+        """Calcula el índice de validación interna.
  
-        :param dist_matrix: Matriz cuadrada (N×N) de distancias entre bolsas.
-                            Debe ser simétrica y con diagonal 0.
-        :param labels:      {bag_id: cluster_id}. Ruido → -1.
-        :param bag_ids:     Lista de bag_ids en el mismo orden que dist_matrix.
-        :returns:           Valor escalar del índice (float).
+        Args:
+            dist_matrix: Matriz cuadrada (N×N) de distancias entre bolsas.
+                         Debe ser simétrica y con diagonal 0.
+            labels: {bag_id: cluster_id}. Ruido → -1.
+            bag_ids: Lista de bag_ids en el mismo orden que dist_matrix.
+            X: Matriz de características opcional.
+
+        Returns:
+            Valor escalar del índice (float).
         """
         raise NotImplementedError("Las subclases deben implementar compute()")
     
@@ -523,9 +526,11 @@ class InternalCVIEvaluator:
     ]
  
     def __init__(self, cvis: Optional[List[BaseCVI]] = None) -> None:
-        """
-        :param cvis: Lista de instancias BaseCVI a ejecutar.
-                     None → usa todos los CVIs registrados por defecto.
+        """Inicializa el evaluador.
+
+        Args:
+            cvis: Lista de instancias BaseCVI a ejecutar.
+                  None → usa todos los CVIs registrados por defecto.
         """
         self._cvis: List[BaseCVI] = (
             list(cvis) if cvis is not None else list(self._DEFAULT_CVIS)
@@ -556,26 +561,26 @@ class InternalCVIEvaluator:
         title: str = "Evaluación Interna",
         verbose: bool = True,
     ) -> Dict[str, Any]:
-        """
-        Calcula todos los CVIs registrados y devuelve un diccionario de resultados.
+        """Calcula todos los CVIs registrados y devuelve un diccionario de resultados.
  
-        :param dist_matrix: Matriz (N×N) de distancias entre bolsas.
-        :param labels:      {bag_id: cluster_id}; ruido → -1.
-        :param bag_ids:     Lista de bag_ids en el orden de dist_matrix.
-        :param dataset:     MIData opcional. Si se proporciona, se calcula X
-                            automáticamente como el centroide (mean) de cada bolsa.
-                            Necesario para SED y DD.
-        :param title:       Título para el reporte en consola.
-        :param verbose:     Si True, imprime reporte formateado.
-        :returns:
+        Args:
+            dist_matrix: Matriz (N×N) de distancias entre bolsas.
+            labels: {bag_id: cluster_id}; ruido → -1.
+            bag_ids: Lista de bag_ids en el orden de dist_matrix.
+            dataset: MIData opcional. Si se proporciona, se calcula X
+                     automáticamente como el centroide (mean) de cada bolsa.
+                     Necesario para SED y DD.
+            title: Título para el reporte en consola.
+            verbose: Si True, imprime reporte formateado.
+
+        Returns:
             Dict con claves:
               "title"      : str
               "n_bags"     : int
               "n_clusters" : int
               "noise_count": int
               "noise_pct"  : float
-              "scores"     : Dict[name → {"value", "category",
-                                          "higher_is_better", ?"error"}]
+              "scores"     : Dict[name → {"value", "category", "higher_is_better", "error"}]
         """
         # ── Calcular X si se proporcionó dataset ──────────────────────────────
         X: Optional[np.ndarray] = None
@@ -626,15 +631,17 @@ class InternalCVIEvaluator:
  
     @staticmethod
     def _compute_bag_centroids(dataset: MIData, bag_ids: List[str]) -> np.ndarray:
-        """
-        Calcula el centroide de cada bolsa como la media de sus instancias.
+        """Calcula el centroide de cada bolsa como la media de sus instancias.
  
         El orden de filas en X respeta el orden de bag_ids, que es el mismo
         que el de dist_matrix, garantizando la alineación de índices.
  
-        :param dataset:  MIData (ya escalado).
-        :param bag_ids:  Lista de bag_ids en el orden de dist_matrix.
-        :returns:        np.ndarray (N × n_features).
+        Args:
+            dataset: MIData (ya escalado).
+            bag_ids: Lista de bag_ids en el orden de dist_matrix.
+
+        Returns:
+            np.ndarray (N × n_features).
         """
         bag_index = {bag.bag_id: bag for bag in dataset.bags}
  
