@@ -131,7 +131,8 @@ MIClustering/
 │           ├── bcm.py             # Métricas de clasificación binaria
 │           ├── cvi.py             # CVIs internos (SED, DD, Hc, VRC, I)
 │           └── scoring.py         # Score combinado para búsqueda de hiperparámetros
-├── datasets/                      # Archivos ARFF (no incluidos en el repo)
+├── datasets/ # Archivos ARFF (no incluidos en el repo) para tests
+├── docs/                      
 ├── tests/
 ├── pyproject.toml
 └── requirements.txt

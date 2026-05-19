@@ -5,12 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "miclustering"
 version = "0.1.0"
-authors = [
-  { name="Andres", email="andresmors.jr@gmail.com" },
-]
 description = "A Multi-Instance Learning Clustering library"
 readme = "README.md"
 requires-python = ">=3.8"
+keywords = ["multi-instance learning", "clustering", "MIL", "machine learning"]
+license = { file = "LICENSE" }
+authors = [
+  { name="Andres", email="andresmors.jr@gmail.com" },
+]
 dependencies = [
     "numpy>=1.20.0",
     "scipy>=1.7.0",
@@ -31,7 +33,3 @@ dev = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
-keywords = ["multi-instance learning", "clustering", "MIL", "machine learning"]
-
-license = { file = "LICENSE" }
