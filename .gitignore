@@ -95,3 +95,10 @@ cython_debug/
 # Optuna plots & artifacts
 optuna_plots/
 **/*.html
+
+# Data files
+*.arff
+**/*.arff
+*.npy
+**/*.npy
+datasets/

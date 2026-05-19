@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "miclustering"
 version = "0.1.0"
 authors = [
-  { name="Andres", email="andres@example.com" },
+  { name="Andres", email="andresmors.jr@gmail.com" },
 ]
 description = "A Multi-Instance Learning Clustering library"
 readme = "README.md"
@@ -16,10 +16,22 @@ dependencies = [
     "scipy>=1.7.0",
     "scikit-learn>=1.0.0",
     "liac-arff>=2.5.0",
+    "pandas>=1.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/Andmo2004/MIClustering"
+"Documentation" = "https://github.com/Andmo2004/MIClustering#readme"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+keywords = ["multi-instance learning", "clustering", "MIL", "machine learning"]
+
+license = { file = "LICENSE" }
