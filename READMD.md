@@ -352,23 +352,3 @@ bag.get_num_instances()  # → int
 bag.add_instance(inst)
 bag.as_matrix()          # → np.ndarray (n_instances × n_features)
 ```
-
----
-
-## Contribuir
-
-Las contribuciones son bienvenidas. Para proponer cambios:
-
-1. Haz un fork del repositorio.
-2. Crea una rama descriptiva: `git checkout -b feature/nueva-distancia`.
-3. Escribe tests en `tests/` para los cambios introducidos.
-4. Asegúrate de que todos los tests pasan: `pytest`.
-5. Abre un Pull Request describiendo el cambio y su motivación.
-
-Para reportar bugs o solicitar nuevas funcionalidades, usa el [issue tracker](https://github.com/Andmo2004/MIClustering/issues).
-
----
-
-## Licencia
-
-Distribuido bajo la licencia MIT. Consulta el archivo `LICENSE` para más detalles.
