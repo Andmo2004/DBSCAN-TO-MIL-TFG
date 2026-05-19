@@ -190,13 +190,22 @@ def mahalanobis_distance(bag1: Bag, bag2: Bag) -> float:
  
     #  Covarianza combinada: ½Σ_a + ½Σ_b 
     cov_combined = 0.5 * cov_a + 0.5 * cov_b   # (d, d)
+
+    epsilon = 1e-5
+    cov_combined += np.eye(cov_combined.shape[0]) * epsilon
  
     #  Inversión con regularización si es necesario 
     # Intentamos inversión directa; si falla (singular) usamos pseudoinversa.
     try:
         cov_inv = np.linalg.inv(cov_combined)
     except np.linalg.LinAlgError:
-        cov_inv = np.linalg.pinv(cov_combined)
+        try:
+            cov_inv = np.linalg.pinv(cov_combined)
+        except np.linalg.LinAlgError:
+            # Fallback extremo: si SVD tampoco converge, usamos la matriz identidad.
+            # Esto convierte efectivamente a Mahalanobis en una distancia Euclidiana
+            # para este par de bolsas concreto, evitando que el script colapse.
+            cov_inv = np.eye(cov_combined.shape[0])
  
     # Comprobación adicional: si la inversa tiene valores muy grandes
     # (casi-singularidad), también usamos pseudoinversa.
