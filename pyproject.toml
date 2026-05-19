@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "miclustering"
+version = "0.1.0"
+authors = [
+  { name="Andres", email="andres@example.com" },
+]
+description = "A Multi-Instance Learning Clustering library"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.20.0",
+    "scipy>=1.7.0",
+    "scikit-learn>=1.0.0",
+    "liac-arff>=2.5.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Andmo2004/MIClustering"
+
+[tool.setuptools.packages.find]
+where = ["src"]
