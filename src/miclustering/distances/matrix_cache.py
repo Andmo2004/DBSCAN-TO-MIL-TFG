@@ -16,35 +16,48 @@ class PersistentDistanceMatrixCache:
         os.makedirs(CACHE_DIR, exist_ok=True)
         self._memory_cache = {}
 
-    def get(self, dataset_name: str, split: str, scaler_name: str, metric_name: str, bags: list, metric_func=None, seed=42
-    ) -> np.ndarray:
-        key = (dataset_name, split, scaler_name, metric_name)
-        
-        # 1. Mirar en memoria
-        if key in self._memory_cache:
-            return self._memory_cache[key]
-            
-        # 2. Mirar en disco
-        filename = f"dist_matrix_{dataset_name}_{split}_{scaler_name}_{metric_name}.npy"
-        filepath = os.path.join(CACHE_DIR, filename)
-        
-        if os.path.exists(filepath):
-            # logger.info(f"[{dataset_name}] Cargando matriz de distancias desde caché ({filename}).")
-            matrix = np.load(filepath)
-            self._memory_cache[key] = matrix
-            return matrix
-            
-        # 3. Calcular y guardar
-        if metric_func is None:
-            raise ValueError("metric_func no fue proporcionado y la matriz no está en caché.")
-            
-        print(f"[{dataset_name}] Calculando matriz de distancias para {scaler_name} + {metric_name} ({split})...")
-        matrix = compute_distance_matrix(bags, metric_func, metric_name)
-        
-        # Guardar en disco y memoria
-        np.save(filepath, matrix)
+def get(
+    self,
+    dataset_name: str,
+    split: str,
+    scaler_name: str,
+    metric_name: str,
+    bags: list,
+    metric_func=None,
+    seed: int = 42,
+    save: bool = False
+) -> np.ndarray:
+    key = (dataset_name, split, scaler_name, metric_name)
+
+    # 1. Memoria
+    if key in self._memory_cache:
+        return self._memory_cache[key]
+
+    # 2. Disco
+    filename = f"dist_matrix_{dataset_name}_{split}_{scaler_name}_{metric_name}.npy"
+    filepath = os.path.join(CACHE_DIR, filename)
+
+    if os.path.exists(filepath):
+        matrix = np.load(filepath)
         self._memory_cache[key] = matrix
         return matrix
+
+    # 3. Calcular
+    if metric_func is None:
+        raise ValueError("metric_func no fue proporcionado y la matriz no está en caché.")
+
+    print(f"[{dataset_name}] Calculando matriz ({split} / {scaler_name} / {metric_name})...")
+    matrix = compute_distance_matrix(bags, metric_func, metric_name)
+
+    # 4. Guardar solo si save=True
+    self._memory_cache[key] = matrix
+    if save:
+        np.save(filepath, matrix)
+        logger.debug(f"Matriz guardada en disco → {filepath}")
+    else:
+        logger.debug(f"Matriz calculada pero NO persistida (save=False)")
+
+    return matrix
         
     def clear_memory(self):
         self._memory_cache.clear()
