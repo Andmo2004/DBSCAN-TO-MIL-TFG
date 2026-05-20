@@ -87,11 +87,9 @@ class Bag:
             Matriz NumPy con las instancias.
         """
         if not self._instances:
-            return np.array([]).reshape(0, len(self._instances[0].values) if self._instances else 0)
-        matrix = []
-        for instance in self._instances:
-            matrix.append(instance.values)
-        return np.array(matrix)
+            raise ValueError(f"No se puede crear una matriz a partir de una bolsa vacía (Bag ID: {self._bag_id}).")
+        matrix = [instance.values for instance in self._instances]
+        return np.array(matrix, dtype=np.float64)
     
     
     @property

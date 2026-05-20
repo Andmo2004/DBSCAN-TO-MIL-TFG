@@ -23,44 +23,7 @@ class MIData:
         self._bags = bags
         self._name = name
 
-    @classmethod
-    def from_arff(cls, 
-                  file_path: str, 
-                  dataset_name: Optional[str] = None,
-                  bag_column: str = 'bag',
-                  class_column: str = 'class') -> 'MIData':
-        """Carga un dataset MIL desde un archivo ARFF.
-        
-        Este método de clase (factory method) permite crear una instancia de MIData
-        directamente desde un archivo ARFF sin necesidad de instanciar manualmente
-        el loader.
-        
-        Args:
-            file_path: Ruta al archivo ARFF.
-            dataset_name: Nombre del dataset (si es None, usa el nombre del archivo).
-            bag_column: Nombre de la columna con estructura relacional (default: 'bag').
-            class_column: Nombre de la columna con etiquetas (default: 'class').
-            
-        Returns:
-            Objeto MIData con el dataset cargado.
-            
-        Raises:
-            FileNotFoundError: Si el archivo no existe.
-            ValueError: Si el formato es inválido o faltan columnas requeridas.
-        """
-        # Importación local para evitar dependencias circulares
-        from miclustering.data.arff_reader import ArffToMIData
-        
-        logger.info(f"Cargando dataset desde ARFF: {file_path}")
-        
-        # Crear el loader con la configuración especificada
-        loader = ArffToMIData(
-            bag_column=bag_column,
-            class_column=class_column
-        )
-        
-        # Cargar y retornar el dataset
-        return loader.load(file_path, dataset_name)
+
     
     @property
     def bags(self) -> List['Bag']:

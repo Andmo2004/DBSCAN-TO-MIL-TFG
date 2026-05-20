@@ -13,6 +13,7 @@ class Attribute:
         data_format: formato (por ejemplo, para fechas).
         val_range: intervalo de valores enteros o reales.
     """
+    __slots__ = ('_name', '_type', '_values', '_data_format', '_val_range')
     def __init__(self, 
                  name: str, 
                  attr_type: str, 

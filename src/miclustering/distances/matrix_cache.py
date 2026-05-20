@@ -45,8 +45,7 @@ class PersistentDistanceMatrixCache:
         # 3. Calcular
         if metric_func is None:
             raise ValueError("metric_func no fue proporcionado y la matriz no está en caché.")
-
-        print(f"[{dataset_name}] Calculando matriz ({split} / {scaler_name} / {metric_name})...")
+        logger.info(f"[{dataset_name}] Calculando matriz ({split} / {scaler_name} / {metric_name})...")
         matrix = compute_distance_matrix(bags, metric_func, metric_name)
 
         # 4. Guardar solo si save=True

@@ -31,24 +31,39 @@ from miclustering.data.bag import Bag
 #     # Devolvemos el máximo de ambos
 #     return max(h_A_B, h_B_A)
 
-def _distance_matrix(bag1: Bag, bag2: Bag):
-    """Calcula la matriz de distancias euclidianas entre las instancias de dos bolsas.
+from typing import Union
+
+def _get_matrix(obj: Union[Bag, np.ndarray]) -> np.ndarray:
+    """Extrae la matriz numpy de un objeto Bag o devuelve el propio np.ndarray asegurando que sea 2D."""
+    if isinstance(obj, Bag):
+        if len(obj.instances) == 0:
+            return np.array([])
+        return obj.as_matrix()
+    elif isinstance(obj, np.ndarray):
+        if obj.ndim == 1:
+            return obj.reshape(1, -1)
+        return obj
+    else:
+        raise TypeError(f"Tipo no soportado: {type(obj)}. Se esperaba Bag o np.ndarray.")
+
+def _distance_matrix(obj1: Union[Bag, np.ndarray], obj2: Union[Bag, np.ndarray]):
+    """Calcula la matriz de distancias euclidianas entre las instancias de dos objetos (Bag o np.ndarray).
 
     Args:
-        bag1: Primera bolsa.
-        bag2: Segunda bolsa.
+        obj1: Primera bolsa o array.
+        obj2: Segunda bolsa o array.
 
     Returns:
-        Tupla (mat1, mat2, d_matrix) o (None, None, None) si alguna bolsa está vacía.
+        Tupla (mat1, mat2, d_matrix) o (None, None, None) si alguna matriz está vacía.
     """
-    mat1 = bag1.as_matrix()
-    mat2 = bag2.as_matrix()
+    mat1 = _get_matrix(obj1)
+    mat2 = _get_matrix(obj2)
     if len(mat1) == 0 or len(mat2) == 0:
         return None, None, None
     return mat1, mat2, cdist(mat1, mat2, metric='euclidean')
 
-def hausdorff_distance(bag1: Bag, bag2: Bag) -> float:
-    """Calcula la distancia de Hausdorff máxima (simétrica) entre dos bolsas.
+def hausdorff_distance(obj1: Union[Bag, np.ndarray], obj2: Union[Bag, np.ndarray]) -> float:
+    """Calcula la distancia de Hausdorff máxima (simétrica) entre dos objetos (Bolsas o Arrays).
  
     Definición formal (ec. 3.19 - 3.20):
         D_Hausdorff-max(A, B) = max{ h(A,B), h(B,A) }
@@ -59,13 +74,13 @@ def hausdorff_distance(bag1: Bag, bag2: Bag) -> float:
     La distancia simétrica toma el máximo de ambas direcciones.
 
     Args:
-        bag1: Primera bolsa.
-        bag2: Segunda bolsa.
+        obj1: Primer objeto (Bag o np.ndarray).
+        obj2: Segundo objeto (Bag o np.ndarray).
 
     Returns:
-        Distancia de Hausdorff simétrica entre las dos bolsas.
+        Distancia de Hausdorff simétrica entre los dos objetos.
     """
-    _, _, d_matrix = _distance_matrix(bag1, bag2)
+    _, _, d_matrix = _distance_matrix(obj1, obj2)
     if d_matrix is None:
         return float('inf')
  
@@ -76,8 +91,8 @@ def hausdorff_distance(bag1: Bag, bag2: Bag) -> float:
  
     return max(h_A_B, h_B_A)
 
-def hausdorff_distance_min(bag1: Bag, bag2: Bag) -> float:
-    """Calcula la distancia de Hausdorff mínima entre dos bolsas.
+def hausdorff_distance_min(obj1: Union[Bag, np.ndarray], obj2: Union[Bag, np.ndarray]) -> float:
+    """Calcula la distancia de Hausdorff mínima entre dos objetos.
  
     Definición formal (ec. 3.18):
         D_Hausdorff-min(A, B) = min_{a in A} min_{b in B} d(a,b)
@@ -85,13 +100,13 @@ def hausdorff_distance_min(bag1: Bag, bag2: Bag) -> float:
     Mínimo absoluto de la matriz de distancias cruzadas.
 
     Args:
-        bag1: Primera bolsa.
-        bag2: Segunda bolsa.
+        obj1: Primer objeto (Bag o np.ndarray).
+        obj2: Segundo objeto (Bag o np.ndarray).
 
     Returns:
-        Distancia de Hausdorff mínima entre las dos bolsas.
+        Distancia de Hausdorff mínima entre los dos objetos.
     """
-    _, _, d_matrix = _distance_matrix(bag1, bag2)
+    _, _, d_matrix = _distance_matrix(obj1, obj2)
     if d_matrix is None:
         return float('inf')
  
@@ -99,8 +114,8 @@ def hausdorff_distance_min(bag1: Bag, bag2: Bag) -> float:
     return float(np.min(d_matrix))
 
 
-def hausdorff_distance_avg(bag1: Bag, bag2: Bag) -> float:
-    """Calcula la distancia de Hausdorff PROMEDIO entre dos bolsas.
+def hausdorff_distance_avg(obj1: Union[Bag, np.ndarray], obj2: Union[Bag, np.ndarray]) -> float:
+    """Calcula la distancia de Hausdorff PROMEDIO entre dos objetos.
  
     Definición formal (ec. 3.21):
  
@@ -113,19 +128,19 @@ def hausdorff_distance_avg(bag1: Bag, bag2: Bag) -> float:
     El resultado se normaliza por el número total de instancias de ambas bolsas.
 
     Args:
-        bag1: Primera bolsa.
-        bag2: Segunda bolsa.
+        obj1: Primer objeto (Bag o np.ndarray).
+        obj2: Segundo objeto (Bag o np.ndarray).
 
     Returns:
-        Distancia de Hausdorff promedio entre las dos bolsas.
+        Distancia de Hausdorff promedio entre los dos objetos.
     """
-    mat1, mat2, d_matrix = _distance_matrix(bag1, bag2)
+    mat1, mat2, d_matrix = _distance_matrix(obj1, obj2)
     if d_matrix is None:
         return float('inf')
  
     # sum_{a in A} min_{b in B} d(a,b): por cada fila (instancia A), min hacia B
     sum_A_to_B = float(np.sum(np.min(d_matrix, axis=1)))
- 
+  
     # sum_{b in B} min_{a in A} d(b,a): por cada columna (instancia B), min hacia A
     sum_B_to_A = float(np.sum(np.min(d_matrix, axis=0)))
  

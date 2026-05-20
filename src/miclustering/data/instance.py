@@ -10,6 +10,7 @@ class Instance:
         values: lista o array con los valores de la instancia.
         weight: peso (por defecto 1.0).
     """
+    __slots__ = ('_values', '_schema', '_weight')
 
     def __init__(self, values: List[Any], schema: List['Attribute'], weight: float = 1.0):
         """Constructor de la Instancia.

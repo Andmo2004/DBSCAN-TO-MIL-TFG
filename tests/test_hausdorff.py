@@ -21,6 +21,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
+src_dir = os.path.join(project_root, "src")
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
 # pyrefly: ignore [missing-import]
 from miclustering.distances.hausdorff import (
@@ -404,6 +407,40 @@ class TestHausdorffNumericalRobustness(unittest.TestCase):
         self.assertAlmostEqual(d_min, expected, places=10)
         self.assertAlmostEqual(d_avg, expected, places=10)
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# Tests de soporte np.ndarray
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestHausdorffNdarraySupport(unittest.TestCase):
+    
+    def test_ndarray_inputs(self):
+        """Verifica que las distancias acepten arrays numpy en lugar de Bags."""
+        A_mat = np.array([[0.0, 0.0], [1.0, 0.0]])
+        B_mat = np.array([[3.0, 0.0], [4.0, 0.0]])
+        
+        A_bag = make_bag(A_mat)
+        B_bag = make_bag(B_mat)
+        
+        for fn in [hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg]:
+            with self.subTest(fn=fn.__name__):
+                expected = fn(A_bag, B_bag)
+                result_array = fn(A_mat, B_mat)
+                self.assertAlmostEqual(expected, result_array, places=10)
+                
+    def test_mixed_inputs(self):
+        """Verifica que se pueda mezclar Bag con np.ndarray."""
+        A_mat = np.array([[0.0, 0.0]])
+        B_mat = np.array([[3.0, 4.0]])
+        
+        A_bag = make_bag(A_mat)
+        
+        for fn in [hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg]:
+            with self.subTest(fn=fn.__name__):
+                expected = fn(A_bag, make_bag(B_mat))
+                result1 = fn(A_bag, B_mat)
+                result2 = fn(A_mat, A_bag)
+                self.assertAlmostEqual(expected, result1, places=10)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Entry point

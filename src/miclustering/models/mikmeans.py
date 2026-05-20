@@ -7,8 +7,7 @@ from sklearn.base import BaseEstimator, ClusterMixin
 from miclustering.data.instance import Instance
 from miclustering.data.midata import MIData
 from miclustering.data.bag import Bag
-from miclustering.distances.hausdorff import hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg
-from miclustering.distances.probability_distribution import cauchy_schwarz_distance, earth_movers_distance, mahalanobis_distance
+from miclustering.distances import DISTANCE_REGISTRY
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +44,8 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         self._fitted = False
         self._train_bags: List[Bag] = []
         
-        # Centroides representados como objetos Bag
-        self._centroids: List[Bag] = []
+        # Centroides representados como arreglos (np.ndarray)
+        self._centroids: List[np.ndarray] = []
 
         logger.debug(f"MIKMeans inicializado: k={k}, metric={metric}")
 
@@ -63,8 +62,8 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         return self._fitted
         
     @property
-    def centroids(self) -> List[Bag]:
-        """Devuelve los centroides actuales (que son objetos Bag)."""
+    def centroids(self) -> List[np.ndarray]:
+        """Devuelve los centroides actuales (que son numpy arrays)."""
         return self._centroids
 
     def _reset_state(self):
@@ -74,27 +73,17 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         self._centroids = []
 
     def _get_metric_function(self, name: str) -> Callable[[Bag, Bag], float]:
-        metrics_registry = {
-            'hausdorff': hausdorff_distance,
-            'hausdorff_min': hausdorff_distance_min,
-            'hausdorff_avg': hausdorff_distance_avg,
-            'cauchy_schwarz': cauchy_schwarz_distance,
-            'earth_movers': earth_movers_distance,
-            'mahalanobis': mahalanobis_distance
-        }
-
-        if name not in metrics_registry:
-            valid_keys = list(metrics_registry.keys())
+        if name not in DISTANCE_REGISTRY:
+            valid_keys = list(DISTANCE_REGISTRY.keys())
             raise ValueError(f"Métrica '{name}' no reconocida. Disponibles: {valid_keys}")
         
-        return metrics_registry[name]
+        return DISTANCE_REGISTRY[name]
 
-    def _calculate_centroid(self, cluster_bags: List[Bag], cluster_id: int) -> Bag:
+    def _calculate_centroid(self, cluster_bags: List[Bag], cluster_id: int) -> np.ndarray:
         """
         Calcula el centroide de un conjunto de bolsas mediante la agregación de sus instancias.
         Calcula la media de todas las instancias dentro de las bolsas para crear un vector representativo,
-        y lo encapsula en un objeto Bag de una sola instancia, para permitir el cálculo
-        de distancias usando las métricas estándar de MIL.
+        y lo devuelve directamente como un arreglo numpy (ndarray), eliminando el hack de empaquetarlo en una bolsa de una instancia.
         """
         if not cluster_bags:
             raise ValueError(f"No se puede calcular el centroide del clúster {cluster_id} vacío.")
@@ -103,19 +92,7 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         all_instances = np.vstack([bag.as_matrix() for bag in cluster_bags])
         
         # El centroide es la media de todas las instancias
-        centroid_vector = np.mean(all_instances, axis=0)
-        
-        # Envolvemos en Instance para respetar el contrato de Bag
-        centroid_instance = Instance(
-            values=centroid_vector.tolist(),
-            schema=cluster_bags[0].instances[0]._schema
-        )        
-        
-        return Bag(
-            bag_id=f"centroid_{cluster_id}",
-            label=None,
-            instances=[centroid_instance]
-        )
+        return np.mean(all_instances, axis=0)
 
     def fit(self, dataset: MIData) -> "MIKMeans":
         """
@@ -169,9 +146,12 @@ class MIKMeans(BaseEstimator, ClusterMixin):
                 cluster_points = np.where(cluster_assignments == c)[0]
                 
                 if len(cluster_points) == 0:
-                    # Clúster vacío: mantener el centroide anterior o reasignar aleatoriamente
-                    logger.debug(f"Clúster {c} vacío en iteración {iteration}.")
-                    new_centroids.append(self._centroids[c])
+                    # Clúster vacío: reinicializar con el punto más alejado del centroide global
+                    logger.debug(f"Clúster {c} vacío en iteración {iteration}. Reinicializando centroide.")
+                    global_centroid = self._calculate_centroid(self._train_bags, -1)
+                    distances_to_global = [self._metric_func(bag, global_centroid) for bag in self._train_bags]
+                    farthest_idx = int(np.argmax(distances_to_global))
+                    new_centroids.append(self._calculate_centroid([self._train_bags[farthest_idx]], c))
                     continue
                     
                 cluster_bags = [self._train_bags[idx] for idx in cluster_points]

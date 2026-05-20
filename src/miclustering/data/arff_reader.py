@@ -111,6 +111,27 @@ class ArffToMIData:
         """Representación legible del transformador."""
         return f"ARFF to MIData Transformer"
 
+    @classmethod
+    def from_arff(cls, 
+                  file_path: str, 
+                  dataset_name: Optional[str] = None,
+                  bag_column: str = DEFAULT_BAG_COLUMN,
+                  class_column: str = DEFAULT_CLASS_COLUMN) -> MIData:
+        """Carga un dataset MIL desde un archivo ARFF directamente.
+        
+        Args:
+            file_path: Ruta al archivo ARFF.
+            dataset_name: Nombre del dataset (si es None, usa el nombre del archivo).
+            bag_column: Nombre de la columna con estructura relacional.
+            class_column: Nombre de la columna con etiquetas.
+            
+        Returns:
+            Objeto MIData con el dataset cargado.
+        """
+        logger.info(f"Cargando dataset desde ARFF de clase: {file_path}")
+        loader = cls(bag_column=bag_column, class_column=class_column)
+        return loader.load(file_path, dataset_name)
+
     def _load_arff_file(self, file_path: str) -> tuple:
         """Carga el archivo ARFF usando scipy y lo convierte en DataFrame.
 

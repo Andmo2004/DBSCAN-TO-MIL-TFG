@@ -21,6 +21,7 @@ class BaseScaler:
         self._schema: Optional[List[Attribute]] = None
         # Indice numerico
         self._numeric_indices: List[int] = []
+        self._numeric_to_position: Dict[int, int] = {}
   
     @property
     def is_fitted(self) -> bool:
@@ -115,6 +116,7 @@ class BaseScaler:
             if attr_type_clean in valid_types:
                 indices.append(i)
         
+        self._numeric_to_position = {idx: pos for pos, idx in enumerate(indices)}
         logger.debug(f"Identificados {len(indices)} atributos numéricos")
         return indices
     
@@ -375,8 +377,8 @@ class MinMaxScaler(BaseScaler):
                 for instance in bag:
                     for i, idx in enumerate(self._numeric_indices):
                         try:
-                            old_val = float(instance._values[idx])
-                            instance._values[idx] = transform_value(i, old_val)
+                            old_val = float(instance.get_value(idx))
+                            instance.set_value(idx, transform_value(i, old_val))
                         except (ValueError, TypeError):
                             continue
             return dataset
@@ -385,7 +387,7 @@ class MinMaxScaler(BaseScaler):
             return self._create_transformed_dataset(
                 dataset,
                 lambda idx, val: transform_value(
-                    self._numeric_indices.index(idx), val
+                    self._numeric_to_position[idx], val
                 )
             )
 
@@ -426,8 +428,8 @@ class MinMaxScaler(BaseScaler):
                 for instance in bag:
                     for i, idx in enumerate(self._numeric_indices):
                         try:
-                            old_val = float(instance._values[idx])
-                            instance._values[idx] = inverse_transform_value(i, old_val)
+                            old_val = float(instance.get_value(idx))
+                            instance.set_value(idx, inverse_transform_value(i, old_val))
                         except (ValueError, TypeError):
                             continue
             return dataset
@@ -435,7 +437,7 @@ class MinMaxScaler(BaseScaler):
             return self._create_transformed_dataset(
                 dataset,
                 lambda idx, val: inverse_transform_value(
-                    self._numeric_indices.index(idx), val
+                    self._numeric_to_position[idx], val
                 )
             )        
 
@@ -505,7 +507,7 @@ class StandardScaler(BaseScaler):
         if zero_std_mask.any():
             num_constant = zero_std_mask.sum()
             logger.warning(f"{num_constant} atributos tienen desviación estándar = 0")
-            std_val[zero_std_mask] = 1.0
+            self._std[zero_std_mask] = 1.0
         
         self._fitted = True
         # Usamos variables locales para evitar problemas de tipo en logging
@@ -554,8 +556,8 @@ class StandardScaler(BaseScaler):
                 for instance in bag:
                     for i, idx in enumerate(self._numeric_indices):
                         try:
-                            old_val = float(instance._values[idx])
-                            instance._values[idx] = transform_value(i, old_val)
+                            old_val = float(instance.get_value(idx))
+                            instance.set_value(idx, transform_value(i, old_val))
                         except (ValueError, TypeError):
                             continue
             return dataset
@@ -563,7 +565,7 @@ class StandardScaler(BaseScaler):
             return self._create_transformed_dataset(
                 dataset,
                 lambda idx, val: transform_value(
-                    self._numeric_indices.index(idx), val
+                    self._numeric_to_position[idx], val
                 )
             )
     
@@ -597,8 +599,8 @@ class StandardScaler(BaseScaler):
                 for instance in bag:
                     for i, idx in enumerate(self._numeric_indices):
                         try:
-                            old_val = float(instance._values[idx])
-                            instance._values[idx] = inverse_transform_value(i, old_val)
+                            old_val = float(instance.get_value(idx))
+                            instance.set_value(idx, inverse_transform_value(i, old_val))
                         except (ValueError, TypeError):
                             continue
             return dataset
@@ -606,6 +608,6 @@ class StandardScaler(BaseScaler):
             return self._create_transformed_dataset(
                 dataset,
                 lambda idx, val: inverse_transform_value(
-                    self._numeric_indices.index(idx), val
+                    self._numeric_to_position[idx], val
                 )
             )

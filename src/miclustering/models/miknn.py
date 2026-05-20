@@ -28,8 +28,7 @@ if project_root not in sys.path:
  
 from miclustering.data.bag import Bag
 from miclustering.data.midata import MIData
-from miclustering.distances.hausdorff import hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg
-from miclustering.distances.probability_distribution import cauchy_schwarz_distance, earth_movers_distance, mahalanobis_distance
+from miclustering.distances import DISTANCE_REGISTRY
 from miclustering.distances.distance_matrix import compute_distance_matrix
  
 logger = logging.getLogger(__name__)
@@ -39,14 +38,7 @@ class MIKnn(BaseEstimator, ClassifierMixin):
     Clasificador k-Nearest Neighbors para Multi-Instance Learning.
     '''
 
-    _METRICS_: Dict[str, Callable[[Bag, Bag], float]] = {
-        "hausdorff":      hausdorff_distance,
-        "hausdorff_min":  hausdorff_distance_min,
-        "hausdorff_avg":  hausdorff_distance_avg,
-        "cauchy_schwarz": cauchy_schwarz_distance,
-        "earth_movers":   earth_movers_distance,
-        "mahalanobis":    mahalanobis_distance,
-    } 
+ 
 
     def __init__(self, k: int = 3, metric: str = "hausdorff"):
         """Constructor del clasificador MIKnn.
@@ -64,8 +56,8 @@ class MIKnn(BaseEstimator, ClassifierMixin):
             raise ValueError(
                 f"El parámetro 'k' debe ser >= 1. Recibido: {k}"
             )
-        if metric.lower() not in self._METRICS_:
-            valid = list(self._METRICS_.keys())
+        if metric.lower() not in DISTANCE_REGISTRY:
+            valid = list(DISTANCE_REGISTRY.keys())
             raise ValueError(
                 f"Métrica '{metric}' no reconocida. Disponibles: {valid}"
             )
@@ -73,7 +65,7 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         self._k            = k
         self._metric_name  = metric.lower()
         self._metric_func: Callable[[Bag, Bag], float] = (
-            self._METRICS_[self._metric_name]
+            DISTANCE_REGISTRY[self._metric_name]
         )
  
         # Estado interno

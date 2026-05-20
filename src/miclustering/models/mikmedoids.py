@@ -6,8 +6,7 @@ from sklearn.base import BaseEstimator, ClusterMixin
 
 from miclustering.data.midata import MIData
 from miclustering.data.bag import Bag
-from miclustering.distances.hausdorff import hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg
-from miclustering.distances.probability_distribution import cauchy_schwarz_distance, earth_movers_distance, mahalanobis_distance
+from miclustering.distances import DISTANCE_REGISTRY
 from miclustering.distances.distance_matrix import compute_distance_matrix
 
 logger = logging.getLogger(__name__)
@@ -79,20 +78,11 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
         self._distance_matrix = None
 
     def _get_metric_function(self, name: str) -> Callable[[Bag, Bag], float]:
-        metrics_registry = {
-            'hausdorff': hausdorff_distance,
-            'hausdorff_min': hausdorff_distance_min,
-            'hausdorff_avg': hausdorff_distance_avg,
-            'cauchy_schwarz': cauchy_schwarz_distance,
-            'earth_movers': earth_movers_distance,
-            'mahalanobis': mahalanobis_distance
-        }
-
-        if name not in metrics_registry:
-            valid_keys = list(metrics_registry.keys())
+        if name not in DISTANCE_REGISTRY:
+            valid_keys = list(DISTANCE_REGISTRY.keys())
             raise ValueError(f"Métrica '{name}' no reconocida. Disponibles: {valid_keys}")
         
-        return metrics_registry[name]
+        return DISTANCE_REGISTRY[name]
 
     def _compute_distance_matrix(self, bags: List[Bag]) -> np.ndarray:
         return compute_distance_matrix(bags, self._metric_func, self._metric_name)

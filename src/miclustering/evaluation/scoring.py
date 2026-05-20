@@ -117,6 +117,9 @@ def score_labels(
         base_f1 = float(f1_score(y_true, y_mapped, average='binary', zero_division=0))
 
     # ── Penalización por ruido excesivo y fragmentación ───────────────────────
+    # NOTA TFG: Los siguientes umbrales (30% de ruido, 10 clústeres) y coeficientes 
+    # (0.5 y 0.02) son hiperparámetros empíricos definidos para penalizar soluciones 
+    # degeneradas que el F1 puro podría no penalizar suficientemente.
     noise_pct = float(np.sum(y_pred < 0)) / len(y_pred)
     # Penalizar si ruido > 30%
     noise_penalty = max(0.0, noise_pct - 0.30) * 0.5
