@@ -171,7 +171,7 @@ class MILEvaluator:
         for bag in dataset.bags:
             if bag.bag_id in model_labels:
                 # Convertimos la etiqueta de la bolsa a int (por si viene como string '1.0')
-                label_val = int(float(bag.label)) if isinstance(bag.label, (str, float)) else int(bag.label)
+                label_val = parse_label(bag.label) if isinstance(bag.label, (str, float)) else int(bag.label)
                 y_true.append(label_val)
                 y_pred_raw.append(model_labels[bag.bag_id])
         

@@ -4,7 +4,6 @@ import numpy as np
 from collections import Counter
 from sklearn.base import BaseEstimator, ClusterMixin
 
-from miclustering.data.instance import Instance
 from miclustering.data.midata import MIData
 from miclustering.data.bag import Bag
 from miclustering.distances import DISTANCE_REGISTRY
@@ -43,9 +42,7 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         self._labels: Dict[str, int] = {}
         self._fitted = False
         self._train_bags: List[Bag] = []
-        
-        # Centroides representados como arreglos (np.ndarray)
-        self._centroids: List[np.ndarray] = []
+        self._centroids: List[Bag] = []
 
         logger.debug(f"MIKMeans inicializado: k={k}, metric={metric}")
 
@@ -62,8 +59,8 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         return self._fitted
         
     @property
-    def centroids(self) -> List[np.ndarray]:
-        """Devuelve los centroides actuales (que son numpy arrays)."""
+    def centroids(self) -> List[Bag]:
+        """Devuelve los centroides actuales (objetos Bag)."""
         return self._centroids
 
     def _reset_state(self):
@@ -79,11 +76,18 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         
         return DISTANCE_REGISTRY[name]
 
-    def _calculate_centroid(self, cluster_bags: List[Bag], cluster_id: int) -> np.ndarray:
+    def _array_to_bag(self, centroid: np.ndarray, cluster_id: int) -> Bag:
+        """Envuelve un vector centroide en un Bag sintético de una instancia."""
+        schema = self._train_bags[0][0].schema   # reutiliza el schema del dataset
+        instance = Instance(centroid.tolist(), schema)
+        return Bag(bag_id=f"__centroid_{cluster_id}__", label=-1, instances=[instance])
+
+    def _calculate_centroid(self, cluster_bags: List[Bag], cluster_id: int) -> Bag:
         """
         Calcula el centroide de un conjunto de bolsas mediante la agregación de sus instancias.
         Calcula la media de todas las instancias dentro de las bolsas para crear un vector representativo,
-        y lo devuelve directamente como un arreglo numpy (ndarray), eliminando el hack de empaquetarlo en una bolsa de una instancia.
+        y lo empaqueta de vuelta en un objeto Bag con una única instancia para mantener la
+        coherencia con las abstracciones de dominio.
         """
         if not cluster_bags:
             raise ValueError(f"No se puede calcular el centroide del clúster {cluster_id} vacío.")
@@ -92,7 +96,7 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         all_instances = np.vstack([bag.as_matrix() for bag in cluster_bags])
         
         # El centroide es la media de todas las instancias
-        return np.mean(all_instances, axis=0)
+        return self._array_to_bag(np.mean(all_instances, axis=0), cluster_id)
 
     def fit(self, dataset: MIData) -> "MIKMeans":
         """

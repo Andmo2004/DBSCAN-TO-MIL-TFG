@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import numpy as np
 from typing import List, Dict, Optional, Tuple
 import logging
@@ -9,7 +10,7 @@ from miclustering.data.attribute import Attribute
 
 logger = logging.getLogger(__name__)
 
-class BaseScaler:
+class BaseScaler(ABC):
     """
     Clase base para el preprocesado de datos Multi Instancia.
     Seguimos el patrón sckit-learn
@@ -38,6 +39,7 @@ class BaseScaler:
         """Índices de atributos numéricos."""
         return self._numeric_indices.copy()
     
+    @abstractmethod
     def fit(self, dataset: MIData) -> 'BaseScaler':
         """Aprende los parámetros de transformación desde el dataset.
 
@@ -46,12 +48,10 @@ class BaseScaler:
 
         Returns:
             Self para encadenamiento de métodos.
-
-        Raises:
-            NotImplementedError: Debe ser implementado por subclases.
         """
-        raise NotImplementedError("Las subclases deben implementar fit()")
+        ...
     
+    @abstractmethod
     def transform(self, dataset: MIData, inplace: bool = False) -> MIData:
         """Aplica la transformación al dataset.
         
@@ -61,11 +61,8 @@ class BaseScaler:
 
         Returns:
             Dataset transformado.
-
-        Raises:
-            NotImplementedError: Debe ser implementado por subclases.
         """
-        raise NotImplementedError("Las subclases deben implementar fit()")
+        ...
     
     def fit_transform(self, dataset: MIData) -> MIData:
         """Entrena y transforma en un solo paso.

@@ -39,8 +39,15 @@ class PersistentDistanceMatrixCache:
 
         if os.path.exists(filepath):
             matrix = np.load(filepath)
-            self._memory_cache[key] = matrix
-            return matrix
+            expected_shape = (len(bags), len(bags))
+            if matrix.shape != expected_shape:
+                logger.warning(
+                    f"Matriz en caché {filepath} tiene shape {matrix.shape}, "
+                    f"se esperaba {expected_shape}. Recalculando."
+                )
+            else:
+                self._memory_cache[key] = matrix
+                return matrix
 
         # 3. Calcular
         if metric_func is None:

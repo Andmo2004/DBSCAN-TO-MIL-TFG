@@ -131,63 +131,65 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
         self._core_bags.append(bag)
         self._core_bag_labels[bag.bag_id] = cluster_id
 
-    def fit(self, dataset: MIData):
-        """Entrenar el modelo DBSCAN, con el dataset.
-
+    def fit(
+        self,
+        dataset: MIData,
+        precomputed_matrix: Optional[np.ndarray] = None,
+    ) -> "MIDBSCAN":
+        """Entrenar el modelo DBSCAN con el dataset.
+ 
         Args:
             dataset: Objeto MIData con las bolsas de entrenamiento.
-
+            precomputed_matrix: Matriz de distancias (N×N) ya calculada.
+                                Si se proporciona, se omite el cálculo interno.
+                                Debe estar alineada con ``dataset.bags`` en el mismo orden.
+ 
         Returns:
             Instancia del modelo para permitir encadenamiento.
-
+ 
         Raises:
-            ValueError: Si el dataset está vacío.
+            ValueError: Si el dataset está vacío o la forma de la matriz no coincide
+                        con el número de bolsas.
         """
-
         if dataset.get_num_bags() == 0:
             error_msg = "El dataset de entrenamiento está vacío."
             logger.error(error_msg)
             raise ValueError(error_msg)
-
-        # 1. Capturar la matriz inyectada ANTES de que _reset_state() la borre
-        precomputed_matrix = self._distance_matrix
-
-        # 2. Reset del estado (pone _distance_matrix = None)
+ 
+        if precomputed_matrix is not None:
+            n = dataset.get_num_bags()
+            if precomputed_matrix.shape != (n, n):
+                raise ValueError(
+                    f"precomputed_matrix shape {precomputed_matrix.shape} "
+                    f"no coincide con n_bags={n}"
+                )
+ 
         self._reset_state()
-
-        # 3. Ahora sí definimos bags y num_bags
+ 
         bags = dataset.bags
         self._train_bags = bags
         num_bags = len(bags)
-
-        # 4. Restaurar matriz precalculada o calcularla si no había
+ 
         if precomputed_matrix is not None:
             self._distance_matrix = precomputed_matrix
-            logger.debug("Reutilizando matriz de distancias precomputada (grid search mode).")
+            logger.debug("Reutilizando matriz de distancias precomputada.")
         else:
             self._distance_matrix = self._compute_distance_matrix(bags)
-
+ 
         logger.info(f"Iniciando clustering DBSCAN (eps={self._epsilon}, min_pts={self._min_pts})...")
     
-        # Vector de visitados a false
         visited = np.zeros(num_bags, dtype=bool)
-        
-        # Inicializamos etiquetas como None
         bag_cluster_map: Dict[str, Optional[int]] = {b.bag_id: None for b in bags}
         current_cluster_id = 0
-
-        # Comenzamos Algoritmo
+ 
         for i in range(num_bags):
             if visited[i]:
                 continue
-
+ 
             visited[i] = True
-            
-            # Buscamos vecinos
             neighbors_index = np.where(self._distance_matrix[i] <= self._epsilon)[0]
-
+ 
             if len(neighbors_index) < self._min_pts:
-                # Marcar como ruido (puede cambiar luego si es alcanzable por otro cluster)
                 bag_cluster_map[bags[i].bag_id] = self.NOISE_LABEL
                 continue
             
@@ -195,17 +197,15 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
             self._add_core_point(bags[i], current_cluster_id)
             bag_cluster_map[bags[i].bag_id] = current_cluster_id
             self._expand_cluster(
-                                neighbors_index,
-                                current_cluster_id,
-                                self._distance_matrix,
-                                visited,
-                                bag_cluster_map,
-                                bags
-                            )
+                neighbors_index,
+                current_cluster_id,
+                self._distance_matrix,
+                visited,
+                bag_cluster_map,
+                bags,
+            )
             current_cluster_id += 1
-
-        # Limpiamos el diccionario
-        # Si v es None, lo cambiamos por self.NOISE_LABEL (que suele ser -1).
+ 
         self._labels = {k: (v if v is not None else self.NOISE_LABEL) for k, v in bag_cluster_map.items()}
         self._cluster_count = current_cluster_id
         self._fitted = True

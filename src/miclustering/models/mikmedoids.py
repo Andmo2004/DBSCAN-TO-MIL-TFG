@@ -87,18 +87,31 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
     def _compute_distance_matrix(self, bags: List[Bag]) -> np.ndarray:
         return compute_distance_matrix(bags, self._metric_func, self._metric_name)
 
-    def fit(self, dataset: MIData) -> "MIKMedoids":
+    def fit(self, dataset: MIData, precomputed_matrix: Optional[np.ndarray] = None) -> "MIKMedoids":
         """
         Entrena el modelo K-Medoids con el dataset usando el algoritmo PAM.
+        
+        Args:
+            dataset: Objeto MIData con las bolsas de entrenamiento.
+            precomputed_matrix: Matriz de distancias (N×N) ya calculada.
+                                Si se proporciona, se omite el cálculo interno.
+                                Debe estar alineada con dataset.bags en el mismo orden.
         """
         if dataset.get_num_bags() == 0:
             raise ValueError("El dataset de entrenamiento está vacío.")
+
+        if precomputed_matrix is not None:
+            n = dataset.get_num_bags()
+            if precomputed_matrix.shape != (n, n):
+                raise ValueError(
+                    f"precomputed_matrix shape {precomputed_matrix.shape} "
+                    f"no coincide con n_bags={n}"
+                )
             
         if dataset.get_num_bags() < self._k:
             logger.warning(f"El número de bolsas ({dataset.get_num_bags()}) es menor que k ({self._k}). Se ajustará k al número de bolsas.")
             self._k = dataset.get_num_bags()
 
-        precomputed_matrix = self._distance_matrix
         self._reset_state()
 
         self._train_bags = dataset.bags

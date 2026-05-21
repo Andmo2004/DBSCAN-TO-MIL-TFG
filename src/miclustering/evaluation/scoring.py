@@ -18,7 +18,7 @@ def detect_imbalance_ratio(dataset: MIData) -> float:
     """
     labels = []
     for bag in dataset.bags:
-        lv = int(float(bag.label)) if isinstance(bag.label, (str, float)) else int(bag.label)
+        lv = parse_label(bag.label) if isinstance(bag.label, (str, float)) else int(bag.label)
         labels.append(lv)
 
     arr = np.array(labels)
@@ -54,7 +54,7 @@ def score_labels(
     y_true, y_pred = [], []
     for bag in dataset.bags:
         if bag.bag_id in predicted_labels:
-            label_val = int(float(bag.label)) \
+            label_val = parse_label(bag.label) \
                 if isinstance(bag.label, (str, float)) else int(bag.label)
             y_true.append(label_val)
             y_pred.append(predicted_labels[bag.bag_id])
