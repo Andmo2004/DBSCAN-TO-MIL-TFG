@@ -25,16 +25,16 @@ src_dir = os.path.join(project_root, "src")
 if src_dir not in sys.path:
     sys.path.insert(0, src_dir)
 
-# pyrefly: ignore [missing-import]
+
 from miclustering.distances.hausdorff import (
     hausdorff_distance,
     hausdorff_distance_min,
     hausdorff_distance_avg,
 )
 
-from miclustering.data.bag import Bag # pyrefly: ignore [missing-import]
-from miclustering.data.instance import Instance # pyrefly: ignore [missing-import]
-from miclustering.data.attribute import Attribute # pyrefly: ignore [missing-import]
+from miclustering.data.bag import Bag 
+from miclustering.data.instance import Instance 
+from miclustering.data.attribute import Attribute 
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 

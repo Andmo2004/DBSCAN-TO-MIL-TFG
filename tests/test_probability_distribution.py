@@ -22,16 +22,16 @@ if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
 
-# pyrefly: ignore [missing-import]
+
 from miclustering.distances.probability_distribution import (
     cauchy_schwarz_distance,
     earth_movers_distance,
     mahalanobis_distance,
 )
 
-from miclustering.data.bag import Bag # pyrefly: ignore [missing-import]
-from miclustering.data.instance import Instance # pyrefly: ignore [missing-import]
-from miclustering.data.attribute import Attribute # pyrefly: ignore [missing-import]s
+from miclustering.data.bag import Bag 
+from miclustering.data.instance import Instance 
+from miclustering.data.attribute import Attribute
 
 # ── Helper ────────────────────────────────────────────────────────────────────
 

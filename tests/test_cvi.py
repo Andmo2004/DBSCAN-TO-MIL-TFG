@@ -17,13 +17,13 @@ if project_root not in sys.path:
 
 import numpy as np
 
-from miclustering.data.midata import MIData # pyrefly: ignore [missing-import]
-from miclustering.models.midbscan import MIDBSCAN # pyrefly: ignore [missing-import]
-from miclustering.preprocessing.scaler import MinMaxScaler, StandardScaler # pyrefly: ignore [missing-import]
-from miclustering.distances.hausdorff import hausdorff_distance # pyrefly: ignore [missing-import]
-from miclustering.distances.cauchy_schwarz import cauchy_schwarz_distance # pyrefly: ignore [missing-import]
-from miclustering.distances.distance_matrix import compute_distance_matrix # pyrefly: ignore [missing-import]
-from miclustering.evaluation.cvi import SEDIndex, HcIndex, DDIndex # pyrefly: ignore [missing-import]
+from miclustering.data.midata import MIData 
+from miclustering.models.midbscan import MIDBSCAN 
+from miclustering.preprocessing.scaler import MinMaxScaler, StandardScaler 
+from miclustering.distances.hausdorff import hausdorff_distance 
+from miclustering.distances.cauchy_schwarz import cauchy_schwarz_distance 
+from miclustering.distances.distance_matrix import compute_distance_matrix 
+from miclustering.evaluation.cvi import SEDIndex, HcIndex, DDIndex 
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 logger = logging.getLogger("test_cvi")
