@@ -176,8 +176,6 @@ def mahalanobis_distance(bag1: Bag, bag2: Bag) -> float:
     diff = mu_a - mu_b             # (d,)
  
     #  Covarianzas (rowvar=False: cada columna es una variable) 
-    # np.cov necesita al menos 2 instancias para estimar covarianza.
-    # Con 1 instancia la covarianza es cero → usamos identidad como fallback.
     if len(mat1) < 2:
         cov_a = np.eye(mat1.shape[1])
     else:
@@ -195,28 +193,37 @@ def mahalanobis_distance(bag1: Bag, bag2: Bag) -> float:
     cov_combined += np.eye(cov_combined.shape[0]) * epsilon
  
     #  Inversión con regularización si es necesario 
-    # Intentamos inversión directa; si falla (singular) usamos pseudoinversa.
     try:
         cov_inv = np.linalg.inv(cov_combined)
     except np.linalg.LinAlgError:
         try:
             cov_inv = np.linalg.pinv(cov_combined)
         except np.linalg.LinAlgError:
-            # Fallback extremo: si SVD tampoco converge, usamos la matriz identidad.
-            # Esto convierte efectivamente a Mahalanobis en una distancia Euclidiana
-            # para este par de bolsas concreto, evitando que el script colapse.
             cov_inv = np.eye(cov_combined.shape[0])
- 
-    # Comprobación adicional: si la inversa tiene valores muy grandes
-    # (casi-singularidad), también usamos pseudoinversa.
+
+    # Validar ANTES del matmul: si inv falla silenciosamente (Accelerate/Mac),
+    # pinv puede seguir produciendo inf — en ese caso caemos a identidad.
     if not np.all(np.isfinite(cov_inv)):
-        cov_inv = np.linalg.pinv(cov_combined)
+        try:
+            cov_inv = np.linalg.pinv(cov_combined)
+        except np.linalg.LinAlgError:
+            cov_inv = np.eye(cov_combined.shape[0])
+
+    # Segunda guardia: si pinv tampoco da valores finitos, usar identidad
+    # (equivale a distancia euclídea en ese par concreto de bolsas)
+    if not np.all(np.isfinite(cov_inv)):
+        cov_inv = np.eye(cov_combined.shape[0])
  
     #  Distancia de Mahalanobis 
     # d = (μ_a - μ_b)^T * Σ^{-1} * (μ_a - μ_b)
-    # Devolvemos la raíz cuadrada para que la escala sea comparable a
-    # distancias euclidianas (mismas unidades que el espacio original).
-    maha_sq = float(diff @ cov_inv @ diff)
- 
+    maha_sq_raw = diff @ cov_inv @ diff
+
+    # Protección multiplataforma: en Mac/Accelerate el matmul puede producir
+    # inf o nan antes de llegar aquí si cov_inv tiene valores extremos.
+    # Fallback: distancia euclídea entre medias (misma escala que Mahalanobis
+    # cuando Σ = I, sin lanzar warnings).
+    if not np.isfinite(maha_sq_raw):
+        return float(np.linalg.norm(diff))
+
     # Protección numérica: por errores de punto flotante puede ser ligeramente negativo
-    return float(np.sqrt(max(0.0, maha_sq)))
+    return float(np.sqrt(max(0.0, float(maha_sq_raw))))
