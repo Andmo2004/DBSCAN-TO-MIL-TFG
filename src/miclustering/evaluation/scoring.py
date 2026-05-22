@@ -3,6 +3,7 @@ import numpy as np
 from typing import Dict
 
 from miclustering.data.midata import MIData
+from miclustering.data.utils import parse_label
 from scipy.optimize import linear_sum_assignment
 from sklearn.metrics import f1_score
 
