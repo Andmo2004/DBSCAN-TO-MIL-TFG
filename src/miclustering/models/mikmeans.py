@@ -6,6 +6,7 @@ from sklearn.base import BaseEstimator, ClusterMixin
 
 from miclustering.data.midata import MIData
 from miclustering.data.bag import Bag
+from miclustering.data.instance import Instance
 from miclustering.distances import DISTANCE_REGISTRY
 
 logger = logging.getLogger(__name__)
