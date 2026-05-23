@@ -10,6 +10,7 @@ MIClustering implementa algoritmos de clustering y clasificación adaptados al p
 
 - [Instalación](#instalación)
 - [Inicio rápido](#inicio-rápido)
+- [Ejecución desde JSON](#ejecución-desde-json-run_json)
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Modelos](#modelos)
 - [Métricas de distancia](#métricas-de-distancia)
@@ -99,6 +100,133 @@ Precision       | 0.8421
 Recall          | 0.7619
 F1-Score        | 0.8000
 Specificity     | 0.8750
+```
+
+---
+
+## Ejecución desde JSON (`run_json`)
+
+Para ejecutar experimentos de forma programática y reproducible, MIClustering proporciona la función `run_json`, que lee una configuración desde un archivo JSON y ejecuta automáticamente el pipeline completo (carga de datos, escalado, entrenamiento, evaluación).
+
+### Formato del archivo de configuración JSON
+
+```json
+{
+  "dataset": "musk1",
+  "medida_de_distancia": "hausdorff",
+  "metodo_de_escalado": "MinMaxScaler",
+  "semilla": 42,
+  "algoritmo": "midbscan",
+  "hiperparametros": {
+    "epsilon": 0.5,
+    "min_pts": 2
+  },
+  "optimizar_optuna": false
+}
+```
+
+#### Campos disponibles:
+
+| Campo | Alias español | Tipo | Valores posibles | Default |
+|---|---|---|---|---|
+| `dataset` | — | string | Nombre del dataset (ej: `"musk1"`) | **requerido** |
+| `distance_metric` | `medida_de_distancia` | string | `hausdorff`, `hausdorff_avg`, `hausdorff_min`, `earth_movers`, `mahalanobis`, `cauchy_schwarz` | `"hausdorff"` |
+| `scaler` | `metodo_de_escalado` | string\|null | `"MinMaxScaler"`, `"StandardScaler"`, `"none"` (sin escalado) | `"MinMaxScaler"` |
+| `seed` | `semilla` | integer | Cualquier entero positivo | `None` |
+| `algorithm` | `algoritmo` | string | `"midbscan"`, `"mikmeans"`, `"mikmedoids"`, `"miknn"` | `"midbscan"` |
+| `hyperparams` | `hiperparametros` | object | Depende del algoritmo | `{}` |
+| `optuna_optimize` | `optimizar_optuna` | boolean | `true` / `false` | `false` |
+
+#### Hiperparámetros por algoritmo:
+
+**MIDBSCAN:** `epsilon` (float), `min_pts` (int)  
+**MIKMeans:** `k` (int), `max_iters` (int)  
+**MIKMedoids:** `k` (int)  
+**MIKnn:** `k` (int)  
+
+### Uso básico
+
+```python
+from miclustering.run import run_json
+
+# Ejecutar desde archivo JSON
+result = run_json("config.json", verbose=True)
+
+# Acceder a los resultados
+print(result["metrics"]["F1-Score"])          # 0.84
+print(result["metrics"]["Precision"])         # 0.85
+print(result["hyperparams"])                  # {"epsilon": 0.5, "min_pts": 2}
+print(result["config"]["dataset"])            # "musk1"
+```
+
+### Guardado automático de resultados
+
+```python
+from miclustering.run import run_json
+
+result = run_json(
+    "config.json",
+    output_dir="results/",
+    verbose=True
+)
+
+# Se guarda automáticamente en: results/experiment_<timestamp>.json
+print(result["output_file"])  # Ruta del archivo JSON guardado
+```
+
+### Uso programático con datos en memoria
+
+Útil en notebooks o para evitar leer desde disco repetidamente:
+
+```python
+from miclustering.run import run_json
+from miclustering import MIData
+
+# Cargar datos una sola vez
+dataset = MIData.from_arff("datasets/musk1.arff")
+train_data, test_data = dataset.split_data(percentage_train=70, seed=42)
+
+# Ejecutar múltiples configuraciones sin releer del disco
+result1 = run_json("config1.json", train_data=train_data, test_data=test_data)
+result2 = run_json("config2.json", train_data=train_data, test_data=test_data)
+result3 = run_json("config3.json", train_data=train_data, test_data=test_data)
+```
+
+### Estructura del resultado
+
+```python
+{
+  "dataset": "musk1",
+  "config": {
+    "dataset": "musk1",
+    "algorithm": "midbscan",
+    "distance_metric": "hausdorff",
+    "scaler": "MinMaxScaler",
+    "seed": 42
+  },
+  "hyperparams": {"epsilon": 0.5, "min_pts": 2},
+  "metrics": {
+    "Accuracy": 0.8421,
+    "Precision": 0.8421,
+    "Recall": 0.7619,
+    "F1-Score": 0.8000,
+    "Specificity": 0.8750
+  },
+  "output_file": "results/experiment_2026-05-23_14-30-45.json",
+  "mapping": {0: 1, 1: 0}  # Mapeo óptimo cluster → clase (solo MIDBSCAN, MIKMeans, MIKMedoids)
+}
+```
+
+### Ejemplo con optimización de hiperparámetros (Optuna)
+
+```json
+{
+  "dataset": "musk1",
+  "algoritmo": "midbscan",
+  "optimizar_optuna": true,
+  "optuna_trials": 30,
+  "metrica_de_rendimiento_a_optimizar": "F1-Score"
+}
 ```
 
 ---
