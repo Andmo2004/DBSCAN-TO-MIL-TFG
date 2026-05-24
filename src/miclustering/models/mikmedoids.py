@@ -170,7 +170,8 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
 
         self._labels = {self._train_bags[i].bag_id: int(cluster_assignments[i]) for i in range(num_bags)}
         self._fitted = True
-        
+        self._distance_matrix = None
+
         return self
 
     def predict(self, test_dataset: MIData) -> Dict[str, int]:

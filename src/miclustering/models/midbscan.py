@@ -210,6 +210,8 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
         self._cluster_count = current_cluster_id
         self._fitted = True
         
+        self._distance_matrix = None
+        
         return self 
 
     def _expand_cluster(self, 
