@@ -38,7 +38,7 @@ class PersistentDistanceMatrixCache:
             return self._memory_cache[key]
 
         # 2. Disco
-        filename = f"dist_matrix_{dataset_name}_{split}_{scaler_name}_{metric_name}.npy"
+        filename = f"dist_matrix__{dataset_name}__{split}__{scaler_name}__{metric_name}.npy"
         filepath = os.path.join(_get_cache_dir(), filename)
 
         if os.path.exists(filepath):
