@@ -8,12 +8,16 @@ logger = logging.getLogger(__name__)
 
 # La librería usa un directorio local por defecto, pero permite sobreescribirlo
 DEFAULT_CACHE_DIR = os.path.join(os.getcwd(), ".miclustering_cache", "distance_matrices")
-CACHE_DIR = os.environ.get("MICLUSTERING_CACHE_DIR", DEFAULT_CACHE_DIR)
+
+def _get_cache_dir():
+    """Lee la variable de entorno en tiempo de ejecución para permitir cambios dinámicos."""
+    return os.environ.get("MICLUSTERING_CACHE_DIR", DEFAULT_CACHE_DIR)
 
 class PersistentDistanceMatrixCache:
     """Caché para almacenar matrices de distancias en disco y evitar recalcularlas."""
     def __init__(self):
-        os.makedirs(CACHE_DIR, exist_ok=True)
+        cache_dir = _get_cache_dir()
+        os.makedirs(cache_dir, exist_ok=True)
         self._memory_cache = {}
 
     def get(
@@ -35,7 +39,7 @@ class PersistentDistanceMatrixCache:
 
         # 2. Disco
         filename = f"dist_matrix_{dataset_name}_{split}_{scaler_name}_{metric_name}.npy"
-        filepath = os.path.join(CACHE_DIR, filename)
+        filepath = os.path.join(_get_cache_dir(), filename)
 
         if os.path.exists(filepath):
             matrix = np.load(filepath)
