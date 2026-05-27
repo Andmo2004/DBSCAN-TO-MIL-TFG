@@ -49,7 +49,7 @@ _KEY_ALIASES: Dict[str, str] = {
 }
 
 
-# ── Dataclass principal ───────────────────────────────────────────────────────
+#  Dataclass principal 
 
 @dataclass
 class RunConfig:
@@ -81,7 +81,7 @@ class RunConfig:
     train_pct:       float                = 70.0
     extra:           Dict[str, Any]       = field(default_factory=dict)
 
-    # ── Constructor alternativo ──────────────────────────────────────────────
+    #  Constructor alternativo 
 
     @classmethod
     def from_dict(cls, raw: Dict[str, Any]) -> "RunConfig":
@@ -105,13 +105,13 @@ class RunConfig:
             canonical = _KEY_ALIASES.get(k.lower().strip(), k.lower().strip())
             normalized[canonical] = v
 
-        # ── Campo obligatorio: dataset ──────────────────────────────────────
+        #  Campo obligatorio: dataset 
         if "dataset" not in normalized:
             raise ValueError(
                 "El campo 'dataset' es obligatorio en la configuración JSON."
             )
 
-        # ── Defaults + extracción de campos conocidos ───────────────────────
+        #  Defaults + extracción de campos conocidos 
         known_fields = {
             f.name for f in cls.__dataclass_fields__.values()  # type: ignore[attr-defined]
         } - {"extra"}
@@ -127,7 +127,7 @@ class RunConfig:
 
         kwargs["extra"] = extra
 
-        # ── Normalización de tipos ──────────────────────────────────────────
+        #  Normalización de tipos 
         if "algorithm" in kwargs:
             kwargs["algorithm"] = str(kwargs["algorithm"]).lower().strip()
 
@@ -144,7 +144,7 @@ class RunConfig:
         instance._validate()
         return instance
 
-    # ── Validación interna ───────────────────────────────────────────────────
+    #  Validación interna 
 
     def _validate(self) -> None:
         """Lanza ValueError si algún campo contiene un valor inválido."""
@@ -177,7 +177,7 @@ class RunConfig:
                 f"'n_trials' debe ser >= 1. Recibido: {self.n_trials}"
             )
 
-    # ── Representación ───────────────────────────────────────────────────────
+    #  Representación 
 
     def __str__(self) -> str:
         lines = [

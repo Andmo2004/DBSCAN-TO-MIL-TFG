@@ -88,14 +88,13 @@ class ArffToMIData:
         
         logger.info(f"Iniciando carga de '{file_path}' como dataset '{dataset_name}'")
         
-        # Cargar y validar estructura
-        df, meta = self._load_arff_file(file_path)
+        # Step 1: Cargar archivo ARFF (I/O + parsing de esquema relacional)
+        df, meta, instance_schema = self._load_arff_file(file_path)
+        
+        # Step 2: Validar estructura (puro DataFrame)
         self._validate_structure(df, file_path)
         
-        # Extraer esquema de instancias
-        instance_schema = self._extract_instance_schema(file_path)
-        
-        # Construir bolsas
+        # Step 3: Construir grafo de objetos (puro - sin I/O)
         bags = self._build_bags(df, instance_schema)
         
         # Crear y retornar MIData
@@ -133,13 +132,13 @@ class ArffToMIData:
         return loader.load(file_path, dataset_name)
 
     def _load_arff_file(self, file_path: str) -> tuple:
-        """Carga el archivo ARFF usando scipy y lo convierte en DataFrame.
+        """Carga el archivo ARFF usando scipy y extrae metadata y esquema de instancias.
 
         Args:
             file_path: Ruta al archivo.
 
         Returns:
-            Tupla (DataFrame, metadata).
+            Tupla (DataFrame, metadata, instance_schema).
 
         Raises:
             ValueError: Si hay error al parsear el archivo.
@@ -148,7 +147,11 @@ class ArffToMIData:
             data, meta = arff.loadarff(file_path)
             df = pd.DataFrame(data)
             logger.debug(f"ARFF parseado: {df.shape[0]} filas, {df.shape[1]} columnas")
-            return df, meta
+            
+            # Extraer esquema de instancias del archivo ARFF (una sola lectura)
+            instance_schema = self._extract_instance_schema_from_file(file_path)
+            
+            return df, meta, instance_schema
         except Exception as e:
             error_msg = f"Error parseando archivo ARFF: {e}"
             logger.error(error_msg)
@@ -187,8 +190,11 @@ class ArffToMIData:
         
         logger.debug("Validación de estructura completada exitosamente")
     
-    def _extract_instance_schema(self, file_path: str) -> List[Attribute]:
+    def _extract_instance_schema_from_file(self, file_path: str) -> List[Attribute]:
         """Extrae el esquema de atributos de las instancias desde el archivo ARFF.
+        
+        Método privado llamado una sola vez durante _load_arff_file() para evitar
+        releer el archivo.
 
         Args:
             file_path: Ruta al archivo ARFF.

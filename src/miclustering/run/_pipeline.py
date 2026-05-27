@@ -34,7 +34,7 @@ from ._config import RunConfig
 
 logger = logging.getLogger(__name__)
 
-# ── Registro de constructores de modelos ─────────────────────────────────────
+#  Registro de constructores de modelos 
 
 _MODEL_REGISTRY = {
     "midbscan":   MIDBSCAN,
@@ -49,7 +49,7 @@ _SUPPORTS_RANDOM_STATE = {"mikmeans", "mikmedoids"}
 # Parámetros que aceptan precomputed_matrix en fit()
 _SUPPORTS_PRECOMPUTED = {"midbscan", "mikmedoids"}
 
-# ── Función principal ────────────────────────────────────────────────────────
+#  Función principal 
 
 
 def run_pipeline(
@@ -82,16 +82,16 @@ def run_pipeline(
             "mapping"    : Dict cluster→clase (solo clustering), vacío para KNN.
     """
 
-    # ── 1. Escalar ────────────────────────────────────────────────────────────
+    #  1. Escalar 
     train_scaled, test_scaled = _apply_scaler(train_data, test_data, config)
 
     y_true_train = _labels_array(train_scaled)
     y_true_test  = _labels_array(test_scaled)
 
-    # ── 2. Obtener función de distancia ───────────────────────────────────────
+    #  2. Obtener función de distancia 
     metric_func = DISTANCE_REGISTRY[config.distance_metric]
 
-    # ── 3. Precomputar matriz de distancias si el modelo la necesita ──────────
+    #  3. Precomputar matriz de distancias si el modelo la necesita 
     dist_matrix: Optional[np.ndarray] = None
     if config.algorithm in _SUPPORTS_PRECOMPUTED:
         logger.info(
@@ -103,12 +103,12 @@ def run_pipeline(
             train_scaled.bags, metric_func, config.distance_metric
         )
 
-    # ── 4. Resolver hiperparámetros (Optuna o directos) ───────────────────────
+    #  4. Resolver hiperparámetros (Optuna o directos) 
     final_hyperparams = _resolve_hyperparams(
         config, train_scaled, dist_matrix, y_true_train
     )
 
-    # ── 5. Instanciar y entrenar modelo ───────────────────────────────────────
+    #  5. Instanciar y entrenar modelo 
     model = _build_model(config.algorithm, final_hyperparams)
 
     logger.info(f"[pipeline] Entrenando {config.algorithm}...")
@@ -117,14 +117,14 @@ def run_pipeline(
     else:
         model.fit(train_scaled)
 
-    # ── 6. Predecir sobre test ────────────────────────────────────────────────
+    #  6. Predecir sobre test 
     logger.info(f"[pipeline] Prediciendo sobre {test_scaled.get_num_bags()} bolsas de test...")
     pred_dict = model.predict(test_scaled)
     y_pred_raw = np.array(
         [pred_dict.get(bag.bag_id, -1) for bag in test_scaled.bags]
     )
 
-    # ── 7. Mapear clusters → clases (solo clustering) ─────────────────────────
+    #  7. Mapear clusters → clases (solo clustering) 
     mapping: Dict[int, int] = {}
 
     if config.algorithm == "miknn":
@@ -140,10 +140,10 @@ def run_pipeline(
         )
         y_pred_test = np.array([mapping.get(int(c), 0) for c in y_pred_raw])
 
-    # ── 8. Calcular métricas ──────────────────────────────────────────────────
+    #  8. Calcular métricas 
     eval_metrics = _compute_metrics(y_true_test, y_pred_test)
 
-    # ── 9. Estadísticas del modelo ────────────────────────────────────────────
+    #  9. Estadísticas del modelo 
     model_stats: Dict[str, Any] = {}
     if hasattr(model, "get_statistics"):
         model_stats = model.get_statistics()
@@ -162,7 +162,7 @@ def run_pipeline(
     }
 
 
-# ── Helpers internos ─────────────────────────────────────────────────────────
+#  Helpers internos 
 
 
 def _apply_scaler(
@@ -225,7 +225,7 @@ def _resolve_hyperparams(
     if not config.use_optuna:
         return base
 
-    # ── Búsqueda Optuna ───────────────────────────────────────────────────────
+    #  Búsqueda Optuna 
     try:
         import optuna  # noqa: PLC0415
         optuna.logging.set_verbosity(optuna.logging.WARNING)

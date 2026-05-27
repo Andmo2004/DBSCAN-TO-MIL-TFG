@@ -69,14 +69,14 @@ def score_labels(
     real_clusters = np.unique(y_pred[y_pred >= 0])
     n_clusters = len(real_clusters)
 
-    # ── Casos degenerados ────────────────────────────────────────────────────
+    #  Casos degenerados 
     if n_clusters == 0:
         return 0.0
     if n_clusters == 1:
         # Un único cluster puede ser correcto en casos raros, pero penalizamos
         return 0.05
 
-    # ── Hungarian mapping - F1 ───────────────────────────────────────────────
+    #  Hungarian mapping - F1 
     classes = np.array([0, 1])
     cost = np.zeros((n_clusters, 2), dtype=int)
     for i, c in enumerate(real_clusters):
@@ -107,7 +107,7 @@ def score_labels(
 
     y_mapped = np.array([mapping.get(p, 0) for p in y_pred])
     
-    # ── Métrica de score adaptativa al desbalanceo ───────────────────────────
+    #  Métrica de score adaptativa al desbalanceo 
     if imbalance_ratio < 0.3:
         base_f1 = float(f1_score(y_true, y_mapped, average='macro', zero_division=0))
         logger.debug(
@@ -117,7 +117,7 @@ def score_labels(
     else:
         base_f1 = float(f1_score(y_true, y_mapped, average='binary', zero_division=0))
 
-    # ── Penalización por ruido excesivo y fragmentación ───────────────────────
+    #  Penalización por ruido excesivo y fragmentación 
     # NOTA TFG: Los siguientes umbrales (30% de ruido, 10 clústeres) y coeficientes 
     # (0.5 y 0.02) son hiperparámetros empíricos definidos para penalizar soluciones 
     # degeneradas que el F1 puro podría no penalizar suficientemente.

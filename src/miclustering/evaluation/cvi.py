@@ -83,7 +83,7 @@ class BaseCVI:
         """
         raise NotImplementedError("Las subclases deben implementar compute()")
     
-    # ── Utilidades internas compartidas ──────────────────────────────────────
+    #  Utilidades internas compartidas 
     
     def _label_array(self, labels: Dict[str, int], bag_ids: List[str]) -> np.ndarray:
         """Convierte el dict de etiquetas a array numpy alineado con bag_ids."""
@@ -536,7 +536,7 @@ class InternalCVIEvaluator:
             list(cvis) if cvis is not None else list(self._DEFAULT_CVIS)
         )
  
-    # ── API pública ───────────────────────────────────────────────────────────
+    #  API pública 
  
     def register(self, cvi: BaseCVI) -> "InternalCVIEvaluator":
         """Añade un CVI al evaluador. Retorna self para encadenamiento."""
@@ -582,12 +582,12 @@ class InternalCVIEvaluator:
               "noise_pct"  : float
               "scores"     : Dict[name → {"value", "category", "higher_is_better", "error"}]
         """
-        # ── Calcular X si se proporcionó dataset ──────────────────────────────
+        #  Calcular X si se proporcionó dataset 
         X: Optional[np.ndarray] = None
         if dataset is not None:
             X = self._compute_bag_centroids(dataset, bag_ids)
  
-        # ── Estadísticas generales ────────────────────────────────────────────
+        #  Estadísticas generales 
         label_arr     = np.array([labels.get(bid, _NOISE) for bid in bag_ids])
         real_clusters = np.unique(label_arr[label_arr >= 0])
         noise_count   = int(np.sum(label_arr < 0))
@@ -602,7 +602,7 @@ class InternalCVIEvaluator:
             "scores":      {},
         }
  
-        # ── Ejecutar cada CVI ─────────────────────────────────────────────────
+        #  Ejecutar cada CVI 
         for cvi in self._cvis:
             try:
                 value = cvi.compute(dist_matrix, labels, bag_ids, X=X)
@@ -627,7 +627,7 @@ class InternalCVIEvaluator:
  
         return results
  
-    # ── Cálculo automático de centroides de bolsas ────────────────────────────
+    #  Cálculo automático de centroides de bolsas 
  
     @staticmethod
     def _compute_bag_centroids(dataset: MIData, bag_ids: List[str]) -> np.ndarray:
@@ -659,7 +659,7 @@ class InternalCVIEvaluator:
  
         return np.array(centroids)   # (N, n_features)
  
-    # ── Reporte en consola ────────────────────────────────────────────────────
+    #  Reporte en consola 
  
     @staticmethod
     def _print_report(results: Dict[str, Any]) -> None:
@@ -693,9 +693,9 @@ class InternalCVIEvaluator:
             if not cat_items:
                 continue
  
-            print(f"\n  {'─'*W}")
+            print(f"\n  {''*W}")
             print(f"  {cat_label}")
-            print(f"  {'─'*W}")
+            print(f"  {''*W}")
             print(f"  {'Índice':<20} {'Valor':>12}   {'Criterio'}")
             print(f"  {'·'*50}")
  

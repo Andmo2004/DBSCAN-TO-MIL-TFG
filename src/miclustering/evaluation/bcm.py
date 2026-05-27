@@ -56,7 +56,7 @@ class MILEvaluator:
         noise_clusters = clusters[clusters < 0]
         real_clusters  = clusters[clusters >= 0]
 
-        # ── Paso 1: Construir matriz de coste para clusters reales ────────────
+        #  Paso 1: Construir matriz de coste para clusters reales 
         classes = np.array([0, 1])
         n_clusters = len(real_clusters)
         n_classes  = len(classes)
@@ -70,7 +70,7 @@ class MILEvaluator:
                 # Coste = cuantas instancias NO coinciden
                 cost_matrix[i, j] = np.sum(true_labels_in_cluster != cls)
 
-        # ── Paso 2: Algoritmo Húngaro ─────────────────────────────────────────
+        #  Paso 2: Algoritmo Húngaro 
         # linear_sum_assignment trabaja sobre matrices cuadradas o rectangulares.
         # Si hay más clusters que clases (K > 2), el solver solo asignará min(K,2)
         # clusters de forma óptima; el resto se asigna por majority voting local.
@@ -85,7 +85,7 @@ class MILEvaluator:
             mapping[cluster_id] = class_label
             assigned_clusters.add(cluster_id)
 
-        # ── Paso 3: Fallback majority voting para clusters no asignados ───────
+        #  Paso 3: Fallback majority voting para clusters no asignados 
         for cluster in real_clusters:
             cid = int(cluster)
             if cid not in assigned_clusters:
@@ -97,7 +97,7 @@ class MILEvaluator:
                 else:
                     mapping[cid] = 0
 
-        # ── Paso 4: Ruido → clase mayoritaria global (no 0 por defecto) ───────
+        #  Paso 4: Ruido → clase mayoritaria global (no 0 por defecto) 
         for cluster in noise_clusters:
             cid = int(cluster)
             mask = y_pred == cluster
@@ -108,7 +108,7 @@ class MILEvaluator:
             else:
                 mapping[cid] = 0
 
-        # ── Paso 5: Construir array de predicciones mapeadas ──────────────────
+        #  Paso 5: Construir array de predicciones mapeadas 
         y_pred_mapped = np.zeros_like(y_pred)
         for cluster_id, class_label in mapping.items():
             y_pred_mapped[y_pred == cluster_id] = class_label

@@ -21,14 +21,14 @@ from miclustering.data.midata import MIData
 from miclustering.models.midbscan import MIDBSCAN 
 from miclustering.preprocessing.scaler import MinMaxScaler, StandardScaler 
 from miclustering.distances.hausdorff import hausdorff_distance 
-from miclustering.distances.cauchy_schwarz import cauchy_schwarz_distance 
+from miclustering.distances.probability_distribution import cauchy_schwarz_distance 
 from miclustering.distances.distance_matrix import compute_distance_matrix 
 from miclustering.evaluation.cvi import SEDIndex, HcIndex, DDIndex 
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s - %(message)s")
 logger = logging.getLogger("test_cvi")
 
-# ── Parámetros del dataset a probar ──────────────────────────────────────────
+#  Parámetros del dataset a probar 
 # Cambia este dict para probar otro dataset
 
 DATASET = {
@@ -53,7 +53,7 @@ def sanity_checks(name: str, value: float):
     assert not np.isinf(value),  f"{name}: no debe ser inf (hay clusters reales)"
     assert value >= 0.0,         f"{name}: debe ser >= 0"
 
-# ── Test ──────────────────────────────────────────────────────────────────────
+#  Test 
  
 def test_cvis(config: dict):
     name       = config["dataset_name"]
@@ -109,7 +109,7 @@ def test_cvis(config: dict):
     print(f"{'='*45}")
     print(f"  Clusters : {stats['num_clusters']}")
     print(f"  Ruido    : {stats['noise_percentage']:.1f}%")
-    print(f"  {'─'*41}")
+    print(f"  {''*41}")
     for cvi_name, (value, criterio) in results.items():
         print(f"  {cvi_name:<6} : {value:>12.6f}  ({criterio})")
     print(f"{'='*45}\n")

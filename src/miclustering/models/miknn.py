@@ -75,7 +75,7 @@ class MIKnn(BaseEstimator, ClassifierMixin):
  
         logger.debug(f"MIKnn creado: k={k}, metric='{metric}'")
 
-    # ── Propiedades ────────────────────────────────────────────
+    #  Propiedades 
  
     @property
     def k(self) -> int:
@@ -97,7 +97,7 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         """Número de bolsas de entrenamiento almacenadas."""
         return len(self._train_bags)
     
-    # ── Publico ──────────────────────────────────────────────────────
+    #  Publico 
  
     def fit(self, dataset: MIData) -> "MIKnn":
         """Memoriza el conjunto de entrenamiento (lazy learning).
@@ -284,7 +284,7 @@ class MIKnn(BaseEstimator, ClassifierMixin):
             "fitted":       True,
         }
  
-    # ── Métodos internos ──────────────────────────────────────────────────────
+    #  Métodos internos 
  
     def _compute_distances_to_train(self, test_bag: Bag) -> np.ndarray:
         """Calcula la distancia de test_bag a cada bolsa de entrenamiento.
@@ -379,7 +379,7 @@ class MIKnn(BaseEstimator, ClassifierMixin):
                 "El modelo no ha sido entrenado. Ejecuta fit() primero."
             )
  
-    # ── Representaciones ──────────────────────────────────────────────────────
+    #  Representaciones 
     
     def __repr__(self, N_CHAR_MAX: int = 700) -> str:
         state = "fitted" if self._fitted else "unfitted"
@@ -404,7 +404,7 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         )
  
  
-# ── Prueba individual ─────────────────────────────────────────────────────────
+#  Prueba individual 
  
 if __name__ == "__main__":
     logging.basicConfig(

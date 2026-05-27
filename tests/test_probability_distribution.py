@@ -15,7 +15,7 @@ import math
 import unittest
 import numpy as np
 
-# ── Path setup ────────────────────────────────────────────────────────────────
+#  Path setup 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
@@ -33,7 +33,7 @@ from miclustering.data.bag import Bag
 from miclustering.data.instance import Instance 
 from miclustering.data.attribute import Attribute
 
-# ── Helper ────────────────────────────────────────────────────────────────────
+#  Helper 
 
 def make_schema(n_features: int) -> list:
     return [Attribute(name=f"feat_{i}", attr_type="real") for i in range(n_features)]

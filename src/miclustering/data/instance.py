@@ -53,7 +53,7 @@ class Instance:
             index: Índice del atributo.
             value: Nuevo valor a asignar.
         """
-        if index < 0 or index >= len(self.values):
+        if not (0 <= index < len(self._values)):
             raise IndexError("Índice fuera de rango.")
 
         attribute_def = self.schema[index]
@@ -86,8 +86,8 @@ class Instance:
         elif attr_type == 'nominal':
             if not isinstance(value, str):
                 return False
-            if attribute.values is None:
-                return True
+            if attribute.values is not None and value not in attribute.values:
+                return False 
             return value in attribute.values
         
         return True

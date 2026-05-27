@@ -189,7 +189,7 @@ class TestRunPipeline:
             assert "F1-Score" in result["metrics"], f"Fallo con métrica {metric}"
 
 
-# ── Tests de run_json ─────────────────────────────────────────────────────────
+#  Tests de run_json 
 
 
 class TestRunJson:

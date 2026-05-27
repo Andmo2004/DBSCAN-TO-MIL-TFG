@@ -23,6 +23,9 @@ def parse_label(raw: Any, nominal_map: Optional[Dict[str, int]] = None) -> int:
     Raises:
         ValueError: Si la etiqueta no puede interpretarse.
     """
+    if raw is None:
+        raise ValueError("parse_label recibió None; se esperaba int, float, str o bytes.")
+    
     mapping = nominal_map if nominal_map is not None else _NOMINAL_MAP
     if isinstance(raw, bytes):
         raw = raw.decode("utf-8")
