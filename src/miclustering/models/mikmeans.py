@@ -187,7 +187,8 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         test_labels = {}
         for test_bag in test_dataset.bags:
             distances = [self._metric_func(test_bag, centroid) for centroid in self._centroids]
-            test_labels[test_bag.bag_id] = np.argmin(distances)
+            # Convertimos np.int64 a int nativo de Python
+            test_labels[test_bag.bag_id] = int(np.argmin(distances))
             
         return test_labels
 

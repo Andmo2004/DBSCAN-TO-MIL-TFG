@@ -71,11 +71,12 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         # Estado interno
         self._train_bags:   List[Bag] = []
         self._train_labels: List[int] = []   # etiquetas numéricas (0/1)
+        self._labels:       Dict[str, int] = {}  # Contrato de interfaz común
         self._fitted:       bool      = False
  
         logger.debug(f"MIKnn creado: k={k}, metric='{metric}'")
 
-    #  Propiedades 
+#  Propiedades 
  
     @property
     def k(self) -> int:
@@ -93,9 +94,15 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         return self._fitted
  
     @property
+    def labels(self) -> Dict[str, int]:
+        """Devuelve una copia de las etiquetas del conjunto de entrenamiento."""
+        return self._labels.copy()
+
+    @property
     def n_train_bags(self) -> int:
         """Número de bolsas de entrenamiento almacenadas."""
         return len(self._train_bags)
+
     
     #  Publico 
  
@@ -127,6 +134,11 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         self._train_labels = [
             self._parse_label(bag.label) for bag in self._train_bags
         ]
+        
+        # Poblar el diccionario de contratos de etiquetas de entrenamiento
+        self._labels = {
+            bag.bag_id: self._train_labels[i] for i, bag in enumerate(self._train_bags)
+        }
         self._fitted = True
  
         logger.info(
