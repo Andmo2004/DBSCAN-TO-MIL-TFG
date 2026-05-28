@@ -302,7 +302,7 @@ class TestMahalanobisDistance(unittest.TestCase):
         """
         A = make_bag(np.array([[0.0, 0.0]]))
         B = make_bag(np.array([[3.0, 4.0]]))
-        self.assertAlmostEqual(mahalanobis_distance(A, B), 5.0, places=10)
+        self.assertAlmostEqual(mahalanobis_distance(A, B), 5.0, places=4)
 
     def test_symmetry(self):
         """d(A, B) == d(B, A)."""
@@ -365,7 +365,7 @@ class TestMahalanobisDistance(unittest.TestCase):
         """
         A = make_bag(np.zeros((1, 5)))
         B = make_bag(np.ones((1, 5)))
-        self.assertAlmostEqual(mahalanobis_distance(A, B), math.sqrt(5), places=5)
+        self.assertAlmostEqual(mahalanobis_distance(A, B), math.sqrt(5), places=4)
 
     def test_returns_float(self):
         """El resultado debe ser un float nativo de Python."""

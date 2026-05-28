@@ -7,6 +7,7 @@ from scipy.optimize import linear_sum_assignment
 from typing import Dict, Tuple
 
 from miclustering.data.midata import MIData
+from miclustering.data.utils import parse_label
 
 logger = logging.getLogger(__name__)
 

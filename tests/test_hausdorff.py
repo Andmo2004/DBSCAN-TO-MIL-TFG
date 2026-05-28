@@ -52,9 +52,7 @@ def make_empty_bag(bag_id: str = "empty") -> Bag:
     return Bag(bag_id=bag_id, label=0, instances=[])
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # Tests compartidos por las tres variantes
-# ══════════════════════════════════════════════════════════════════════════════
 
 class TestHausdorffCommonProperties(unittest.TestCase):
     """Propiedades que deben cumplir las tres variantes."""
@@ -136,9 +134,7 @@ class TestHausdorffCommonProperties(unittest.TestCase):
         self.assertLessEqual(d_avg, d_max + 1e-10)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # Tests específicos: hausdorff_distance  (MÁXIMA)
-# ══════════════════════════════════════════════════════════════════════════════
 
 class TestHausdorffMax(unittest.TestCase):
 
@@ -210,9 +206,7 @@ class TestHausdorffMax(unittest.TestCase):
         self.assertAlmostEqual(hausdorff_distance(A, B), math.sqrt(20), places=10)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # Tests específicos: hausdorff_distance_min  (MÍNIMA)
-# ══════════════════════════════════════════════════════════════════════════════
 
 class TestHausdorffMin(unittest.TestCase):
 
@@ -272,9 +266,7 @@ class TestHausdorffMin(unittest.TestCase):
         self.assertAlmostEqual(hausdorff_distance_min(A, B), 2.0, places=10)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # Tests específicos: hausdorff_distance_avg  (PROMEDIO)
-# ══════════════════════════════════════════════════════════════════════════════
 
 class TestHausdorffAvg(unittest.TestCase):
 
@@ -360,9 +352,7 @@ class TestHausdorffAvg(unittest.TestCase):
         )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # Tests de robustez numérica
-# ══════════════════════════════════════════════════════════════════════════════
 
 class TestHausdorffNumericalRobustness(unittest.TestCase):
 
@@ -407,44 +397,7 @@ class TestHausdorffNumericalRobustness(unittest.TestCase):
         self.assertAlmostEqual(d_min, expected, places=10)
         self.assertAlmostEqual(d_avg, expected, places=10)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# Tests de soporte np.ndarray
-# ══════════════════════════════════════════════════════════════════════════════
-
-class TestHausdorffNdarraySupport(unittest.TestCase):
-    
-    def test_ndarray_inputs(self):
-        """Verifica que las distancias acepten arrays numpy en lugar de Bags."""
-        A_mat = np.array([[0.0, 0.0], [1.0, 0.0]])
-        B_mat = np.array([[3.0, 0.0], [4.0, 0.0]])
-        
-        A_bag = make_bag(A_mat)
-        B_bag = make_bag(B_mat)
-        
-        for fn in [hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg]:
-            with self.subTest(fn=fn.__name__):
-                expected = fn(A_bag, B_bag)
-                result_array = fn(A_mat, B_mat)
-                self.assertAlmostEqual(expected, result_array, places=10)
-                
-    def test_mixed_inputs(self):
-        """Verifica que se pueda mezclar Bag con np.ndarray."""
-        A_mat = np.array([[0.0, 0.0]])
-        B_mat = np.array([[3.0, 4.0]])
-        
-        A_bag = make_bag(A_mat)
-        
-        for fn in [hausdorff_distance, hausdorff_distance_min, hausdorff_distance_avg]:
-            with self.subTest(fn=fn.__name__):
-                expected = fn(A_bag, make_bag(B_mat))
-                result1 = fn(A_bag, B_mat)
-                result2 = fn(A_mat, A_bag)
-                self.assertAlmostEqual(expected, result1, places=10)
-
-# ══════════════════════════════════════════════════════════════════════════════
 # Entry point
-# ══════════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

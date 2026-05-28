@@ -109,14 +109,6 @@ class TestInstance:
         with pytest.raises(IndexError):
             basic_instance.set_value(10, 0.0)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG in Instance.set_value: guard `if index < 0 or index >= len(self.values)` "
-            "never triggers for negative indices because Python list.__getitem__ wraps them. "
-            "Fix: use `if not (0 <= index < len(self.values))`."
-        ),
-    )
     def test_set_value_negative_index_raises_index_error(self, basic_instance):
         with pytest.raises(IndexError):
             basic_instance.set_value(-1, 0.0)
@@ -167,17 +159,6 @@ class TestInstance:
         inst.set_value(0, "world")
         assert inst.get_value(0) == "world"
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG in Instance.set_value / _validate_type: when attr_type == 'nominal' "
-            "and value is NOT in attribute.values, _validate_type returns False but "
-            "set_value still writes the value because the `isinstance(value, str)` "
-            "check passes first.  The guard `if attribute.values is None: return True` "
-            "short-circuits too early.  Fix: check membership unconditionally when "
-            "values is not None."
-        ),
-    )
     def test_set_nominal_value_not_in_vocabulary_raises_type_error(self):
         schema = [Attribute("cat", "nominal", values=["a", "b"])]
         inst = Instance(["a"], schema)

@@ -25,6 +25,7 @@ Tipo 3 — Estructuras Especiales / orientado a densidad:
 import logging
 import numpy as np
 
+from abc import ABC, abstractmethod
 from miclustering.data.midata import MIData
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -32,19 +33,21 @@ _NOISE = -1
 
 logger = logging.getLogger(__name__)
 
-class BaseCVI:
+class BaseCVI(ABC):
     """
-    Clase base para los Índices de Validación Interna de Clustering.
+    Clase base abstracta para los Índices de Validación Interna de Clustering.
     """
     def __init__(self):
         pass
 
     @property
+    @abstractmethod
     def name(self) -> str:
         """Nombre legible del índice."""
-        raise NotImplementedError("Las subclases deben implementar name")
+        ...
 
     @property
+    @abstractmethod
     def category(self) -> str:
         """
         Grupo de clasificación:
@@ -52,7 +55,7 @@ class BaseCVI:
           'compactness_separation' → compactibilidad + separación
           'special'                → estructuras especiales / densidad
         """
-        raise NotImplementedError("Las subclases deben implementar category")
+        ...
 
     @property
     def higher_is_better(self) -> bool:
@@ -62,6 +65,7 @@ class BaseCVI:
         """
         return True  # valor por defecto, las subclases pueden sobreescribirlo
 
+    @abstractmethod
     def compute(        
         self,
         dist_matrix: np.ndarray,
@@ -81,7 +85,7 @@ class BaseCVI:
         Returns:
             Valor escalar del índice (float).
         """
-        raise NotImplementedError("Las subclases deben implementar compute()")
+        ...
     
     #  Utilidades internas compartidas 
     
@@ -479,20 +483,17 @@ class IIndex(BaseCVI):
             diffs = X[idx] - mu_j
             ek   += float(np.linalg.norm(diffs, axis=1).sum())
  
-        if ek < 1e-12:
-            logger.warning("[IIndex] Ek ≈ 0: clusters degenerados.")
-            return float("inf")
- 
-        # Dk: máxima distancia euclídea entre pares de centroides
+# Dk: máxima distancia euclídea entre pares de centroides
         dk = 0.0
         for a in range(len(centroids)):
             for b in range(a + 1, len(centroids)):
                 d = float(np.linalg.norm(centroids[a] - centroids[b]))
                 if d > dk:
                     dk = d
- 
-        if dk < 1e-12:
-            # Todos los centroides son idénticos → no hay separación
+
+        # Si no hay separación entre centroides o clusters degenerados → I = 0
+        if dk < 1e-12 or ek < 1e-12:
+            logger.warning("[IIndex] Clustering degenerado (sin separación o Ek ≈ 0).")
             return 0.0
  
         return float(((1.0 / k) * (e1 / ek) * dk) ** self._P)

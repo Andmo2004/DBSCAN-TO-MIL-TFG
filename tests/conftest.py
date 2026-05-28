@@ -20,7 +20,6 @@ from miclustering.data.instance import Instance
 from miclustering.data.bag import Bag
 from miclustering.data.midata import MIData
 
-
 # Helpers
 
 def make_schema(n_features: int = 3) -> list[Attribute]:
