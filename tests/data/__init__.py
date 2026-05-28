@@ -1,0 +1,1 @@
+"""tests/data/ — Tests para módulo data (Attribute, Instance, Bag, MIData)"""

@@ -136,3 +136,87 @@ def small_dataset() -> MIData:
 def binary_dataset_10() -> MIData:
     """Dataset de 10 bolsas para tests de split y label queries."""
     return make_dataset(n_bags=10, n_instances=5, n_features=4, seed=7)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Fixtures específicos para modelos (clustering, classification)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@pytest.fixture()
+def binary_train() -> MIData:
+    """Dataset de entrenamiento binario (10 pos + 10 neg), bien separadas.
+    
+    Usado por tests de modelos de clustering y clasificación.
+    Clusters: positivos en [2, 3], negativos en [0, 1].
+    """
+    rng = np.random.RandomState(42)
+    schema = make_schema(4)
+    bags = []
+    # Positivos: cluster en [2, 3]
+    for i in range(10):
+        mat = (rng.rand(5, 4) + 2.0).tolist()
+        bags.append(Bag(f"pos_{i}", "1", [Instance(r, schema) for r in mat]))
+    # Negativos: cluster en [0, 1]
+    for i in range(10):
+        mat = rng.rand(5, 4).tolist()
+        bags.append(Bag(f"neg_{i}", "0", [Instance(r, schema) for r in mat]))
+    return MIData(bags, "train")
+
+
+@pytest.fixture()
+def binary_test() -> MIData:
+    """Dataset de test binario (5 pos + 5 neg)."""
+    rng = np.random.RandomState(99)
+    schema = make_schema(4)
+    bags = []
+    for i in range(5):
+        mat = (rng.rand(5, 4) + 2.0).tolist()
+        bags.append(Bag(f"pos_{i}", "1", [Instance(r, schema) for r in mat]))
+    for i in range(5):
+        mat = rng.rand(5, 4).tolist()
+        bags.append(Bag(f"neg_{i}", "0", [Instance(r, schema) for r in mat]))
+    return MIData(bags, "test")
+
+
+@pytest.fixture()
+def tiny_train() -> MIData:
+    """Dataset de entrenamiento pequeño (3 pos + 3 neg) para tests rápidos."""
+    rng = np.random.RandomState(7)
+    schema = make_schema(4)
+    bags = []
+    for i in range(3):
+        mat = (rng.rand(5, 4) + 2.0).tolist()
+        bags.append(Bag(f"pos_{i}", "1", [Instance(r, schema) for r in mat]))
+    for i in range(3):
+        mat = rng.rand(5, 4).tolist()
+        bags.append(Bag(f"neg_{i}", "0", [Instance(r, schema) for r in mat]))
+    return MIData(bags, "tiny_train")
+
+
+@pytest.fixture()
+def tiny_test() -> MIData:
+    """Dataset de test pequeño (2 pos + 2 neg)."""
+    rng = np.random.RandomState(8)
+    schema = make_schema(4)
+    bags = []
+    for i in range(2):
+        mat = (rng.rand(5, 4) + 2.0).tolist()
+        bags.append(Bag(f"pos_{i}", "1", [Instance(r, schema) for r in mat]))
+    for i in range(2):
+        mat = rng.rand(5, 4).tolist()
+        bags.append(Bag(f"neg_{i}", "0", [Instance(r, schema) for r in mat]))
+    return MIData(bags, "tiny_test")
+
+
+@pytest.fixture()
+def empty_dataset() -> MIData:
+    """Dataset vacío para tests de edge cases."""
+    return MIData([], "empty")
+
+
+@pytest.fixture()
+def single_bag_dataset() -> MIData:
+    """Dataset con una única bolsa."""
+    schema = make_schema(2)
+    bags = [Bag("only", "1", [Instance([1.0, 2.0], schema)])]
+    return MIData(bags, "single")

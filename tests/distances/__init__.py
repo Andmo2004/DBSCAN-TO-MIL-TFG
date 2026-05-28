@@ -1,0 +1,1 @@
+"""tests/distances/ — Tests para módulo distances (Hausdorff, probabilidad)"""

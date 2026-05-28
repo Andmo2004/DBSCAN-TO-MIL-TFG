@@ -31,6 +31,11 @@ dev = [
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "-v --tb=short"
+# Excluir explícitamente el venv y otros directorios de pytest
+norecursedirs = [".venv", "venv", ".git", ".tox", "build", "dist", "*.egg"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
 
 [project.urls]
 "Homepage" = "https://github.com/Andmo2004/MIClustering"

@@ -1,0 +1,1 @@
+"""tests/evaluation/ — Tests para módulo evaluation (scoring, bcm, cvi)"""

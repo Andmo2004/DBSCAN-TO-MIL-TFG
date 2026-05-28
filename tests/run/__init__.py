@@ -1,0 +1,1 @@
+"""tests/run/ — Tests para módulo run (pipeline execution)"""
