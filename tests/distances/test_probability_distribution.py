@@ -48,9 +48,9 @@ def make_empty_bag(bag_id: str = "empty") -> Bag:
     return Bag(bag_id=bag_id, label=0, instances=[])
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Tests compartidos por las tres distancias
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestProbDistCommonProperties(unittest.TestCase):
     """Propiedades que deben cumplir las tres distancias."""
@@ -93,9 +93,9 @@ class TestProbDistCommonProperties(unittest.TestCase):
                 self.assertEqual(fn(e1, e2), float('inf'))
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Tests específicos: cauchy_schwarz_distance
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestCauchySchwarz(unittest.TestCase):
 
@@ -194,9 +194,9 @@ class TestCauchySchwarz(unittest.TestCase):
                 self.assertLessEqual(d, 2.0 + 1e-10)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Tests específicos: earth_movers_distance
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestEarthMoversDistance(unittest.TestCase):
 
@@ -277,9 +277,9 @@ class TestEarthMoversDistance(unittest.TestCase):
         self.assertAlmostEqual(earth_movers_distance(A, B), 3.0, places=5)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Tests específicos: mahalanobis_distance
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestMahalanobisDistance(unittest.TestCase):
 
@@ -375,9 +375,9 @@ class TestMahalanobisDistance(unittest.TestCase):
         self.assertIsInstance(result, float)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Tests de robustez numérica
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestNumericalRobustness(unittest.TestCase):
 
@@ -418,9 +418,9 @@ class TestNumericalRobustness(unittest.TestCase):
                 self.assertIsInstance(fn(A, B), float)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Entry point
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

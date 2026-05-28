@@ -45,13 +45,13 @@ from miclustering.data.instance import Instance
 from tests.models.conftest import _make_binary_dataset, _schema
 
 
-# ─── helpers ──────────────────────────────────────────────────────────────────
+#  helpers 
 
 def _ds(n: int = 8, seed: int = 0) -> MIData:
     return _make_binary_dataset(n_pos=n // 2, n_neg=n // 2, seed=seed)
 
 
-# ─── 1. Construcción ─────────────────────────────────────────────────────────
+#  1. Construcción 
 
 class TestMIKMeansConstruction:
 
@@ -96,7 +96,7 @@ class TestMIKMeansConstruction:
         assert m._random_state == 42
 
 
-# ─── 2. fit() ─────────────────────────────────────────────────────────────────
+#  2. fit() 
 
 class TestMIKMeansFit:
 
@@ -185,7 +185,7 @@ class TestMIKMeansFit:
         assert m1.is_fitted and m2.is_fitted
 
 
-# ─── 3. predict() ─────────────────────────────────────────────────────────────
+#  3. predict() 
 
 class TestMIKMeansPredict:
 
@@ -224,7 +224,7 @@ class TestMIKMeansPredict:
             assert 0 <= v < m.k
 
 
-# ─── 4. fit_predict ───────────────────────────────────────────────────────────
+#  4. fit_predict 
 
 class TestMIKMeansFitPredict:
 
@@ -243,7 +243,7 @@ class TestMIKMeansFitPredict:
         assert set(result.keys()) == {bag.bag_id for bag in test.bags}
 
 
-# ─── 5. get_statistics / get_cluster_sizes ────────────────────────────────────
+#  5. get_statistics / get_cluster_sizes 
 
 class TestMIKMeansStatistics:
 
@@ -284,7 +284,7 @@ class TestMIKMeansStatistics:
         assert m.get_cluster_sizes() == {}
 
 
-# ─── 6. Representaciones ─────────────────────────────────────────────────────
+#  6. Representaciones 
 
 class TestMIKMeansRepresentation:
 

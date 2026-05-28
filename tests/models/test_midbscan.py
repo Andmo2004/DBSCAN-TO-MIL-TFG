@@ -52,7 +52,7 @@ from miclustering.data.bag import Bag
 from miclustering.data.instance import Instance
 
 
-# ─── helpers locales ──────────────────────────────────────────────────────────
+#  helpers locales 
 
 def _identity_matrix(n: int) -> np.ndarray:
     """Todos los puntos son 'idénticos' entre sí → un único cluster si eps >= 0."""
@@ -86,7 +86,7 @@ def _make_dataset(n: int, prefix: str = "b") -> MIData:
     return MIData(bags, f"ds_{n}")
 
 
-# ─── 1. Construcción y validación ─────────────────────────────────────────────
+#  1. Construcción y validación 
 
 class TestMIDBSCANConstruction:
 
@@ -135,7 +135,7 @@ class TestMIDBSCANConstruction:
         assert MIDBSCAN.NOISE_LABEL == -1
 
 
-# ─── 2. Contrato fit() ────────────────────────────────────────────────────────
+#  2. Contrato fit() 
 
 class TestMIDBSCANFit:
 
@@ -196,7 +196,7 @@ class TestMIDBSCANFit:
         assert len(m.labels) == 4
 
 
-# ─── 3. Comportamiento del clustering ─────────────────────────────────────────
+#  3. Comportamiento del clustering 
 
 class TestMIDBSCANClusteringBehavior:
 
@@ -258,7 +258,7 @@ class TestMIDBSCANClusteringBehavior:
         assert all(v != MIDBSCAN.NOISE_LABEL for v in m.labels.values())
 
 
-# ─── 4. predict() ─────────────────────────────────────────────────────────────
+#  4. predict() 
 
 class TestMIDBSCANPredict:
 
@@ -313,7 +313,7 @@ class TestMIDBSCANPredict:
         assert all(v == MIDBSCAN.NOISE_LABEL for v in result.values())
 
 
-# ─── 5. fit_predict ───────────────────────────────────────────────────────────
+#  5. fit_predict 
 
 class TestMIDBSCANFitPredict:
 
@@ -332,7 +332,7 @@ class TestMIDBSCANFitPredict:
         assert set(result.keys()) == {bag.bag_id for bag in test_ds.bags}
 
 
-# ─── 6. Estadísticas y helpers de consulta ────────────────────────────────────
+#  6. Estadísticas y helpers de consulta 
 
 class TestMIDBSCANStatistics:
 
@@ -426,7 +426,7 @@ class TestMIDBSCANStatistics:
         assert m.get_cluster_sizes() == {}
 
 
-# ─── 7. Representaciones ──────────────────────────────────────────────────────
+#  7. Representaciones 
 
 class TestMIDBSCANRepresentation:
 

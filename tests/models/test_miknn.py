@@ -50,7 +50,7 @@ from miclustering.data.attribute import Attribute
 from tests.models.conftest import _make_binary_dataset, _schema
 
 
-# ─── helpers ──────────────────────────────────────────────────────────────────
+#  helpers 
 
 def _ds(n_pos: int = 6, n_neg: int = 6, seed: int = 0) -> MIData:
     return _make_binary_dataset(n_pos=n_pos, n_neg=n_neg, seed=seed)
@@ -83,7 +83,7 @@ def _perfectly_separable_dataset() -> tuple[MIData, MIData]:
     return MIData(train_bags, "sep_train"), MIData(test_bags, "sep_test")
 
 
-# ─── 1. Construcción ──────────────────────────────────────────────────────────
+#  1. Construcción 
 
 class TestMIKnnConstruction:
 
@@ -122,7 +122,7 @@ class TestMIKnnConstruction:
         assert MIKnn().n_train_bags == 0
 
 
-# ─── 2. fit() — lazy learning ─────────────────────────────────────────────────
+#  2. fit() — lazy learning 
 
 class TestMIKnnFit:
 
@@ -162,7 +162,7 @@ class TestMIKnnFit:
         assert m.is_fitted
 
 
-# ─── 3. predict() ─────────────────────────────────────────────────────────────
+#  3. predict() 
 
 class TestMIKnnPredict:
 
@@ -216,7 +216,7 @@ class TestMIKnnPredict:
         assert set(result.values()).issubset({0, 1})
 
 
-# ─── 4. predict_bag() ─────────────────────────────────────────────────────────
+#  4. predict_bag() 
 
 class TestMIKnnPredictBag:
 
@@ -243,7 +243,7 @@ class TestMIKnnPredictBag:
         assert m.predict_bag(bag) == m.predict(test)[bag.bag_id]
 
 
-# ─── 5. predict_proba() ───────────────────────────────────────────────────────
+#  5. predict_proba() 
 
 class TestMIKnnPredictProba:
 
@@ -289,7 +289,7 @@ class TestMIKnnPredictProba:
         assert probas["test_neg"][0] == pytest.approx(1.0)
 
 
-# ─── 6. get_neighbors() ───────────────────────────────────────────────────────
+#  6. get_neighbors() 
 
 class TestMIKnnGetNeighbors:
 
@@ -342,7 +342,7 @@ class TestMIKnnGetNeighbors:
         assert label == 1
 
 
-# ─── 7. fit_predict ───────────────────────────────────────────────────────────
+#  7. fit_predict 
 
 class TestMIKnnFitPredict:
 
@@ -359,7 +359,7 @@ class TestMIKnnFitPredict:
         assert set(result.keys()) == {bag.bag_id for bag in test.bags}
 
 
-# ─── 8. get_statistics() ─────────────────────────────────────────────────────
+#  8. get_statistics() 
 
 class TestMIKnnStatistics:
 
@@ -393,7 +393,7 @@ class TestMIKnnStatistics:
         assert sum(stats["label_counts"].values()) == 10
 
 
-# ─── 9. Representaciones ─────────────────────────────────────────────────────
+#  9. Representaciones 
 
 class TestMIKnnRepresentation:
 
@@ -420,7 +420,7 @@ class TestMIKnnRepresentation:
         assert "MIKnn" in str(m)
 
 
-# ─── 10. Documentación de bug conocido (xfail) ───────────────────────────────
+#  10. Documentación de bug conocido (xfail) 
 
 class TestMIKnnKnownIssues:
 

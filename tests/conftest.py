@@ -138,9 +138,9 @@ def binary_dataset_10() -> MIData:
     return make_dataset(n_bags=10, n_instances=5, n_features=4, seed=7)
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
+# ═
 # Fixtures específicos para modelos (clustering, classification)
-# ═══════════════════════════════════════════════════════════════════════════════
+# ═
 
 @pytest.fixture()
 def binary_train() -> MIData:

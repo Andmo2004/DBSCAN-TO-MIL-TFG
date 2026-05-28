@@ -42,7 +42,7 @@ from miclustering.data.midata import MIData
 from tests.models.conftest import _make_binary_dataset
 
 
-# ─── helpers ──────────────────────────────────────────────────────────────────
+#  helpers 
 
 def _close_matrix(n: int) -> np.ndarray:
     m = np.full((n, n), 0.1)
@@ -65,7 +65,7 @@ def _fit_model(model, train: MIData) -> None:
         model.fit(train)
 
 
-# ─── parametrize: un id de modelo → factory ───────────────────────────────────
+#  parametrize: un id de modelo → factory 
 
 MODEL_FACTORIES = [
     pytest.param(
@@ -87,7 +87,7 @@ MODEL_FACTORIES = [
 ]
 
 
-# ─── Contrato: estado inicial ─────────────────────────────────────────────────
+#  Contrato: estado inicial 
 
 class TestModelInitialState:
 
@@ -102,7 +102,7 @@ class TestModelInitialState:
         assert m.labels == {}
 
 
-# ─── Contrato: fit() ──────────────────────────────────────────────────────────
+#  Contrato: fit() 
 
 class TestModelFitContract:
 
@@ -149,7 +149,7 @@ class TestModelFitContract:
             m.fit(MIData([], "empty"))
 
 
-# ─── Contrato: predict() ─────────────────────────────────────────────────────
+#  Contrato: predict() 
 
 class TestModelPredictContract:
 
@@ -195,7 +195,7 @@ class TestModelPredictContract:
             m.predict(MIData([], "empty"))
 
 
-# ─── Contrato: fit_predict() ─────────────────────────────────────────────────
+#  Contrato: fit_predict() 
 
 class TestModelFitPredictContract:
 
@@ -223,7 +223,7 @@ class TestModelFitPredictContract:
         assert set(result.keys()) == expected
 
 
-# ─── Contrato: get_statistics() ──────────────────────────────────────────────
+#  Contrato: get_statistics() 
 
 class TestModelStatisticsContract:
 
@@ -249,7 +249,7 @@ class TestModelStatisticsContract:
         assert isinstance(stats, dict)
 
 
-# ─── Contrato: labels property es copia ──────────────────────────────────────
+#  Contrato: labels property es copia 
 
 class TestModelLabelsImmutability:
 
@@ -264,7 +264,7 @@ class TestModelLabelsImmutability:
         assert len(m.labels) == train.get_num_bags()
 
 
-# ─── Contrato: representaciones ──────────────────────────────────────────────
+#  Contrato: representaciones 
 
 class TestModelRepresentationContract:
 

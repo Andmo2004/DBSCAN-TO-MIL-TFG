@@ -3,18 +3,18 @@ tests/preprocessing/test_preprocessing.py
 
 Tests unitarios para ``miclustering.preprocessing.scaler``.
 
-══════════════════════════════════════════════════════════════════════════════
+
 AUDITORÍA TÉCNICA DEL MÓDULO preprocessing/scaler.py
-══════════════════════════════════════════════════════════════════════════════
+
 
 Clases expuestas
-────────────────
+
   BaseScaler        — ABC; define el contrato fit / transform / fit_transform
   MinMaxScaler      — escala a [feature_min, feature_max]  (default [0, 1])
   StandardScaler    — estandariza a μ=0, σ=1
 
 Problemas de diseño detectados
-───────────────────────────────
+
 1. _create_transformed_dataset accede a ``instance._values`` directamente
    (atributo privado con __slots__). Acopla BaseScaler al detalle de
    implementación de Instance. Si se renombra o encapsula _values, transform()
@@ -33,7 +33,7 @@ Problemas de diseño detectados
    que introduzcan copias.
 
 Estrategia de testing
-─────────────────────
+
 Un único archivo para todo el módulo porque:
   • Solo existe un script (scaler.py) con dos subclases de la misma jerarquía.
   • Muchos casos son parametrizables entre MinMaxScaler y StandardScaler.
@@ -41,7 +41,7 @@ Un único archivo para todo el módulo porque:
     agrupado en el subdirectorio que espeja la estructura de src/.
 
 Cambios en pyproject.toml
-─────────────────────────
+
 No se requiere ninguno. testpaths = ["tests"] y pythonpath = ["src"] ya
 recogen este subdirectorio automáticamente mediante pytest discovery.
 """
@@ -52,7 +52,7 @@ import sys
 import numpy as np
 import pytest
 
-# ── path (igual que test_run.py y test_hausdorff.py) ─────────────────────────
+#  path (igual que test_run.py y test_hausdorff.py) 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 from miclustering.data.attribute import Attribute
@@ -62,9 +62,9 @@ from miclustering.data.midata import MIData
 from miclustering.preprocessing.scaler import BaseScaler, MinMaxScaler, StandardScaler
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Factories locales (sin dependencia del conftest raíz para aislamiento)
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 def _schema(*types: str) -> list:
     return [Attribute(f"f{i}", t) for i, t in enumerate(types)]
@@ -80,9 +80,9 @@ def _dataset(specs: list, schema: list, name: str = "test_ds") -> MIData:
     return MIData([_bag(bid, lbl, rows, schema) for bid, lbl, rows in specs], name)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Fixtures
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 @pytest.fixture()
 def numeric_schema():
@@ -147,9 +147,9 @@ def single_bag_dataset(numeric_schema):
     return _dataset([("only", 0, [[1.0, 2.0], [3.0, 4.0]])], numeric_schema)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 1. Contrato de BaseScaler — parametrizado sobre ambas subclases
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestBaseScalerContract:
     """
@@ -161,7 +161,7 @@ class TestBaseScalerContract:
     def scaler(self, request):
         return MinMaxScaler() if request.param == "minmax" else StandardScaler()
 
-    # ── estado inicial ──────────────────────────────────────────────────────
+    #  estado inicial 
 
     def test_not_fitted_on_construction(self, scaler):
         assert not scaler.is_fitted
@@ -172,7 +172,7 @@ class TestBaseScalerContract:
     def test_numeric_indices_empty_before_fit(self, scaler):
         assert scaler.numeric_indices == []
 
-    # ── fit ─────────────────────────────────────────────────────────────────
+    #  fit 
 
     def test_fit_returns_self(self, scaler, simple_dataset):
         assert scaler.fit(simple_dataset) is scaler
@@ -194,7 +194,7 @@ class TestBaseScalerContract:
         scaler.fit(simple_dataset)
         assert scaler.numeric_indices == [0, 1]
 
-    # ── transform ───────────────────────────────────────────────────────────
+    #  transform 
 
     def test_transform_returns_midata(self, scaler, simple_dataset):
         scaler.fit(simple_dataset)
@@ -247,7 +247,7 @@ class TestBaseScalerContract:
         for bag in scaler.transform(simple_dataset).bags:
             assert np.all(np.isfinite(bag.as_matrix()))
 
-    # ── fit_transform ───────────────────────────────────────────────────────
+    #  fit_transform 
 
     def test_fit_transform_equivalent_to_fit_then_transform(self, simple_dataset):
         s1 = MinMaxScaler()
@@ -259,7 +259,7 @@ class TestBaseScalerContract:
         for b1, b2 in zip(chained.bags, combined.bags):
             np.testing.assert_allclose(b1.as_matrix(), b2.as_matrix(), atol=1e-12)
 
-    # ── repr / str ──────────────────────────────────────────────────────────
+    #  repr / str 
 
     def test_repr_contains_not_fitted_before_fit(self, scaler):
         assert "not" in repr(scaler).lower() or "unfitted" in repr(scaler).lower()
@@ -272,9 +272,9 @@ class TestBaseScalerContract:
         assert type(scaler).__name__ in str(scaler)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 2. Helpers internos de BaseScaler
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestBaseScalerInternalHelpers:
 
@@ -329,9 +329,9 @@ class TestBaseScalerInternalHelpers:
         assert len(scaler.numeric_indices) == 2
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 3. MinMaxScaler — fit
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestMinMaxScalerFit:
 
@@ -375,9 +375,9 @@ class TestMinMaxScalerFit:
         assert scaler.feature_range == (-1.0, 1.0)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 4. MinMaxScaler — transform
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestMinMaxScalerTransform:
 
@@ -430,9 +430,9 @@ class TestMinMaxScalerTransform:
         np.testing.assert_allclose(result.bags[1].as_matrix()[0], [1.5, 1.5], atol=1e-12)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 5. MinMaxScaler — feature_range personalizado
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestMinMaxScalerFeatureRange:
 
@@ -457,9 +457,9 @@ class TestMinMaxScalerFeatureRange:
         np.testing.assert_allclose(result.bags[1].as_matrix()[0], [-0.2, -0.2], atol=1e-12)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 6. MinMaxScaler — inverse_transform
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestMinMaxScalerInverseTransform:
 
@@ -480,9 +480,9 @@ class TestMinMaxScalerInverseTransform:
             MinMaxScaler().inverse_transform(simple_dataset)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 7. StandardScaler — fit
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestStandardScalerFit:
 
@@ -527,9 +527,9 @@ class TestStandardScalerFit:
             StandardScaler().fit(MIData([], "empty"))
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 8. StandardScaler — transform
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestStandardScalerTransform:
 
@@ -570,9 +570,9 @@ class TestStandardScalerTransform:
                 assert orig_inst.get_value(0) == new_inst.get_value(0)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 9. StandardScaler — inverse_transform
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestStandardScalerInverseTransform:
 
@@ -587,9 +587,9 @@ class TestStandardScalerInverseTransform:
             StandardScaler().inverse_transform(simple_dataset)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 10. Edge cases — parametrizados sobre ambas subclases
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestScalerEdgeCases:
 
@@ -655,9 +655,9 @@ class TestScalerEdgeCases:
         assert len(result) == 1
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # 11. Notas de auditoría (xfail)
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class TestScalerDesignAuditNotes:
     """

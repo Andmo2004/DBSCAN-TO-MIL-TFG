@@ -115,9 +115,9 @@ class BaseCVI(ABC):
         return f"<{self.__class__.__name__} [{self.category}] {arrow} mejor>"
     
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # TIPO 1 — Solo Compactibilidad
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class SEDIndex(BaseCVI):
     """
@@ -317,9 +317,9 @@ class HcIndex(BaseCVI):
  
         return float(hc)
     
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # TIPO 2 — Compactibilidad + Separación
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 
 class VRCIndex(BaseCVI):
     """
@@ -499,9 +499,9 @@ class IIndex(BaseCVI):
         return float(((1.0 / k) * (e1 / ek) * dk) ** self._P)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
+# 
 # Evaluador Unificado de CVIs Internos
-# ══════════════════════════════════════════════════════════════════════════════
+# 
  
 class InternalCVIEvaluator:
     """

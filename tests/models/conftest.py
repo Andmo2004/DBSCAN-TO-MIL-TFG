@@ -29,7 +29,7 @@ from miclustering.data.instance import Instance
 from miclustering.data.midata import MIData
 
 
-# ─── Helpers privados para tests de modelos ────────────────────────────────────
+#  Helpers privados para tests de modelos 
 
 def _schema(n: int = 4) -> list[Attribute]:
     """Crea esquema con n atributos numéricos."""

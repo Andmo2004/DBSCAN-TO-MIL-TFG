@@ -38,7 +38,7 @@ from miclustering.data.bag import Bag
 from tests.models.conftest import _make_binary_dataset, _schema
 
 
-# ─── helpers ──────────────────────────────────────────────────────────────────
+#  helpers 
 
 def _ds(n: int = 8, seed: int = 0) -> MIData:
     return _make_binary_dataset(n_pos=n // 2, n_neg=n // 2, seed=seed)
@@ -64,7 +64,7 @@ def _block_matrix(n_a: int, n_b: int, intra: float = 0.1, inter: float = 10.0) -
     return m
 
 
-# ─── 1. Construcción ──────────────────────────────────────────────────────────
+#  1. Construcción 
 
 class TestMIKMedoidsConstruction:
 
@@ -105,7 +105,7 @@ class TestMIKMedoidsConstruction:
         assert m.medoids == []
 
 
-# ─── 2. fit() ─────────────────────────────────────────────────────────────────
+#  2. fit() 
 
 class TestMIKMedoidsFit:
 
@@ -217,7 +217,7 @@ class TestMIKMedoidsFit:
         assert m.labels == labels1
 
 
-# ─── 3. predict() ─────────────────────────────────────────────────────────────
+#  3. predict() 
 
 class TestMIKMedoidsPredict:
 
@@ -261,7 +261,7 @@ class TestMIKMedoidsPredict:
             assert isinstance(v, int)
 
 
-# ─── 4. fit_predict ───────────────────────────────────────────────────────────
+#  4. fit_predict 
 
 class TestMIKMedoidsFitPredict:
 
@@ -280,7 +280,7 @@ class TestMIKMedoidsFitPredict:
         assert set(result.keys()) == {bag.bag_id for bag in test.bags}
 
 
-# ─── 5. Estadísticas ─────────────────────────────────────────────────────────
+#  5. Estadísticas 
 
 class TestMIKMedoidsStatistics:
 
@@ -322,7 +322,7 @@ class TestMIKMedoidsStatistics:
         assert m.get_cluster_sizes() == {}
 
 
-# ─── 6. Representaciones ─────────────────────────────────────────────────────
+#  6. Representaciones 
 
 class TestMIKMedoidsRepresentation:
 
