@@ -163,25 +163,20 @@ class BaseScaler(ABC):
         Raises:
             ValueError: Si no se encuentran instancias en el dataset.
         """ 
-
         all_values = []
 
         for bag in dataset:
-            mat = bag.as_matrix()
-            if len(mat) > 0:
-                all_values.append(mat)
+            for instance in bag:
+                # Extraemos de forma segura los valores nativos numéricos por posición
+                instance_vals = list(instance._values)
+                numeric_vals = [float(instance_vals[idx]) for idx in self._numeric_indices]
+                all_values.append(numeric_vals)
 
         if not all_values:
-            raise ValueError("No se encontraron instancias en el datset")
+            raise ValueError("No se encontraron instancias en el dataset")
         
-        # Concatenamos todas las instancias
-        full_mat = np.vstack(all_values)
-
-        #Extraemos solo columnas numéricas
-        numeric_mat = full_mat[:, self._numeric_indices]
-
-        logger.debug(f"Datos recolectados: {numeric_mat.shape}")
-        return numeric_mat        
+        # Generamos la matriz limpia y tipada únicamente con atributos numéricos
+        return np.array(all_values, dtype=np.float64)
 
     def _create_transformed_dataset(self, original: MIData, transform_fn) -> MIData:
         """Crea un nuevo dataset aplicando una función de transformación.
@@ -343,14 +338,14 @@ class MinMaxScaler(BaseScaler):
         """
         self._validate_schema(dataset)
         
+        if not self._numeric_indices:
+            logger.warning("No hay atributos numéricos que transformar")
+            return dataset
+
         if self._data_min is None or self._data_range is None:
             raise RuntimeError("MinMaxScaler no fue entrenado correctamente. Llama a fit() primero.")
         
         logger.info(f"Transformando dataset '{dataset.name}' con MinMaxScaler")
-        
-        if not self._numeric_indices:
-            logger.warning("No hay atributos numéricos que transformar")
-            return dataset
         
         min_range, max_range = self._feature_range
         range_diff = max_range - min_range
@@ -400,6 +395,10 @@ class MinMaxScaler(BaseScaler):
         """
         self._validate_schema(dataset)
         
+        if not self._numeric_indices:
+            logger.warning("No hay atributos numéricos que revertir")
+            return dataset
+
         if self._data_min is None or self._data_range is None:
             raise RuntimeError("MinMaxScaler no fue entrenado correctamente. Llama a fit() primero.")
         
@@ -530,14 +529,14 @@ class StandardScaler(BaseScaler):
         """
         self._validate_schema(dataset)
         
+        if not self._numeric_indices:
+            logger.warning("No hay atributos numéricos que transformar")
+            return dataset
+
         if self._mean is None or self._std is None:
             raise RuntimeError("StandardScaler no fue entrenado correctamente. Llama a fit() primero.")
         
         logger.info(f"Transformando dataset '{dataset.name}' con StandardScaler")
-        
-        if not self._numeric_indices:
-            logger.warning("No hay atributos numéricos que transformar")
-            return dataset
         
         # Capturamos los valores para evitar problemas de tipo
         mean = self._mean
@@ -578,6 +577,10 @@ class StandardScaler(BaseScaler):
         """
         self._validate_schema(dataset)
         
+        if not self._numeric_indices:
+            logger.warning("No hay atributos numéricos que revertir")
+            return dataset
+
         if self._mean is None or self._std is None:
             raise RuntimeError("StandardScaler no fue entrenado correctamente. Llama a fit() primero.")
         
