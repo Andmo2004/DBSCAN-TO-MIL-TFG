@@ -62,12 +62,13 @@ pip install -e .
 ## Inicio rápido
 
 ```python
-from miclustering import MIData, MIDBSCAN, MIKMeans, MIKMedoids, MIKnn
+from miclustering import MIDBSCAN, MIKMeans, MIKMedoids, MIKnn
+from miclustering.data.arff_reader import ArffToMIData
 from miclustering.preprocessing.scaler import MinMaxScaler
 from miclustering.evaluation.bcm import MILEvaluator
 
 # 1. Cargar dataset desde ARFF
-dataset = MIData.from_arff("datasets/musk1.arff")
+dataset = ArffToMIData.from_arff("datasets/musk1.arff")
 train_data, test_data = dataset.split_data(percentage_train=70, seed=42)
 
 # 2. Normalizar
@@ -173,9 +174,9 @@ print(result["output_file"])
 
 ```python
 from miclustering.run import run_json
-from miclustering import MIData
+from miclustering.data.arff_reader import ArffToMIData
 
-dataset = MIData.from_arff("datasets/musk1.arff")
+dataset = ArffToMIData.from_arff("datasets/musk1.arff")
 train_data, test_data = dataset.split_data(percentage_train=70, seed=42)
 
 # Ejecutar múltiples configuraciones sin releer del disco
@@ -503,11 +504,30 @@ evaluator_custom = InternalCVIEvaluator(cvis=[VRCIndex(), IIndex()])
 
 ## Referencia de la API
 
+### `ArffToMIData`
+
+```python
+from miclustering.data.arff_reader import ArffToMIData
+
+# Carga directa (método de clase)
+dataset = ArffToMIData.from_arff("datasets/musk1.arff", dataset_name="musk1")
+
+# Con columnas personalizadas
+dataset = ArffToMIData.from_arff(
+    "datasets/musk1.arff",
+    bag_column="bag",
+    class_column="class"
+)
+
+# Vía instancia del loader
+loader = ArffToMIData(bag_column="bag", class_column="class")
+dataset = loader.load("datasets/musk1.arff", dataset_name="musk1")
+```
+
 ### `MIData`
 
 ```python
 MIData(bags: List[Bag], name: str)
-MIData.from_arff(file_path, dataset_name=None, bag_column="bag", class_column="class")
 
 dataset.get_bag(i)                          # → Bag
 dataset.get_num_bags()                      # → int
