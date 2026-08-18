@@ -6,15 +6,6 @@ Referencia:
     Kriegel, H. P., Pryakhin, A., Schubert, M., Zimek, A. (2006). COSMIC: conceptually
     specified multi-instance clusters. Proceedings of the 6th International Conference
     on Data Mining (ICDM 2006), pp. 917-921.
-
-NOTA IMPORTANTE:
-Esta clase implementa el Paso 1 (ordenamiento por densidad, Algoritmo 5) y el Paso 2
-(extracción de clusters mediante epsilon', Algoritmo 6) del artículo original. La
-generación de "conceptos" (la mitad del nombre COSMIC, basada en Formal Concept
-Analysis sobre atributos de las instancias) NO está implementada: el capítulo de
-referencia no detalla su procedimiento exacto y depende de una definición de atributos
-por instancia que queda fuera del alcance de esta clase. Si se retoma en el futuro,
-encajaría como un método adicional (p. ej. `derive_concepts()`).
 """
 
 import heapq
