@@ -69,8 +69,8 @@ class MIData:
         Returns:
             Objeto Bag.
         """
-        if 0 <= i < len(self.bags):
-            return self.bags[i]
+        if 0 <= i < len(self._bags):
+            return self._bags[i]
         raise IndexError(f"Índice {i} fuera de rango para el dataset {self.name}.")
     
     def get_num_bags(self) -> int:
@@ -79,7 +79,7 @@ class MIData:
         Returns:
             Número de bolsas (int).
         """
-        return len(self.bags)
+        return len(self._bags)
     
     def split_data(self, percentage_train: float, seed: int = 1234) -> Tuple['MIData', 'MIData']:
         """Divide el dataset en conjuntos de entrenamiento y prueba.
@@ -93,7 +93,7 @@ class MIData:
         """
         random.seed(seed)
         
-        bags_copy = self.bags[:]
+        bags_copy = list(self._bags)
         random.shuffle(bags_copy)
         
         split_index = int(len(bags_copy) * (percentage_train / 100.0))

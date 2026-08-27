@@ -13,7 +13,7 @@ from typing import Any, Dict, Optional
 
 from miclustering.distances import DISTANCE_REGISTRY
 
-VALID_ALGORITHMS = {"midbscan", "miknn", "mikmeans", "mikmedoids"}
+VALID_ALGORITHMS = {"midbscan", "miknn", "mikmeans", "mikmedoids", "cosmic"}
 VALID_SCALERS = {"MinMaxScaler", "StandardScaler", None}
 VALID_METRICS_EVAL = {"F1-Score", "Accuracy", "Precision", "Recall", "Specificity"}
 
@@ -46,6 +46,16 @@ _KEY_ALIASES: Dict[str, str] = {
     # partición
     "porcentaje_entrenamiento":          "train_pct",
     "percentage_train":                  "train_pct",
+    # paralelismo
+    "n_jobs":                            "n_jobs",
+    "num_workers":                       "n_jobs",
+    "paralelismo":                       "n_jobs",
+    "num_cores":                         "n_jobs",
+    # aceleración / GPU
+    "device":                            "device",
+    "dispositivo":                       "device",
+    "gpu":                               "device",
+    "aceleracion":                       "device",
 }
 
 
@@ -79,6 +89,8 @@ class RunConfig:
     use_optuna:      bool                 = False
     n_trials:        int                  = 30
     train_pct:       float                = 70.0
+    n_jobs:          int                  = -1
+    device:          str                  = "cpu"
     extra:           Dict[str, Any]       = field(default_factory=dict)
 
     #  Constructor alternativo 

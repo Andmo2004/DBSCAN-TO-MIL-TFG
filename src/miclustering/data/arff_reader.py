@@ -3,6 +3,7 @@ import pandas as pd
 from typing import List, Optional
 from pathlib import Path
 import logging
+import re
 
 from miclustering.data.attribute import Attribute
 from miclustering.data.instance import Instance
@@ -265,27 +266,28 @@ class ArffToMIData:
         Returns:
             Objeto Attribute o None si no se puede parsear.
         """
-        parts = line.split()
-        if len(parts) < 3:
+        match = re.match(r"^@attribute\s+(?:'([^']+)'|\"([^\"]+)\"|(\S+))\s+(.+)$", line.strip(), re.IGNORECASE)
+        if not match:
             logger.warning(f"Línea de atributo mal formada: {line}")
             return None
         
-        attr_name = parts[1]
-        attr_type_raw = parts[2].lower()
+        attr_name = match.group(1) or match.group(2) or match.group(3)
+        attr_type_raw = match.group(4).strip()
+        attr_type_lower = attr_type_raw.lower()
         
         # Mapear tipos ARFF a tipos internos
-        if attr_type_raw in ['numeric', 'real', 'float', 'double']:
+        if attr_type_lower in ['numeric', 'real', 'float', 'double']:
             attr_type = 'real'
-        elif attr_type_raw in ['integer', 'int']:
+        elif attr_type_lower in ['integer', 'int']:
             attr_type = 'integer'
-        elif attr_type_raw == 'string':
+        elif attr_type_lower == 'string':
             attr_type = 'string'
-        elif attr_type_raw.startswith('{'):
+        elif attr_type_lower.startswith('{'):
             # Tipo nominal: {valor1, valor2, ...}
             attr_type = 'nominal'
-            # Extraer valores nominales (simplificado)
-            values_str = ' '.join(parts[2:])
-            values = [v.strip() for v in values_str.strip('{}').split(',')]
+            # Extraer valores nominales
+            values_str = attr_type_raw.strip('{}')
+            values = [v.strip().strip("'\"") for v in values_str.split(',')]
             return Attribute(attr_name, attr_type, values=values)
         else:
             attr_type = 'real'  # Por defecto
@@ -308,19 +310,21 @@ class ArffToMIData:
         """
         logger.info("Construyendo bolsas...")
         
-        id_column = df.columns[0]
+        id_col_idx = 0
+        bag_col_idx = df.columns.get_loc(self._bag_column)
+        class_col_idx = df.columns.get_loc(self._class_column)
         bags = []
         
-        for index, row in df.iterrows():
+        for index, row in enumerate(df.itertuples(index=False)):
             try:
                 # Extraer ID
-                bag_id = self._decode_if_bytes(row[id_column])
+                bag_id = self._decode_if_bytes(row[id_col_idx])
                 
                 # Extraer etiqueta
-                label = self._decode_if_bytes(row[self._class_column])
+                label = self._decode_if_bytes(row[class_col_idx])
                 
                 # Extraer instancias
-                raw_instances = row[self._bag_column]
+                raw_instances = row[bag_col_idx]
                 instances = self._build_instances(raw_instances, instance_schema)
                 
                 # Crear bolsa

@@ -10,6 +10,7 @@ from .models.midbscan import MIDBSCAN
 from .models.mikmeans import MIKMeans
 from .models.mikmedoids import MIKMedoids
 from .models.miknn import MIKnn
+from .models.cosmic import COSMIC
 from .data.midata import MIData
 from .data.bag import Bag
 
@@ -18,6 +19,7 @@ __all__ = [
     "MIKMeans",
     "MIKMedoids",
     "MIKnn",
+    "COSMIC",
     "MIData",
     "Bag"
 ]

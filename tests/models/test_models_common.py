@@ -287,3 +287,58 @@ class TestModelRepresentationContract:
         _fit_model(m_unfitted, train)
         repr_after = repr(m_unfitted)
         assert repr_before != repr_after
+
+
+#  Contrato: Atributos estándar Scikit-Learn (labels_, cluster_centers_, classes_, device, n_jobs)
+
+class TestModelScikitLearnAttributes:
+
+    @pytest.mark.parametrize("factory", MODEL_FACTORIES)
+    def test_labels_trailing_underscore_before_fit_raises(self, factory):
+        m = factory()
+        with pytest.raises(AttributeError):
+            _ = m.labels_
+
+    @pytest.mark.parametrize("factory", MODEL_FACTORIES)
+    def test_labels_trailing_underscore_returns_ndarray(self, factory):
+        train, _ = _make_train_test()
+        m = factory()
+        _fit_model(m, train)
+        arr = m.labels_
+        assert isinstance(arr, np.ndarray)
+        assert len(arr) == train.get_num_bags()
+
+    @pytest.mark.parametrize("factory", MODEL_FACTORIES)
+    def test_device_and_n_jobs_accessible(self, factory):
+        m = factory()
+        assert hasattr(m, "device")
+        assert hasattr(m, "n_jobs")
+        assert isinstance(m.device, str)
+        assert isinstance(m.n_jobs, int)
+
+    def test_mikmeans_cluster_centers(self):
+        train, _ = _make_train_test()
+        m = MIKMeans(k=2)
+        m.fit(train)
+        centers = m.cluster_centers_
+        assert isinstance(centers, list)
+        assert len(centers) == 2
+
+    def test_mikmedoids_cluster_centers_and_indices(self):
+        train, _ = _make_train_test()
+        m = MIKMedoids(k=2)
+        m.fit(train)
+        centers = m.cluster_centers_
+        indices = m.medoid_indices_
+        assert isinstance(centers, list)
+        assert isinstance(indices, list)
+        assert len(centers) == 2
+        assert len(indices) == 2
+
+    def test_miknn_classes_attribute(self):
+        train, _ = _make_train_test()
+        m = MIKnn(k=3)
+        m.fit(train)
+        cls_arr = m.classes_
+        assert isinstance(cls_arr, np.ndarray)
+        assert len(cls_arr) > 0

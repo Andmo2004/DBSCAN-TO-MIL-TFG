@@ -168,7 +168,7 @@ class BaseScaler(ABC):
         for bag in dataset:
             for instance in bag:
                 # Extraemos de forma segura los valores nativos numéricos por posición
-                instance_vals = list(instance._values)
+                instance_vals = list(instance.values)
                 numeric_vals = [float(instance_vals[idx]) for idx in self._numeric_indices]
                 all_values.append(numeric_vals)
 
@@ -195,7 +195,7 @@ class BaseScaler(ABC):
             new_instances = []
 
             for instance in bag:
-                new_values = list(instance._values)
+                new_values = list(instance.values)
 
                 # Transformamos solo valores numericos
                 for idx in self._numeric_indices:

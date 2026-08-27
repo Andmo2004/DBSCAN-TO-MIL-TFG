@@ -665,15 +665,6 @@ class TestScalerDesignAuditNotes:
     No bloquean CI pero aparecen en el reporte como recordatorio de refactor.
     """
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG de diseño: _create_transformed_dataset accede a instance._values "
-            "directamente (atributo privado con __slots__), acoplando BaseScaler "
-            "a un detalle de implementación de Instance. "
-            "Refactor: añadir Instance.with_replacement(idx, val) -> Instance."
-        ),
-    )
     def test_transform_does_not_access_private_instance_values(self):
         import inspect
         from miclustering.preprocessing.scaler import BaseScaler as BS

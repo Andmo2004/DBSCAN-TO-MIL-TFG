@@ -40,7 +40,13 @@ class MIKnn(BaseEstimator, ClassifierMixin):
 
  
 
-    def __init__(self, k: int = 3, metric: str = "hausdorff"):
+    def __init__(
+        self,
+        k: int = 3,
+        metric: str = "hausdorff",
+        n_jobs: int = 1,
+        device: str = "cpu",
+    ):
         """Constructor del clasificador MIKnn.
  
         Args:
@@ -48,6 +54,8 @@ class MIKnn(BaseEstimator, ClassifierMixin):
             metric: Nombre de la función de distancia entre bolsas.
                     Valores válidos: 'hausdorff', 'hausdorff_min', 'hausdorff_avg', 
                     'cauchy_schwarz', 'earth_movers', 'mahalanobis'.
+            n_jobs: Número de procesos paralelos para cómputo (-1 para todos los núcleos).
+            device: Dispositivo de cómputo ('cpu', 'cuda', 'mps', 'auto').
  
         Raises:
             ValueError: Si k < 1 o si la métrica no está registrada.
@@ -64,6 +72,8 @@ class MIKnn(BaseEstimator, ClassifierMixin):
  
         self._k            = k
         self._metric_name  = metric.lower()
+        self._n_jobs       = n_jobs
+        self._device       = (device or "cpu").lower().strip()
         self._metric_func: Callable[[Bag, Bag], float] = (
             DISTANCE_REGISTRY[self._metric_name]
         )
@@ -87,6 +97,16 @@ class MIKnn(BaseEstimator, ClassifierMixin):
     def metric_name(self) -> str:
         """Nombre de la métrica de distancia."""
         return self._metric_name
+
+    @property
+    def n_jobs(self) -> int:
+        """Número de procesos paralelos para cómputo."""
+        return self._n_jobs
+
+    @property
+    def device(self) -> str:
+        """Dispositivo de cómputo configurado."""
+        return self._device
  
     @property
     def is_fitted(self) -> bool:
@@ -97,6 +117,20 @@ class MIKnn(BaseEstimator, ClassifierMixin):
     def labels(self) -> Dict[str, int]:
         """Devuelve una copia de las etiquetas del conjunto de entrenamiento."""
         return self._labels.copy()
+
+    @property
+    def classes_(self) -> np.ndarray:
+        """Clases conocidas aprendidas durante el entrenamiento (array numpy)."""
+        if not self._fitted:
+            raise AttributeError("El modelo no ha sido entrenado. Ejecuta fit() primero.")
+        return np.array(sorted(list(set(self._train_labels))))
+
+    @property
+    def labels_(self) -> np.ndarray:
+        """Etiquetas de entrenamiento (array numpy)."""
+        if not self._fitted:
+            raise AttributeError("El modelo no ha sido entrenado. Ejecuta fit() primero.")
+        return np.array(self._train_labels)
 
     @property
     def n_train_bags(self) -> int:
@@ -167,16 +201,29 @@ class MIKnn(BaseEstimator, ClassifierMixin):
         """
         self._check_fitted()
  
-        if dataset.get_num_bags() == 0:
+        test_bags = list(dataset.bags)
+        if len(test_bags) == 0:
             raise ValueError("El dataset de prueba no puede estar vacío.")
- 
+
         predictions: Dict[str, int] = {}
- 
-        for test_bag in dataset.bags:
-            distances = self._compute_distances_to_train(test_bag)
-            label     = self._classify(distances)
-            predictions[test_bag.bag_id] = label
- 
+
+        if self._n_jobs == 1 or len(test_bags) <= 10:
+            for test_bag in test_bags:
+                distances = self._compute_distances_to_train(test_bag)
+                label     = self._classify(distances)
+                predictions[test_bag.bag_id] = label
+        else:
+            from joblib import Parallel, delayed
+
+            def _predict_single(b):
+                dists = self._compute_distances_to_train(b)
+                return b.bag_id, self._classify(dists)
+
+            results = Parallel(n_jobs=self._n_jobs, backend="loky")(
+                delayed(_predict_single)(b) for b in test_bags
+            )
+            predictions = dict(results)
+
         logger.info(
             f"MIKnn predijo {len(predictions)} bolsas."
         )

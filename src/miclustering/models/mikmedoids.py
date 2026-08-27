@@ -17,7 +17,15 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
     utilizando el algoritmo PAM (Partitioning Around Medoids).
     """
 
-    def __init__(self, k: int, metric: str = 'hausdorff', max_iters: int = 100, random_state: Optional[int] = None):
+    def __init__(
+        self,
+        k: int,
+        metric: str = 'hausdorff',
+        max_iters: int = 100,
+        random_state: Optional[int] = None,
+        n_jobs: int = 1,
+        device: str = "cpu",
+    ):
         """Constructor del modelo MIKMedoids.
         
         Args:
@@ -25,6 +33,8 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
             metric: Métrica de distancia a utilizar.
             max_iters: Número máximo de iteraciones.
             random_state: Semilla para la inicialización aleatoria.
+            n_jobs: Número de procesos paralelos para cómputo (-1 para todos los núcleos).
+            device: Dispositivo de cómputo ('cpu', 'cuda', 'mps', 'auto').
         """
         if k < 1:
             raise ValueError(f"El parámetro 'k' debe ser >= 1. Recibido: {k}")
@@ -35,6 +45,8 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
         self._metric_name = metric.lower()
         self._max_iters = max_iters
         self._random_state = random_state
+        self._n_jobs = n_jobs
+        self._device = (device or "cpu").lower().strip()
 
         self._metric_func = self._get_metric_function(self._metric_name)
 
@@ -56,8 +68,25 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
         return self._k
 
     @property
+    def n_jobs(self) -> int:
+        """Número de procesos paralelos para cómputo."""
+        return self._n_jobs
+
+    @property
+    def device(self) -> str:
+        """Dispositivo de cómputo configurado."""
+        return self._device
+
+    @property
     def labels(self) -> Dict[str, int]:
         return self._labels.copy()
+
+    @property
+    def labels_(self) -> np.ndarray:
+        """Etiquetas de clúster asignadas a cada bolsa de entrenamiento (array numpy)."""
+        if not self._fitted:
+            raise AttributeError("El modelo no ha sido entrenado. Ejecuta fit() primero.")
+        return np.array([self._labels.get(bag.bag_id, -1) for bag in self._train_bags])
 
     @property
     def is_fitted(self) -> bool:
@@ -69,6 +98,16 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
         if not self._fitted:
             return []
         return [self._train_bags[i] for i in self._medoid_indices]
+
+    @property
+    def cluster_centers_(self) -> List[Bag]:
+        """Alias estándar Scikit-Learn para los centroides/medoides calculados."""
+        return self.medoids
+
+    @property
+    def medoid_indices_(self) -> List[int]:
+        """Índices de los medoides dentro del conjunto de entrenamiento."""
+        return list(self._medoid_indices)
 
     def _reset_state(self):
         self._labels = {}
@@ -85,7 +124,9 @@ class MIKMedoids(BaseEstimator, ClusterMixin):
         return DISTANCE_REGISTRY[name]
 
     def _compute_distance_matrix(self, bags: List[Bag]) -> np.ndarray:
-        return compute_distance_matrix(bags, self._metric_func, self._metric_name)
+        return compute_distance_matrix(
+            bags, self._metric_func, self._metric_name, n_jobs=self._n_jobs, device=self._device
+        )
 
     def fit(self, dataset: MIData, precomputed_matrix: Optional[np.ndarray] = None) -> "MIKMedoids":
         """

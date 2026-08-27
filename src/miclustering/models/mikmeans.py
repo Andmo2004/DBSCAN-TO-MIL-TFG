@@ -13,12 +13,32 @@ logger = logging.getLogger(__name__)
 
 class MIKMeans(BaseEstimator, ClusterMixin):
     """
-    Implementación del algoritmo KMeans adaptado para Multi-Instance Learning (MIL).
-    En este caso, los centroides se representan como Bolsas (Bags) que se construyen
-    mediante la agregación de las instancias de las bolsas asignadas a cada clúster.
+    Implementación del algoritmo K-Means adaptado para Multi-Instance Learning (MIL).
+
+    Diseño Algorítmico MIL:
+    -----------------------
+    En el aprendizaje multi-instancia estándar, las muestras de entrada son bolsas (Bags)
+    que contienen conjuntos de cardinalidad variable de vectores de instancia. Para aplicar
+    K-Means:
+      1. Cada centroide se modela y representa como un objeto `Bag` sintético que contiene
+         exactamente 1 instancia representativa (el vector medio $\mu_k = \frac{1}{|C_k|} \sum_{b \in C_k} \bar{x}_b$).
+      2. La distancia entre cualquier bolsa de entrada (con $M$ instancias) y el centroide
+         sintético (con 1 instancia) se calcula utilizando directamente la métrica MIL
+         configurada (por ejemplo, Hausdorff o Mahalanobis), manteniendo la coherencia
+         del dominio y la invariancia de tipos.
+      3. En cada iteración se reasignan las bolsas al centroide más cercano y se actualizan
+         los centroides sintéticos hasta convergencia o alcanzar `max_iters`.
     """
 
-    def __init__(self, k: int, metric: str = 'hausdorff', max_iters: int = 100, random_state: Optional[int] = None):
+    def __init__(
+        self,
+        k: int,
+        metric: str = 'hausdorff',
+        max_iters: int = 100,
+        random_state: Optional[int] = None,
+        n_jobs: int = 1,
+        device: str = "cpu",
+    ):
         """Constructor del modelo MIKMeans.
         
         Args:
@@ -26,6 +46,8 @@ class MIKMeans(BaseEstimator, ClusterMixin):
             metric: Métrica de distancia a utilizar entre bolsas y centroides.
             max_iters: Número máximo de iteraciones.
             random_state: Semilla para la inicialización aleatoria.
+            n_jobs: Número de procesos paralelos para cómputo (-1 para todos los núcleos).
+            device: Dispositivo de cómputo ('cpu', 'cuda', 'mps', 'auto').
         """
         if k < 1:
             raise ValueError(f"El parámetro 'k' debe ser >= 1. Recibido: {k}")
@@ -36,6 +58,8 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         self._metric_name = metric.lower()
         self._max_iters = max_iters
         self._random_state = random_state
+        self._n_jobs = n_jobs
+        self._device = (device or "cpu").lower().strip()
 
         self._metric_func = self._get_metric_function(self._metric_name)
 
@@ -52,8 +76,25 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         return self._k
 
     @property
+    def n_jobs(self) -> int:
+        """Número de procesos paralelos para cómputo."""
+        return self._n_jobs
+
+    @property
+    def device(self) -> str:
+        """Dispositivo de cómputo configurado."""
+        return self._device
+
+    @property
     def labels(self) -> Dict[str, int]:
         return self._labels.copy()
+
+    @property
+    def labels_(self) -> np.ndarray:
+        """Etiquetas de clúster asignadas a cada bolsa de entrenamiento (array numpy)."""
+        if not self._fitted:
+            raise AttributeError("El modelo no ha sido entrenado. Ejecuta fit() primero.")
+        return np.array([self._labels.get(bag.bag_id, -1) for bag in self._train_bags])
 
     @property
     def is_fitted(self) -> bool:
@@ -62,6 +103,11 @@ class MIKMeans(BaseEstimator, ClusterMixin):
     @property
     def centroids(self) -> List[Bag]:
         """Devuelve los centroides actuales (objetos Bag)."""
+        return self._centroids
+
+    @property
+    def cluster_centers_(self) -> List[Bag]:
+        """Alias estándar Scikit-Learn para los centroides calculados."""
         return self._centroids
 
     def _reset_state(self):

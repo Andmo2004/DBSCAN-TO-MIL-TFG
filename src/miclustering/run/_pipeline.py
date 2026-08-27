@@ -28,6 +28,7 @@ from miclustering.models.midbscan import MIDBSCAN
 from miclustering.models.mikmeans import MIKMeans
 from miclustering.models.mikmedoids import MIKMedoids
 from miclustering.models.miknn import MIKnn
+from miclustering.models.cosmic import COSMIC
 from miclustering.preprocessing.scaler import MinMaxScaler, StandardScaler
 
 from ._config import RunConfig
@@ -41,13 +42,14 @@ _MODEL_REGISTRY = {
     "miknn":      MIKnn,
     "mikmeans":   MIKMeans,
     "mikmedoids": MIKMedoids,
+    "cosmic":     COSMIC,
 }
 
 # Parámetros que aceptan random_state
 _SUPPORTS_RANDOM_STATE = {"mikmeans", "mikmedoids"}
 
 # Parámetros que aceptan precomputed_matrix en fit()
-_SUPPORTS_PRECOMPUTED = {"midbscan", "mikmedoids"}
+_SUPPORTS_PRECOMPUTED = {"midbscan", "mikmedoids", "cosmic"}
 
 #  Función principal 
 
@@ -100,7 +102,11 @@ def run_pipeline(
             f"con métrica '{config.distance_metric}'..."
         )
         dist_matrix = compute_distance_matrix(
-            train_scaled.bags, metric_func, config.distance_metric
+            train_scaled.bags,
+            metric_func,
+            config.distance_metric,
+            n_jobs=config.n_jobs,
+            device=config.device,
         )
 
     #  4. Resolver hiperparámetros (Optuna o directos) 
@@ -117,19 +123,35 @@ def run_pipeline(
     else:
         model.fit(train_scaled)
 
-    #  6. Predecir sobre test 
-    logger.info(f"[pipeline] Prediciendo sobre {test_scaled.get_num_bags()} bolsas de test...")
-    pred_dict = model.predict(test_scaled)
-    y_pred_raw = np.array(
-        [pred_dict.get(bag.bag_id, -1) for bag in test_scaled.bags]
-    )
-
-    #  7. Mapear clusters → clases (solo clustering) 
+    #  6. Predecir y Mapear clusters → clases 
     mapping: Dict[int, int] = {}
 
-    if config.algorithm == "miknn":
+    if config.algorithm == "cosmic":
+        # COSMIC es transductivo: evalúa sobre train_scaled
+        train_labels_dict = getattr(model, "labels", {})
+        noise_label = getattr(model, "NOISE_LABEL", -1)
+        y_pred_train_raw = np.array(
+            [train_labels_dict.get(bag.bag_id, noise_label) for bag in train_scaled.bags]
+        )
+        _, mapping = MILEvaluator.hungarian_map_clusters_to_labels(
+            y_true_train, y_pred_train_raw
+        )
+        y_pred_mapped = np.array([mapping.get(int(c), 0) for c in y_pred_train_raw])
+        eval_metrics = _compute_metrics(y_true_train, y_pred_mapped)
+    elif config.algorithm == "miknn":
+        logger.info(f"[pipeline] Prediciendo sobre {test_scaled.get_num_bags()} bolsas de test...")
+        pred_dict = model.predict(test_scaled)
+        y_pred_raw = np.array(
+            [pred_dict.get(bag.bag_id, -1) for bag in test_scaled.bags]
+        )
         y_pred_test = y_pred_raw
+        eval_metrics = _compute_metrics(y_true_test, y_pred_test)
     else:
+        logger.info(f"[pipeline] Prediciendo sobre {test_scaled.get_num_bags()} bolsas de test...")
+        pred_dict = model.predict(test_scaled)
+        y_pred_raw = np.array(
+            [pred_dict.get(bag.bag_id, -1) for bag in test_scaled.bags]
+        )
         train_labels_dict = getattr(model, "labels", {}) or model.predict(train_scaled)
         noise_label = getattr(model, "NOISE_LABEL", -1)
         y_pred_train_raw = np.array(
@@ -139,9 +161,7 @@ def run_pipeline(
             y_true_train, y_pred_train_raw
         )
         y_pred_test = np.array([mapping.get(int(c), 0) for c in y_pred_raw])
-
-    #  8. Calcular métricas 
-    eval_metrics = _compute_metrics(y_true_test, y_pred_test)
+        eval_metrics = _compute_metrics(y_true_test, y_pred_test)
 
     #  9. Estadísticas del modelo 
     model_stats: Dict[str, Any] = {}
@@ -213,14 +233,11 @@ def _resolve_hyperparams(
     más los valores implícitos necesarios (metric, random_state).
     """
     base: Dict[str, Any] = dict(config.hyperparams)
-
-    # Inyectar metric si no viene en hyperparams
-    if "metric" not in base:
-        base["metric"] = config.distance_metric
-
-    # Inyectar random_state para modelos que lo soportan
-    if config.algorithm in _SUPPORTS_RANDOM_STATE and "random_state" not in base:
-        base["random_state"] = config.seed
+    base.setdefault("metric", config.distance_metric)
+    if config.algorithm in _SUPPORTS_RANDOM_STATE:
+        base.setdefault("random_state", config.seed)
+    if config.algorithm in {"midbscan", "miknn"}:
+        base.setdefault("n_jobs", config.n_jobs)
 
     if not config.use_optuna:
         return base
@@ -252,14 +269,18 @@ def _resolve_hyperparams(
     best = study.best_params
     logger.info(f"[pipeline] Optuna best params: {best}")
 
-    # Convertir eps_percentile → epsilon para MIDBSCAN
-    if config.algorithm == "midbscan" and dist_matrix is not None:
+    # Convertir eps_percentile → epsilon para MIDBSCAN y COSMIC
+    if config.algorithm in {"midbscan", "cosmic"} and dist_matrix is not None:
         upper = dist_matrix[np.triu_indices_from(dist_matrix, k=1)]
         upper_pos = upper[upper > 0]
         if len(upper_pos) > 0:
             base["epsilon"] = float(
                 np.percentile(upper_pos, best.get("eps_percentile", 15.0))
             )
+            if config.algorithm == "cosmic" and "eps_prime_percentile" in best:
+                base["epsilon_prime"] = float(
+                    np.percentile(upper_pos, best.get("eps_prime_percentile", 10.0))
+                )
         base["min_pts"] = best.get("min_pts", base.get("min_pts", 2))
     else:
         base["k"] = best.get("k", base.get("k", 3))
@@ -293,6 +314,19 @@ def _build_optuna_objective(
             if len(upper_pos) == 0:
                 raise optuna.exceptions.TrialPruned()
             hp["epsilon"] = float(np.percentile(upper_pos, eps_pct))
+
+        elif config.algorithm == "cosmic":
+            hp["min_pts"] = trial.suggest_int("min_pts", 2, 20)
+            eps_pct = trial.suggest_float("eps_percentile", 10.0, 60.0)
+            if dist_matrix is None:
+                raise optuna.exceptions.TrialPruned()
+            upper = dist_matrix[np.triu_indices_from(dist_matrix, k=1)]
+            upper_pos = upper[upper > 0]
+            if len(upper_pos) == 0:
+                raise optuna.exceptions.TrialPruned()
+            hp["epsilon"] = float(np.percentile(upper_pos, eps_pct))
+            eps_prime_pct = trial.suggest_float("eps_prime_percentile", 1.0, eps_pct)
+            hp["epsilon_prime"] = float(np.percentile(upper_pos, eps_prime_pct))
 
         elif config.algorithm == "miknn":
             hp["k"] = trial.suggest_int("k", 1, 15)

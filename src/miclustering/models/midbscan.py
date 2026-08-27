@@ -18,13 +18,22 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
 
     NOISE_LABEL = -1
 
-    def __init__(self, epsilon: float, min_pts: int, metric: str = 'hausdorff'):
+    def __init__(
+        self,
+        epsilon: float,
+        min_pts: int,
+        metric: str = 'hausdorff',
+        n_jobs: int = 1,
+        device: str = "cpu",
+    ):
         """Constructor del modelo MIDBSCAN.
         
         Args:
             epsilon: Distancia máxima entre dos muestras para que se consideren en la vecindad.
             min_pts: El número de muestras mínimo en vecindad para que un punto se considere núcleo.
             metric: Métrica de distancia usada.
+            n_jobs: Número de procesos paralelos para cómputo (-1 para todos los núcleos).
+            device: Dispositivo de cómputo ('cpu', 'cuda', 'mps', 'auto').
 
         Raises:
             ValueError: Si epsilon <= 0 o min_pts < 1.
@@ -40,6 +49,8 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
         self._epsilon = epsilon
         self._min_pts = min_pts
         self._metric_name = metric.lower()
+        self._n_jobs = n_jobs
+        self._device = (device or "cpu").lower().strip()
 
         # Función de métrica a usar
         self._metric_func = self._get_metric_function(self._metric_name)
@@ -71,6 +82,16 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
         return self._min_pts
 
     @property
+    def n_jobs(self) -> int:
+        """Número de procesos paralelos para cómputo."""
+        return self._n_jobs
+
+    @property
+    def device(self) -> str:
+        """Dispositivo de cómputo configurado."""
+        return self._device
+
+    @property
     def cluster_count(self) -> int:
         """Número de clústeres encontrados (excluyendo ruido)."""
         return self._cluster_count
@@ -81,6 +102,13 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
         Devuelve un diccionario con las etiquetas asignadas {bag_id: cluster_id}.
         """
         return self._labels.copy()
+
+    @property
+    def labels_(self) -> np.ndarray:
+        """Etiquetas de clúster asignadas a cada bolsa de entrenamiento (array numpy)."""
+        if not self._fitted:
+            raise AttributeError("El modelo no ha sido entrenado. Ejecuta fit() primero.")
+        return np.array([self._labels.get(bag.bag_id, self.NOISE_LABEL) for bag in self._train_bags])
     
     @property
     def noise_label(self) -> int:
@@ -124,7 +152,9 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
         Returns:
             Matriz numpy de distancias (N X N).
         """
-        return compute_distance_matrix(bags, self._metric_func, self._metric_name)
+        return compute_distance_matrix(
+            bags, self._metric_func, self._metric_name, n_jobs=self._n_jobs, device=self._device
+        )
 
     def _add_core_point(self, bag: Bag, cluster_id: int):
         """Registra un punto como núcleo para uso futuro en predicciones."""
@@ -281,28 +311,50 @@ class MIDBSCAN(BaseEstimator, ClusterMixin):
         
         logger.info(f"Prediciendo {test_dataset.get_num_bags()} bolsas de prueba usando {len(self._core_bags)} núcleos...")
 
+        test_bags = list(test_dataset.bags)
         test_labels = {}
         noise_count = 0
+        dist_func = self._metric_func
 
-        for test_bag in test_dataset.bags:
-            best_dist = float('inf')
-            assigned_cluster = self.NOISE_LABEL
-            dist_func = self._metric_func
+        if self._n_jobs == 1 or len(test_bags) <= 10:
+            for test_bag in test_bags:
+                best_dist = float('inf')
+                assigned_cluster = self.NOISE_LABEL
 
-            # Compararemos solo los puntos núcleo (más optimizado para datasets grandes)
-            for core_bag in self._core_bags:
-                dist = dist_func(test_bag, core_bag)
+                # Compararemos solo los puntos núcleo (más optimizado para datasets grandes)
+                for core_bag in self._core_bags:
+                    dist = dist_func(test_bag, core_bag)
 
-                if dist <= self._epsilon:
-                    if dist < best_dist:
+                    if dist <= self._epsilon:
+                        if dist < best_dist:
+                            best_dist = dist
+                            assigned_cluster = self._core_bag_labels[core_bag.bag_id]
+
+                test_labels[test_bag.bag_id] = assigned_cluster
+                if assigned_cluster == self.NOISE_LABEL:
+                    noise_count += 1
+        else:
+            from joblib import Parallel, delayed
+
+            def _predict_single(test_bag):
+                best_dist = float('inf')
+                assigned = self.NOISE_LABEL
+                for core_bag in self._core_bags:
+                    dist = dist_func(test_bag, core_bag)
+                    if dist <= self._epsilon and dist < best_dist:
                         best_dist = dist
-                        assigned_cluster = self._core_bag_labels[core_bag.bag_id]
+                        assigned = self._core_bag_labels[core_bag.bag_id]
+                return test_bag.bag_id, assigned
 
-            test_labels[test_bag.bag_id] = assigned_cluster
-            if assigned_cluster == self.NOISE_LABEL:
-                noise_count += 1
+            results = Parallel(n_jobs=self._n_jobs, backend="loky")(
+                delayed(_predict_single)(b) for b in test_bags
+            )
+            for bag_id, assigned in results:
+                test_labels[bag_id] = assigned
+                if assigned == self.NOISE_LABEL:
+                    noise_count += 1
 
-        percentage = (noise_count / test_dataset.get_num_bags()) * 100
+        percentage = (noise_count / len(test_bags)) * 100
         logger.info(f"Predicción completada: {noise_count} bolsas asignadas como ruido ({percentage:.2f}%)")
         
         return test_labels

@@ -12,11 +12,13 @@ class Bag:
         label: etiqueta asociada a la bolsa.
     """
     _instances: List['Instance']
+    _matrix_cache: Optional[np.ndarray]
 
     def __init__(self, bag_id: Any, label: Any, instances: Optional[List['Instance']] = None):
         self._bag_id = bag_id
         self._label = label
         self._instances = instances if instances is not None else []
+        self._matrix_cache = None
 
         if self._instances and not all(isinstance(i, Instance) for i in self._instances):
             raise TypeError("Todos los elementos deben ser instancias de Instance")
@@ -73,24 +75,30 @@ class Bag:
         return len(self._instances)
     
     def add_instance(self, instance: 'Instance'):
-        """Añade una instancia a la bolsa.
+        """Añade una instancia a la bolsa e invalida la caché de matriz.
 
         Args:
             instance: Objeto Instance a añadir.
         """
         self._instances.append(instance)
+        self._matrix_cache = None
 
     def as_matrix(self) -> np.ndarray:
         """Devuelve las instancias como una matriz NumPy. (n_instancias * n_atributos)
+        Usa caché interna para evitar conversiones repetidas de listas de Python a NumPy.
 
         Returns:
             Matriz NumPy con las instancias.
         """
+        if self._matrix_cache is not None:
+            return self._matrix_cache
+
         if not self._instances:
-            return np.empty((0,), dtype=np.float64)
-        matrix = [instance.values for instance in self._instances]
-        return np.array(matrix, dtype=np.float64)
-    
+            self._matrix_cache = np.empty((0,), dtype=np.float64)
+        else:
+            matrix = [instance.values for instance in self._instances]
+            self._matrix_cache = np.array(matrix, dtype=np.float64)
+        return self._matrix_cache
     
     @property
     def bag_id(self) -> Any:

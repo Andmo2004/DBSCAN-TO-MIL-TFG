@@ -48,6 +48,8 @@ class COSMIC(BaseEstimator, ClusterMixin):
         min_pts: int,
         epsilon_prime: Optional[float] = None,
         metric: str = "hausdorff",
+        n_jobs: int = 1,
+        device: str = "cpu",
     ):
         """Constructor del modelo COSMIC.
 
@@ -57,6 +59,8 @@ class COSMIC(BaseEstimator, ClusterMixin):
             epsilon_prime: Umbral de extracción de clusters (epsilon_prime <= epsilon). Si no
                 se proporciona, se usa epsilon en la primera extracción automática dentro de fit().
             metric: Métrica de distancia entre bolsas a usar.
+            n_jobs: Número de procesos paralelos para cómputo (-1 para todos los núcleos).
+            device: Dispositivo de cómputo ('cpu', 'cuda', 'mps', 'auto').
 
         Raises:
             ValueError: Si epsilon <= 0, min_pts < 1, o epsilon_prime > epsilon.
@@ -75,6 +79,8 @@ class COSMIC(BaseEstimator, ClusterMixin):
         self._min_pts = min_pts
         self._epsilon_prime = epsilon_prime
         self._metric_name = metric.lower()
+        self._n_jobs = n_jobs
+        self._device = (device or "cpu").lower().strip()
         self._metric_func = self._get_metric_function(self._metric_name)
 
         # Estado del modelo
@@ -114,14 +120,31 @@ class COSMIC(BaseEstimator, ClusterMixin):
         return self._epsilon_prime
 
     @property
+    def n_jobs(self) -> int:
+        """Número de procesos paralelos para cómputo."""
+        return self._n_jobs
+
+    @property
+    def device(self) -> str:
+        """Dispositivo de cómputo configurado."""
+        return self._device
+
+    @property
     def cluster_count(self) -> int:
-        """Número de clusters encontrados en la última extracción (excluyendo ruido)."""
+        """Número de clusters encontrados (excluyendo ruido)."""
         return self._cluster_count
 
     @property
     def labels(self) -> Dict[str, int]:
-        """Devuelve un diccionario con las etiquetas de la última extracción {bag_id: cluster_id}."""
+        """Devuelve una copia del diccionario {bag_id: cluster_id}."""
         return self._labels.copy()
+
+    @property
+    def labels_(self) -> np.ndarray:
+        """Etiquetas de clúster asignadas a cada bolsa de entrenamiento (array numpy)."""
+        if not self._fitted:
+            raise AttributeError("El modelo no ha sido entrenado. Ejecuta fit() primero.")
+        return np.array([self._labels.get(bag.bag_id, self.NOISE_LABEL) for bag in self._train_bags])
 
     @property
     def noise_label(self) -> int:
@@ -181,7 +204,9 @@ class COSMIC(BaseEstimator, ClusterMixin):
         Returns:
             Matriz numpy de distancias (N x N).
         """
-        return compute_distance_matrix(bags, self._metric_func, self._metric_name)
+        return compute_distance_matrix(
+            bags, self._metric_func, self._metric_name, n_jobs=self._n_jobs, device=self._device
+        )
 
     def _add_core_point(self, bag: Bag, cluster_id: int):
         """Registra un punto como núcleo, asociado al cluster en el que fue encontrado."""
