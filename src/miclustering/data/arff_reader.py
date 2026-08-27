@@ -1,6 +1,6 @@
 from scipy.io import arff
 import pandas as pd
-from typing import List, Optional
+from typing import List, Optional, Union
 from pathlib import Path
 import logging
 import re
@@ -61,7 +61,7 @@ class ArffToMIData:
         """Codificación del archivo."""
         return self._encoding
     
-    def load(self, file_path: str, dataset_name: Optional[str] = None) -> MIData:
+    def load(self, file_path: Union[str, Path], dataset_name: Optional[str] = None) -> MIData:
         """Carga un archivo ARFF y lo convierte a un objeto MIData.
 
         Args:
@@ -113,7 +113,7 @@ class ArffToMIData:
 
     @classmethod
     def from_arff(cls, 
-                  file_path: str, 
+                  file_path: Union[str, Path], 
                   dataset_name: Optional[str] = None,
                   bag_column: str = DEFAULT_BAG_COLUMN,
                   class_column: str = DEFAULT_CLASS_COLUMN) -> MIData:
@@ -132,7 +132,7 @@ class ArffToMIData:
         loader = cls(bag_column=bag_column, class_column=class_column)
         return loader.load(file_path, dataset_name)
 
-    def _load_arff_file(self, file_path: str) -> tuple:
+    def _load_arff_file(self, file_path: Union[str, Path]) -> tuple:
         """Carga el archivo ARFF usando scipy y extrae metadata y esquema de instancias.
 
         Args:
@@ -145,7 +145,7 @@ class ArffToMIData:
             ValueError: Si hay error al parsear el archivo.
         """
         try:
-            data, meta = arff.loadarff(file_path)
+            data, meta = arff.loadarff(str(file_path))
             df = pd.DataFrame(data)
             logger.debug(f"ARFF parseado: {df.shape[0]} filas, {df.shape[1]} columnas")
             
@@ -158,7 +158,7 @@ class ArffToMIData:
             logger.error(error_msg)
             raise ValueError(error_msg)
     
-    def _validate_structure(self, df: pd.DataFrame, file_path: str):
+    def _validate_structure(self, df: pd.DataFrame, file_path: Union[str, Path]):
         """Valida que el DataFrame tenga la estructura MIL requerida.
 
         Args:
@@ -191,7 +191,7 @@ class ArffToMIData:
         
         logger.debug("Validación de estructura completada exitosamente")
     
-    def _extract_instance_schema_from_file(self, file_path: str) -> List[Attribute]:
+    def _extract_instance_schema_from_file(self, file_path: Union[str, Path]) -> List[Attribute]:
         """Extrae el esquema de atributos de las instancias desde el archivo ARFF.
         
         Método privado llamado una sola vez durante _load_arff_file() para evitar
