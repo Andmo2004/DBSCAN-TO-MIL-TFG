@@ -72,7 +72,11 @@ def earth_movers_distance(bag1: Bag, bag2: Bag) -> float:
         4. sum_{a in A, b in B} f(a,b) = 1 (toda la tierra es transportada)
  
     Cada instancia tiene masa uniforme 1/n_a (bolsa A) y 1/n_b (bolsa B).
-    El problema se formula como un Programa Lineal y se resuelve con scipy.
+
+    Implementación:
+        1. Si POT está disponible, usa ``ot.emd2`` (network simplex, exacto,
+           órdenes de magnitud más rápido que LP genérico).
+        2. Fallback: formulación LP con ``scipy.optimize.linprog`` (HiGHS).
 
     Args:
         bag1: Primera bolsa.
@@ -90,10 +94,24 @@ def earth_movers_distance(bag1: Bag, bag2: Bag) -> float:
     n_a = len(mat1)
     n_b = len(mat2)
  
-    # Ground distance: matriz euclidiana (n_a x n_b) 
+    # Ground distance: matriz euclidiana (n_a x n_b)
     D = cdist(mat1, mat2, metric='euclidean')   # (n_a, n_b)
+
+    # ── Camino rápido: POT (network simplex, exacto) ──
+    try:
+        import ot
+        a = np.ones(n_a) / n_a
+        b = np.ones(n_b) / n_b
+        res = ot.emd2(a, b, D)
+        return float(np.asarray(res).item())
+    except ImportError:
+        pass
+    except Exception:
+        # Si ot.emd2 falla por cualquier razón, caer al LP
+        pass
+
+    # ── Fallback: LP genérico con scipy (si POT no está instalado) ──
  
-    # Formulación LP
     # Variable: f = vector plano (n_a * n_b,) con el flujo f(a_i, b_j)
     # Objetivo: minimizar sum_{i,j} D[i,j] * f[i,j]
     c = D.flatten()                             # (n_a*n_b,)
@@ -227,3 +245,99 @@ def mahalanobis_distance(bag1: Bag, bag2: Bag) -> float:
 
     # Protección numérica: por errores de punto flotante puede ser ligeramente negativo
     return float(np.sqrt(max(0.0, float(maha_sq_raw))))
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Mahalanobis optimizado: precomputación de estadísticos por bolsa
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _bag_gaussian_stats(bag: Bag):
+    """Precomputa media y covarianza de una bolsa para Mahalanobis optimizado.
+
+    Returns:
+        Tupla (mu, cov) con la media (d,) y covarianza (d, d) de la bolsa.
+        Si la bolsa está vacía, devuelve (None, None).
+    """
+    mat = bag.as_matrix()
+    if len(mat) == 0:
+        return None, None
+    mu = np.mean(mat, axis=0)
+    if len(mat) < 2:
+        cov = np.eye(mat.shape[1])
+    else:
+        cov = np.cov(mat, rowvar=False)
+    return mu, cov
+
+
+def _mahalanobis_from_stats(mu_a, cov_a, mu_b, cov_b) -> float:
+    """Calcula distancia de Mahalanobis a partir de estadísticos precomputados.
+
+    Réplica exacta de la lógica de inversión/fallback de ``mahalanobis_distance``,
+    pero sin recalcular media ni covarianza.
+    """
+    if mu_a is None or mu_b is None:
+        return float('inf')
+
+    diff = mu_a - mu_b
+    cov_combined = 0.5 * cov_a + 0.5 * cov_b + np.eye(len(diff)) * 1e-5
+
+    # Inversión con misma cadena de fallback que mahalanobis_distance
+    try:
+        cov_inv = np.linalg.inv(cov_combined)
+    except np.linalg.LinAlgError:
+        try:
+            cov_inv = np.linalg.pinv(cov_combined)
+        except np.linalg.LinAlgError:
+            cov_inv = np.eye(cov_combined.shape[0])
+
+    if not np.all(np.isfinite(cov_inv)):
+        try:
+            cov_inv = np.linalg.pinv(cov_combined)
+        except np.linalg.LinAlgError:
+            cov_inv = np.eye(cov_combined.shape[0])
+
+    if not np.all(np.isfinite(cov_inv)):
+        cov_inv = np.eye(cov_combined.shape[0])
+
+    maha_sq_raw = diff @ cov_inv @ diff
+
+    if not np.isfinite(maha_sq_raw):
+        return float(np.linalg.norm(diff))
+
+    return float(np.sqrt(max(0.0, float(maha_sq_raw))))
+
+
+def compute_mahalanobis_matrix(bags: list) -> np.ndarray:
+    """Calcula la matriz de distancias de Mahalanobis con estadísticos precomputados.
+
+    Precomputa media y covarianza una sola vez por bolsa — O(N) — en vez de
+    recalcularlas en cada par — O(N²). El resultado numérico es idéntico a
+    llamar ``mahalanobis_distance`` para cada par.
+
+    Args:
+        bags: Lista de Bags.
+
+    Returns:
+        Matriz numpy simétrica (N × N) de distancias de Mahalanobis.
+    """
+    import logging
+    _logger = logging.getLogger(__name__)
+
+    n = len(bags)
+    if n <= 1:
+        return np.zeros((n, n), dtype=np.float64)
+
+    # Precomputar estadísticos: O(N) en vez de O(N²)
+    _logger.info(f"[Mahalanobis] Precomputando estadísticos para {n} bolsas...")
+    stats = [_bag_gaussian_stats(b) for b in bags]
+
+    matrix = np.zeros((n, n), dtype=np.float64)
+    for i in range(n):
+        mu_a, cov_a = stats[i]
+        for j in range(i + 1, n):
+            mu_b, cov_b = stats[j]
+            d = _mahalanobis_from_stats(mu_a, cov_a, mu_b, cov_b)
+            matrix[i, j] = d
+            matrix[j, i] = d
+
+    return matrix

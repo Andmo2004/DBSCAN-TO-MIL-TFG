@@ -16,19 +16,19 @@ from miclustering.data.bag import Bag
 logger = logging.getLogger(__name__)
 
 # Intento de importar PyTorch
+torch: Any = None
 try:
     import torch
     TORCH_AVAILABLE = True
 except ImportError:
-    torch = None  # type: ignore
     TORCH_AVAILABLE = False
 
 # Intento de importar POT (Python Optimal Transport)
+ot: Any = None
 try:
     import ot
     POT_AVAILABLE = True
 except ImportError:
-    ot = None  # type: ignore
     POT_AVAILABLE = False
 
 
@@ -222,12 +222,17 @@ def mahalanobis_torch(
 
     cov_comb = 0.5 * cov_a + 0.5 * cov_b + torch.eye(d, dtype=dtype, device=dev) * 1e-5
 
+    # Resolver el sistema lineal (cov_comb @ x = diff) en lugar de invertir la matriz
+    # Esto evita el fallback aten::linalg_svd a CPU en MPS y es más rápido/estable en CUDA
     try:
-        cov_inv = torch.linalg.pinv(cov_comb)
+        sol = torch.linalg.solve(cov_comb, diff)
+        maha_sq = diff @ sol
     except Exception:
-        cov_inv = torch.eye(d, dtype=dtype, device=dev)
-
-    maha_sq = diff @ cov_inv @ diff
+        try:
+            cov_inv = torch.linalg.pinv(cov_comb)
+            maha_sq = diff @ cov_inv @ diff
+        except Exception:
+            maha_sq = diff @ diff
 
     if not torch.isfinite(maha_sq):
         return float(torch.norm(diff).item())
@@ -258,7 +263,8 @@ def sinkhorn_emd_torch(
         a = np.ones(len(mat1)) / len(mat1)
         b = np.ones(len(mat2)) / len(mat2)
         try:
-            return float(ot.emd2(a, b, D))
+            res = ot.emd2(a, b, D)
+            return float(np.asarray(res).item())
         except Exception:
             pass
 
@@ -288,6 +294,7 @@ def sinkhorn_emd_torch(
     K = torch.exp(-M / reg)
     K = torch.clamp(K, min=1e-12)
     u = torch.ones(n_a, dtype=dtype, device=dev)
+    v = torch.ones(n_b, dtype=dtype, device=dev)
 
     for _ in range(max_iter):
         v = b / (K.T @ u + 1e-12)
@@ -297,6 +304,86 @@ def sinkhorn_emd_torch(
     P = u.unsqueeze(1) * K * v.unsqueeze(0)
     cost = torch.sum(P * M)
     return float(cost.item())
+
+
+def compute_mahalanobis_matrix_torch(
+    bags: List[Bag],
+    device: str = "auto",
+) -> np.ndarray:
+    """Calcula la matriz de Mahalanobis en GPU con estadísticos precomputados por bolsa.
+
+    Precomputa media y covarianza una sola vez por bolsa — O(N) — en vez de
+    recalcularlas en cada par — O(N²). Mismo resultado numérico que el bucle
+    ingenuo con ``mahalanobis_torch``.
+
+    Args:
+        bags: Lista de objetos Bag.
+        device: Dispositivo ('auto', 'cuda', 'mps', 'cpu').
+
+    Returns:
+        Matriz numpy NxN de distancias de Mahalanobis.
+    """
+    dev = get_torch_device(device)
+    n = len(bags)
+    if n <= 1:
+        return np.zeros((n, n), dtype=np.float64)
+
+    dtype = torch.float32 if getattr(dev, "type", "") == "mps" else torch.float64
+
+    # Precomputar media y covarianza por bolsa: O(N)
+    logger.info(f"[GPU Mahalanobis] Precomputando estadísticos para {n} bolsas en {dev}...")
+    stats = []  # List of (mu, cov) tensors or (None, None) for empty bags
+    d = None  # feature dimension, inferred from first non-empty bag
+    for b in bags:
+        mat = b.as_matrix()
+        if len(mat) == 0:
+            stats.append((None, None))
+            continue
+        t = torch.as_tensor(mat, dtype=dtype, device=dev)
+        if d is None:
+            d = t.shape[1]
+        mu = torch.mean(t, dim=0)
+        cov = torch.cov(t.T) if t.shape[0] >= 2 else torch.eye(d, dtype=dtype, device=dev)
+        stats.append((mu, cov))
+
+    if d is None:
+        return np.zeros((n, n), dtype=np.float64)
+
+    eye_eps = torch.eye(d, dtype=dtype, device=dev) * 1e-5
+
+    matrix = np.zeros((n, n), dtype=np.float64)
+    for i in range(n):
+        mu_a, cov_a = stats[i]
+        if mu_a is None:
+            continue
+        for j in range(i + 1, n):
+            mu_b, cov_b = stats[j]
+            if mu_b is None:
+                matrix[i, j] = matrix[j, i] = float('inf')
+                continue
+
+            diff = mu_a - mu_b
+            cov_comb = 0.5 * cov_a + 0.5 * cov_b + eye_eps
+
+            try:
+                sol = torch.linalg.solve(cov_comb, diff)
+                maha_sq = diff @ sol
+            except Exception:
+                try:
+                    cov_inv = torch.linalg.pinv(cov_comb)
+                    maha_sq = diff @ cov_inv @ diff
+                except Exception:
+                    maha_sq = diff @ diff
+
+            if not torch.isfinite(maha_sq):
+                dist = float(torch.norm(diff).item())
+            else:
+                dist = float(torch.sqrt(torch.clamp(maha_sq, min=0.0)).item())
+
+            matrix[i, j] = dist
+            matrix[j, i] = dist
+
+    return matrix
 
 
 #  Cómputo Matricial Acelerado de Distancias 
@@ -317,12 +404,16 @@ def compute_distance_matrix_torch(
     Returns:
         Matriz numpy NxN de distancias.
     """
-    dev = get_torch_device(device)
     num_bags = len(bags)
-    matrix = np.zeros((num_bags, num_bags), dtype=np.float64)
-
     if num_bags <= 1:
-        return matrix
+        return np.zeros((num_bags, num_bags), dtype=np.float64)
+
+    # Caso especial: Mahalanobis con estadísticos precomputados
+    if metric_name.lower() == "mahalanobis":
+        return compute_mahalanobis_matrix_torch(bags, device=device)
+
+    dev = get_torch_device(device)
+    matrix = np.zeros((num_bags, num_bags), dtype=np.float64)
 
     # Mapeo a función de distancia en GPU
     metric_map = {

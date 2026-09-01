@@ -49,6 +49,12 @@ def compute_distance_matrix(
 
     logger.info(f"Calculando matriz ({num_bags}x{num_bags}) usando métrica: '{metric_name}' (n_jobs={n_jobs}, device=cpu)...")
 
+    # Caso especial: Mahalanobis con estadísticos precomputados — O(N) covarianzas
+    # en vez de O(N²). Resultado numérico idéntico al bucle genérico.
+    if metric_name.lower() == "mahalanobis":
+        from miclustering.distances.probability_distribution import compute_mahalanobis_matrix  # noqa: PLC0415
+        return compute_mahalanobis_matrix(bags)
+
     # Inicializamos matriz a 0
     matrix = np.zeros((num_bags, num_bags), dtype=np.float64)
 

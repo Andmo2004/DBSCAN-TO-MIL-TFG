@@ -10,14 +10,34 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 import numpy as np
-import pytest
 
 from miclustering.distances.distance_matrix import compute_distance_matrix
 from miclustering.distances.hausdorff import hausdorff_distance
 from miclustering.data.midata import MIData
 from miclustering.models.midbscan import MIDBSCAN
 from miclustering.models.miknn import MIKnn
-from tests.models.conftest import _make_binary_dataset, _make_bag_custom
+from miclustering.data.attribute import Attribute
+from miclustering.data.bag import Bag
+from miclustering.data.instance import Instance
+
+
+def _make_bag_custom(bag_id: str, label: int, matrix: list[list[float]]) -> Bag:
+    schema = [Attribute(f"f{i}", "real") for i in range(len(matrix[0]))]
+    insts = [Instance(list(row), schema) for row in matrix]
+    return Bag(bag_id=bag_id, label=str(label), instances=insts)
+
+
+def _make_binary_dataset(n_pos: int = 10, n_neg: int = 10, seed: int = 0) -> MIData:
+    rng = np.random.RandomState(seed)
+    schema = [Attribute(f"f{i}", "real") for i in range(4)]
+    bags = []
+    for i in range(n_pos):
+        mat = (rng.rand(5, 4) + 2.0).tolist()
+        bags.append(Bag(f"pos_{i}", "1", [Instance(r, schema) for r in mat]))
+    for i in range(n_neg):
+        mat = rng.rand(5, 4).tolist()
+        bags.append(Bag(f"neg_{i}", "0", [Instance(r, schema) for r in mat]))
+    return MIData(bags, "synthetic")
 
 
 class TestDistanceMatrixComputation:
@@ -51,6 +71,37 @@ class TestDistanceMatrixComputation:
 
         np.testing.assert_allclose(m_seq, m_par2, atol=1e-12)
         np.testing.assert_allclose(m_seq, m_par_all, atol=1e-12)
+
+    def test_mahalanobis_dispatch_matches_direct(self):
+        from miclustering.distances.probability_distribution import (
+            mahalanobis_distance,
+            compute_mahalanobis_matrix,
+        )
+        dataset = _make_binary_dataset(n_pos=5, n_neg=5)
+        bags = dataset.bags
+
+        m_dispatch = compute_distance_matrix(
+            bags, mahalanobis_distance, metric_name="mahalanobis", device="cpu"
+        )
+        m_direct = compute_mahalanobis_matrix(bags)
+
+        assert m_dispatch.shape == (10, 10)
+        np.testing.assert_allclose(m_dispatch, m_direct, atol=1e-10)
+        np.testing.assert_allclose(m_dispatch, m_dispatch.T, atol=1e-12)
+        np.testing.assert_allclose(np.diag(m_dispatch), np.zeros(10), atol=1e-12)
+
+    def test_earth_movers_matrix_computation(self):
+        from miclustering.distances.probability_distribution import earth_movers_distance
+        dataset = _make_binary_dataset(n_pos=4, n_neg=4)
+        bags = dataset.bags
+
+        m = compute_distance_matrix(
+            bags, earth_movers_distance, metric_name="earth_movers", device="cpu"
+        )
+        assert m.shape == (8, 8)
+        assert np.all(m >= 0.0)
+        np.testing.assert_allclose(m, m.T, atol=1e-10)
+        np.testing.assert_allclose(np.diag(m), np.zeros(8), atol=1e-10)
 
 
 class TestModelParallelPredict:

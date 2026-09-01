@@ -13,7 +13,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 import numpy as np
-import pytest
+import unittest
 
 from miclustering.distances.torch_backend import (
     is_torch_available,
@@ -34,10 +34,32 @@ from miclustering.distances.probability_distribution import (
     mahalanobis_distance,
 )
 from miclustering.distances.distance_matrix import compute_distance_matrix
-from tests.models.conftest import _make_binary_dataset, _make_bag_custom
+from miclustering.data.attribute import Attribute
+from miclustering.data.bag import Bag
+from miclustering.data.instance import Instance
+from miclustering.data.midata import MIData
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="PyTorch no está instalado")
+def _make_bag_custom(bag_id: str, label: int, matrix: list[list[float]]) -> Bag:
+    schema = [Attribute(f"f{i}", "real") for i in range(len(matrix[0]))]
+    insts = [Instance(list(row), schema) for row in matrix]
+    return Bag(bag_id=bag_id, label=str(label), instances=insts)
+
+
+def _make_binary_dataset(n_pos: int = 10, n_neg: int = 10, seed: int = 0) -> MIData:
+    rng = np.random.RandomState(seed)
+    schema = [Attribute(f"f{i}", "real") for i in range(4)]
+    bags = []
+    for i in range(n_pos):
+        mat = (rng.rand(5, 4) + 2.0).tolist()
+        bags.append(Bag(f"pos_{i}", "1", [Instance(r, schema) for r in mat]))
+    for i in range(n_neg):
+        mat = rng.rand(5, 4).tolist()
+        bags.append(Bag(f"neg_{i}", "0", [Instance(r, schema) for r in mat]))
+    return MIData(bags, "synthetic")
+
+
+@unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
 class TestTorchAvailabilityAndDevice:
     def test_torch_is_available(self):
         assert is_torch_available() is True
@@ -49,10 +71,11 @@ class TestTorchAvailabilityAndDevice:
 
     def test_get_device_cpu_returns_cpu(self):
         dev = get_torch_device("cpu")
+        assert dev is not None
         assert dev.type == "cpu"
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="PyTorch no está instalado")
+@unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
 class TestHausdorffGPUvsCPU:
     def test_hausdorff_max_matches_cpu(self):
         bag1 = _make_bag_custom("b1", 1, [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
@@ -86,7 +109,7 @@ class TestHausdorffGPUvsCPU:
         assert np.isinf(val)
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="PyTorch no está instalado")
+@unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
 class TestCauchySchwarzGPUvsCPU:
     def test_cauchy_schwarz_matches_cpu(self):
         bag1 = _make_bag_custom("b1", 1, [[1.0, 2.0], [3.0, 4.0]])
@@ -102,7 +125,7 @@ class TestCauchySchwarzGPUvsCPU:
         assert np.isinf(val)
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="PyTorch no está instalado")
+@unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
 class TestMahalanobisGPUvsCPU:
     def test_mahalanobis_matches_cpu(self):
         rng = np.random.RandomState(42)
@@ -118,7 +141,7 @@ class TestMahalanobisGPUvsCPU:
         np.testing.assert_allclose(cpu_val, gpu_val, atol=1e-3)
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="PyTorch no está instalado")
+@unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
 class TestSinkhornEMDGPU:
     def test_sinkhorn_identical_is_near_zero(self):
         mat = np.array([[1.0, 2.0], [3.0, 4.0]])
@@ -133,7 +156,7 @@ class TestSinkhornEMDGPU:
         assert val > 10.0
 
 
-@pytest.mark.skipif(not is_torch_available(), reason="PyTorch no está instalado")
+@unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
 class TestComputeDistanceMatrixGPU:
     def test_matrix_gpu_matches_cpu_hausdorff(self):
         dataset = _make_binary_dataset(n_pos=8, n_neg=8)
@@ -151,8 +174,18 @@ class TestComputeDistanceMatrixGPU:
         dataset = _make_binary_dataset(n_pos=4, n_neg=4)
         bags = dataset.bags
 
-        for metric in ["hausdorff", "hausdorff_min", "hausdorff_avg", "cauchy_schwarz", "mahalanobis"]:
+        for metric in ["hausdorff", "hausdorff_min", "hausdorff_avg", "cauchy_schwarz", "mahalanobis", "earth_movers"]:
             m = compute_distance_matrix_torch(bags, metric_name=metric, device="auto")
             assert m.shape == (8, 8)
             assert np.all(np.isfinite(m))
             np.testing.assert_allclose(m, m.T, atol=1e-10)
+
+    def test_compute_mahalanobis_matrix_torch_direct(self):
+        from miclustering.distances.torch_backend import compute_mahalanobis_matrix_torch
+        dataset = _make_binary_dataset(n_pos=5, n_neg=5)
+        bags = dataset.bags
+
+        m = compute_mahalanobis_matrix_torch(bags, device="auto")
+        assert m.shape == (10, 10)
+        np.testing.assert_allclose(m, m.T, atol=1e-10)
+        np.testing.assert_allclose(np.diag(m), np.zeros(10), atol=1e-10)

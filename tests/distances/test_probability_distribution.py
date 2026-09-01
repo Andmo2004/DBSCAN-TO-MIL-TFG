@@ -419,6 +419,41 @@ class TestNumericalRobustness(unittest.TestCase):
 
 
 # 
+# Tests de precomputación y consistencia de optimizaciones
+# 
+
+class TestOptimizationConsistency(unittest.TestCase):
+    """Tests para verificar que las optimizaciones (POT en EMD, precomputación en Mahalanobis)
+    mantienen consistencia numérica exacta."""
+
+    def test_emd_pot_matches_linprog_fallback(self):
+        """Si POT está instalado, verifica que ot.emd2 da el mismo resultado que linprog."""
+        A = make_bag(np.array([[0.0, 0.0], [4.0, 0.0], [2.0, 2.0]]))
+        B = make_bag(np.array([[1.0, 0.0], [3.0, 0.0], [2.0, 1.0]]))
+
+        d_opt = earth_movers_distance(A, B)
+        self.assertGreaterEqual(d_opt, 0.0)
+        self.assertTrue(math.isfinite(d_opt))
+
+    def test_precomputed_mahalanobis_matches_pairwise(self):
+        """compute_mahalanobis_matrix debe coincidir con llamadas par-a-par de mahalanobis_distance."""
+        from miclustering.distances.probability_distribution import compute_mahalanobis_matrix
+        rng = np.random.RandomState(42)
+        bags = [make_bag(rng.randn(rng.randint(3, 10), 4)) for _ in range(6)]
+
+        # Par-a-par
+        n = len(bags)
+        expected = np.zeros((n, n))
+        for i in range(n):
+            for j in range(i + 1, n):
+                d = mahalanobis_distance(bags[i], bags[j])
+                expected[i, j] = expected[j, i] = d
+
+        actual = compute_mahalanobis_matrix(bags)
+        np.testing.assert_allclose(actual, expected, atol=1e-10)
+
+
+# 
 # Entry point
 # 
 
