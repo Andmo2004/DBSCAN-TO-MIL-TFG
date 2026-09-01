@@ -12,6 +12,7 @@ from miclustering.distances.probability_distribution import (
 from miclustering.distances.distance_matrix import compute_distance_matrix
 from miclustering.distances.torch_backend import (
     is_torch_available,
+    is_cuda_usable,
     get_torch_device,
     compute_distance_matrix_torch,
 )
@@ -36,6 +37,7 @@ __all__ = [
     "earth_movers_distance",
     "mahalanobis_distance",
     "is_torch_available",
+    "is_cuda_usable",
     "get_torch_device",
     "compute_distance_matrix_torch",
 ]

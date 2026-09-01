@@ -36,9 +36,12 @@ def compute_distance_matrix(
     # Intentar aceleración por GPU si device != "cpu"
     if device and device.lower() != "cpu":
         try:
-            from miclustering.distances.torch_backend import is_torch_available, compute_distance_matrix_torch
+            from miclustering.distances.torch_backend import is_torch_available, get_torch_device, compute_distance_matrix_torch
             if is_torch_available():
-                return compute_distance_matrix_torch(bags, metric_name=metric_name, device=device)
+                resolved_dev = get_torch_device(device)
+                if resolved_dev is not None and resolved_dev.type != "cpu":
+                    return compute_distance_matrix_torch(bags, metric_name=metric_name, device=device)
+                # Si resolved_dev es CPU (p. ej. GPU incompatible como Tesla P100 o sin GPU), usar CPU multinúcleo
             else:
                 logger.warning("Dispositivo GPU solicitado pero PyTorch no está disponible. Degradando a CPU.")
         except Exception as e:

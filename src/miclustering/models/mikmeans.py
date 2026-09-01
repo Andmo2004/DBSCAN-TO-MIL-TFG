@@ -12,7 +12,7 @@ from miclustering.distances import DISTANCE_REGISTRY
 logger = logging.getLogger(__name__)
 
 class MIKMeans(BaseEstimator, ClusterMixin):
-    """
+    r"""
     Implementación del algoritmo K-Means adaptado para Multi-Instance Learning (MIL).
 
     Diseño Algorítmico MIL:

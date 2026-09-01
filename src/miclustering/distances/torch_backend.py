@@ -32,13 +32,58 @@ except ImportError:
     POT_AVAILABLE = False
 
 
+_CUDA_USABLE: Optional[bool] = None
+_CUDA_CHECK_MESSAGE: str = ""
+
+
 def is_torch_available() -> bool:
     """Verifica si PyTorch está instalado y disponible en el entorno."""
     return TORCH_AVAILABLE
 
 
+def is_cuda_usable() -> bool:
+    """Comprueba si CUDA está no solo disponible sino verdaderamente operativo con los kernels de PyTorch.
+
+    Evita errores como 'cudaErrorNoKernelImageForDevice' en GPUs de arquitectura anterior a sm_70
+    (ej. NVIDIA Tesla P100 sm_60 en Kaggle) cuando la versión instalada de PyTorch solo soporta sm_70+.
+    """
+    global _CUDA_USABLE, _CUDA_CHECK_MESSAGE
+    if _CUDA_USABLE is not None:
+        return _CUDA_USABLE
+
+    if not TORCH_AVAILABLE:
+        _CUDA_USABLE = False
+        return False
+
+    try:
+        if not torch.cuda.is_available():
+            _CUDA_USABLE = False
+            return False
+
+        # Prueba funcional real ejecutando una operación elemental en GPU
+        test_t = torch.zeros(1, device="cuda") + 1.0
+        _ = float(test_t.item())
+        _CUDA_USABLE = True
+        return True
+    except Exception as e:
+        gpu_name = "Desconocida"
+        try:
+            if torch.cuda.device_count() > 0:
+                gpu_name = torch.cuda.get_device_name(0)
+        except Exception:
+            pass
+
+        _CUDA_USABLE = False
+        _CUDA_CHECK_MESSAGE = (
+            f"GPU detectada ({gpu_name}) no es compatible con los kernels compilados de esta versión de PyTorch ({e}). "
+            "Se usará CPU paralelizada automáticamente."
+        )
+        logger.warning(_CUDA_CHECK_MESSAGE)
+        return False
+
+
 def get_torch_device(device_str: str = "auto") -> Optional["torch.device"]:
-    """Resuelve y devuelve el objeto torch.device apropiado según la disponibilidad.
+    """Resuelve y devuelve el objeto torch.device apropiado según la disponibilidad y compatibilidad real.
 
     Args:
         device_str: 'auto', 'cuda', 'mps', 'cpu' o None.
@@ -52,11 +97,18 @@ def get_torch_device(device_str: str = "auto") -> Optional["torch.device"]:
     dev = (device_str or "auto").lower().strip()
 
     if dev == "auto":
-        if torch.cuda.is_available():
+        if is_cuda_usable():
             return torch.device("cuda")
         elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
             return torch.device("mps")
         else:
+            return torch.device("cpu")
+
+    elif dev == "cuda":
+        if is_cuda_usable():
+            return torch.device("cuda")
+        else:
+            logger.warning("CUDA solicitado pero la GPU no es compatible con esta instalación de PyTorch. Usando CPU.")
             return torch.device("cpu")
 
     try:
