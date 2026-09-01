@@ -23,9 +23,9 @@ from miclustering.distances.probability_distribution import (
 )
 
 
-# ═══════════════════════════════════════════════════════════════════════════
+
 # Helpers
-# ═══════════════════════════════════════════════════════════════════════════
+
 
 def _make_schema(n_features: int) -> list:
     return [Attribute(name=f"feat_{i}", attr_type="real") for i in range(n_features)]
@@ -60,9 +60,9 @@ def _pairwise_mahalanobis_matrix(bags: list) -> np.ndarray:
     return matrix
 
 
-# ═══════════════════════════════════════════════════════════════════════════
+
 # Tests: funciones auxiliares
-# ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestBagGaussianStats(unittest.TestCase):
     """Tests para _bag_gaussian_stats."""
@@ -124,9 +124,9 @@ class TestMahalanobisFromStats(unittest.TestCase):
         self.assertAlmostEqual(actual, expected, places=10)
 
 
-# ═══════════════════════════════════════════════════════════════════════════
+
 # Tests: equivalencia numérica de la matriz completa (CPU)
-# ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestComputeMahalanobisMatrix(unittest.TestCase):
     """Verifica que compute_mahalanobis_matrix produce resultados idénticos
@@ -172,9 +172,9 @@ class TestComputeMahalanobisMatrix(unittest.TestCase):
         self.assertTrue(np.all(matrix >= 0))
 
 
-# ═══════════════════════════════════════════════════════════════════════════
+
 # Tests: equivalencia GPU (torch backend) — skip si no disponible
-# ═══════════════════════════════════════════════════════════════════════════
+
 
 class TestComputeMahalanobisMatrixTorch(unittest.TestCase):
     """Verifica compute_mahalanobis_matrix_torch contra el resultado CPU."""

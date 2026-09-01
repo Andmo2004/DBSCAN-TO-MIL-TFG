@@ -46,6 +46,8 @@ class PersistentDistanceMatrixCache:
         metric_func: Optional[Callable] = None,
         seed: int = 42,
         save: bool = False,
+        n_jobs: int = 1,
+        device: str = "cpu",
     ) -> np.ndarray:
         key = (dataset_name, split, scaler_name, metric_name)
  
@@ -81,9 +83,11 @@ class PersistentDistanceMatrixCache:
         from miclustering.distances.distance_matrix import compute_distance_matrix  # noqa: PLC0415
         logger.info(
             f"[{dataset_name}] Calculando matriz "
-            f"({split} / {scaler_name} / {metric_name})..."
+            f"({split} / {scaler_name} / {metric_name}) [device={device}, n_jobs={n_jobs}]..."
         )
-        matrix = compute_distance_matrix(bags, metric_func, metric_name)
+        matrix = compute_distance_matrix(
+            bags, metric_func, metric_name, n_jobs=n_jobs, device=device
+        )
  
         self._lru_set(key, matrix)
         if save:
