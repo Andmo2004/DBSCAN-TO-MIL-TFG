@@ -38,6 +38,7 @@ from miclustering.distances.probability_distribution import cauchy_schwarz_dista
 import sys
 import importlib
 from pathlib import Path
+from typing import Any
 
 # Add experiments directory to sys.path for phase 4 statistics testing
 _exp_dir = Path(__file__).resolve().parents[3] / "MIClustering-experiments"
@@ -46,11 +47,12 @@ if str(_exp_dir) not in sys.path:
 
 try:
     _fase4 = importlib.import_module("fase4_estadistica")
-    cd_diagram_data = _fase4.cd_diagram_data
-    wilcoxon_posthoc = _fase4.wilcoxon_posthoc
+    cd_diagram_data: Any = _fase4.cd_diagram_data
+    wilcoxon_posthoc: Any = _fase4.wilcoxon_posthoc
 except ImportError:
-    cd_diagram_data = None
-    wilcoxon_posthoc = None
+    cd_diagram_data: Any = lambda *args, **kwargs: {}
+    wilcoxon_posthoc: Any = lambda *args, **kwargs: None
+
 
 
 

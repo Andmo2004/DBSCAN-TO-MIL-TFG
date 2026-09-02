@@ -138,8 +138,11 @@ class MIKMeans(BaseEstimator, ClusterMixin):
     def _array_to_bag(self, centroid: np.ndarray, cluster_id: int) -> Bag:
         """Envuelve un vector centroide en un Bag sintético de una instancia."""
         schema = self._train_bags[0][0].schema   # reutiliza el schema del dataset
-        instance = Instance(centroid.tolist(), schema)
-        return Bag(bag_id=f"__centroid_{cluster_id}__", label=-1, instances=[instance])
+        c_mat = np.ascontiguousarray(centroid.reshape(1, -1), dtype=np.float64)
+        instance = Instance(c_mat[0].tolist(), schema)
+        bag = Bag(bag_id=f"__centroid_{cluster_id}__", label=-1, instances=[instance])
+        bag._matrix_cache = c_mat
+        return bag
 
     def _calculate_centroid(self, cluster_bags: List[Bag], cluster_id: int) -> Bag:
         """
@@ -196,6 +199,8 @@ class MIKMeans(BaseEstimator, ClusterMixin):
             self._centroids.append(centroid_bag)
         
         cluster_assignments = np.zeros(num_bags, dtype=int)
+        prev_assignments = None
+        prev_prev_assignments = None
         
         logger.info(f"Iniciando MIKMeans (k={self._k}, max_iters={self._max_iters}, tol={self._tol})...")
 
@@ -222,7 +227,16 @@ class MIKMeans(BaseEstimator, ClusterMixin):
                 )
                 cluster_assignments = new_assignments
                 break
+            elif prev_prev_assignments is not None and np.array_equal(new_assignments, prev_prev_assignments):
+                logger.debug(
+                    f"Ciclo oscilatorio de frontera detectado en iteración {iteration}. "
+                    f"Convergencia estable alcanzada."
+                )
+                cluster_assignments = new_assignments
+                break
                 
+            prev_prev_assignments = prev_assignments
+            prev_assignments = cluster_assignments
             cluster_assignments = new_assignments
             
             # 2. Actualizar centroides
