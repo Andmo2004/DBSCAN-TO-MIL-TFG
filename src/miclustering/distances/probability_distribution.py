@@ -247,9 +247,7 @@ def mahalanobis_distance(bag1: Bag, bag2: Bag) -> float:
     return float(np.sqrt(max(0.0, float(maha_sq_raw))))
 
 
-# ═══════════════════════════════════════════════════════════════════════════
 # Mahalanobis optimizado: precomputación de estadísticos por bolsa
-# ═══════════════════════════════════════════════════════════════════════════
 
 def _bag_gaussian_stats(bag: Bag):
     """Precomputa media y covarianza de una bolsa para Mahalanobis optimizado.

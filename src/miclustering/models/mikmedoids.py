@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 class MIKMedoids(BaseEstimator, ClusterMixin):
     """
     Implementación del algoritmo K-Medoids adaptado para Multi-Instance Learning (MIL),
-    utilizando el algoritmo PAM (Partitioning Around Medoids).
+    utilizando una heurística alternante tipo Lloyd (asignación a medoide más cercano
+    y actualización seleccionando la bolsa que minimiza la suma de distancias intra-clúster).
     """
 
     def __init__(

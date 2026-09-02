@@ -1,4 +1,5 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
+from pathlib import Path
 from miclustering.data.bag import Bag
 import random
 import logging
@@ -91,10 +92,10 @@ class MIData:
         Returns:
             Tupla (MIData_train, MIData_test).
         """
-        random.seed(seed)
+        rng = random.Random(seed)
         
         bags_copy = list(self._bags)
-        random.shuffle(bags_copy)
+        rng.shuffle(bags_copy)
         
         split_index = int(len(bags_copy) * (percentage_train / 100.0))
         
@@ -131,3 +132,30 @@ class MIData:
         """
         negative_labels = {'0', 0, 'negative', 'neg', False}
         return [bag for bag in self._bags if bag.label in negative_labels]
+
+    @classmethod
+    def from_arff(
+        cls,
+        file_path: Union[str, Path],
+        dataset_name: Optional[str] = None,
+        bag_column: str = "bag",
+        class_column: str = "class",
+    ) -> 'MIData':
+        """Carga un dataset MIL desde un archivo ARFF utilizando ArffToMIData.
+
+        Args:
+            file_path: Ruta al archivo ARFF.
+            dataset_name: Nombre del dataset (si es None, usa el nombre del archivo).
+            bag_column: Nombre de la columna con estructura relacional (por defecto 'bag').
+            class_column: Nombre de la columna con etiquetas (por defecto 'class').
+
+        Returns:
+            Objeto MIData con el dataset cargado.
+        """
+        from miclustering.data.arff_reader import ArffToMIData
+        return ArffToMIData.from_arff(
+            file_path=file_path,
+            dataset_name=dataset_name,
+            bag_column=bag_column,
+            class_column=class_column,
+        )

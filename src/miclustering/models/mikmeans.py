@@ -144,15 +144,22 @@ class MIKMeans(BaseEstimator, ClusterMixin):
     def _calculate_centroid(self, cluster_bags: List[Bag], cluster_id: int) -> Bag:
         """
         Calcula el centroide de un conjunto de bolsas mediante la agregación de sus instancias.
-        Calcula la media de todas las instancias dentro de las bolsas para crear un vector representativo,
-        y lo empaqueta de vuelta en un objeto Bag con una única instancia para mantener la
-        coherencia con las abstracciones de dominio.
+        Calcula la media de todas las instancias agrupadas (ponderación a nivel de instancia)
+        para crear un vector representativo, y lo empaqueta de vuelta en un objeto Bag
+        con una única instancia para mantener la coherencia con las abstracciones de dominio.
         """
-        if not cluster_bags:
-            raise ValueError(f"No se puede calcular el centroide del clúster {cluster_id} vacío.")
+        valid_matrices = []
+        for bag in cluster_bags:
+            if len(bag) > 0:
+                mat = bag.as_matrix()
+                if mat.ndim == 2 and mat.shape[0] > 0:
+                    valid_matrices.append(mat)
+
+        if not valid_matrices:
+            raise ValueError(f"No se puede calcular el centroide del clúster {cluster_id}: no contiene instancias válidas.")
             
         # Agregamos todas las instancias de todas las bolsas del clúster
-        all_instances = np.vstack([bag.as_matrix() for bag in cluster_bags])
+        all_instances = np.vstack(valid_matrices)
         
         # El centroide es la media de todas las instancias
         return self._array_to_bag(np.mean(all_instances, axis=0), cluster_id)
@@ -180,7 +187,11 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         self._centroids = []
         for c_idx, idx in enumerate(initial_indices):
             bag = self._train_bags[idx]
-            # Convertimos la bolsa seleccionada a un centroide válido (una bolsa con la media de sus instancias)
+            if len(bag) == 0:
+                for b in self._train_bags:
+                    if len(b) > 0:
+                        bag = b
+                        break
             centroid_bag = self._calculate_centroid([bag], c_idx)
             self._centroids.append(centroid_bag)
         
@@ -218,18 +229,19 @@ class MIKMeans(BaseEstimator, ClusterMixin):
             new_centroids = []
             for c in range(self._k):
                 cluster_points = np.where(cluster_assignments == c)[0]
+                cluster_bags = [self._train_bags[idx] for idx in cluster_points] if len(cluster_points) > 0 else []
+                valid_bags = [b for b in cluster_bags if len(b) > 0]
                 
-                if len(cluster_points) == 0:
-                    # Clúster vacío: reinicializar con el punto más alejado del centroide global
-                    logger.debug(f"Clúster {c} vacío en iteración {iteration}. Reinicializando centroide.")
+                if len(cluster_points) == 0 or len(valid_bags) == 0:
+                    # Clúster vacío o sin instancias válidas: reinicializar con el punto más alejado del centroide global
+                    logger.debug(f"Clúster {c} vacío o sin instancias en iteración {iteration}. Reinicializando centroide.")
                     global_centroid = self._calculate_centroid(self._train_bags, -1)
                     distances_to_global = [self._metric_func(bag, global_centroid) for bag in self._train_bags]
                     farthest_idx = int(np.argmax(distances_to_global))
                     new_centroids.append(self._calculate_centroid([self._train_bags[farthest_idx]], c))
                     continue
                     
-                cluster_bags = [self._train_bags[idx] for idx in cluster_points]
-                new_centroids.append(self._calculate_centroid(cluster_bags, c))
+                new_centroids.append(self._calculate_centroid(valid_bags, c))
                 
             self._centroids = new_centroids
             

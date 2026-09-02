@@ -10,7 +10,7 @@ class Instance:
         values: lista o array con los valores de la instancia.
         weight: peso (por defecto 1.0).
     """
-    __slots__ = ('_values', '_schema', '_weight')
+    __slots__ = ('_values', '_schema', '_weight', '_bag_ref')
 
     def __init__(self, values: List[Any], schema: List['Attribute'], weight: float = 1.0):
         """Constructor de la Instancia.
@@ -23,6 +23,20 @@ class Instance:
         self._values = values
         self._schema = schema
         self._weight = weight
+        self._bag_ref = None
+
+    def __getstate__(self):
+        return {
+            '_values': self._values,
+            '_schema': self._schema,
+            '_weight': self._weight,
+        }
+
+    def __setstate__(self, state):
+        self._values = state['_values']
+        self._schema = state['_schema']
+        self._weight = state['_weight']
+        self._bag_ref = None
 
     def __eq__(self, other):
         if not isinstance(other, Instance):
@@ -65,6 +79,12 @@ class Instance:
             )
 
         self.values[index] = value
+
+        # Invalidar la caché de la bolsa contenedora si existe (tras mutación exitosa)
+        ref = self._bag_ref
+        bag = ref() if ref is not None else None
+        if bag is not None:
+            bag.invalidate_cache()
     
     def _validate_type(self, value: Any, attribute: 'Attribute') -> bool:
         """Método interno auxiliar para validar un valor contra un Atributo.
@@ -86,9 +106,7 @@ class Instance:
         elif attr_type == 'nominal':
             if not isinstance(value, str):
                 return False
-            if attribute.values is not None and value not in attribute.values:
-                return False 
-            return value in attribute.values
+            return True if attribute.values is None else value in attribute.values
         
         return True
     

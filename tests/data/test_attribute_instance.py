@@ -13,6 +13,7 @@ import pytest
 
 from miclustering.data.attribute import Attribute
 from miclustering.data.instance import Instance
+from miclustering.data.bag import Bag
 
 from tests.conftest import make_schema
 
@@ -170,6 +171,36 @@ class TestInstance:
         inst = Instance(["a"], schema)
         inst.set_value(0, "b")
         assert inst.get_value(0) == "b"
+
+    def test_set_nominal_value_when_values_is_none_accepted(self):
+        schema = [Attribute("cat", "nominal", values=None)]
+        inst = Instance(["a"], schema)
+        inst.set_value(0, "arbitrary_string")
+        assert inst.get_value(0) == "arbitrary_string"
+
+    def test_set_value_invalidates_parent_bag_cache(self):
+        schema = [Attribute("x", "real"), Attribute("y", "real")]
+        inst1 = Instance([1.0, 2.0], schema)
+        inst2 = Instance([3.0, 4.0], schema)
+        bag = Bag("test_bag", 0, [inst1, inst2])
+
+        # Generate cache
+        mat_before = bag.as_matrix()
+        assert mat_before[0, 0] == 1.0
+
+        # Mutate instance via set_value
+        inst1.set_value(0, 99.0)
+
+        # Cache must be invalidated, new matrix must reflect update
+        mat_after = bag.as_matrix()
+        assert mat_after[0, 0] == 99.0
+
+    def test_orphaned_instance_set_value_does_not_crash(self):
+        schema = [Attribute("x", "real")]
+        inst = Instance([1.0], schema)
+        # No parent bag attached
+        inst.set_value(0, 42.0)
+        assert inst.get_value(0) == 42.0
 
     #  __slots__ 
 

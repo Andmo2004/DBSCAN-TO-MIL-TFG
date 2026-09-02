@@ -60,7 +60,7 @@ def _make_binary_dataset(n_pos: int = 10, n_neg: int = 10, seed: int = 0) -> MID
 
 
 @unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
-class TestTorchAvailabilityAndDevice:
+class TestTorchAvailabilityAndDevice(unittest.TestCase):
     def test_torch_is_available(self):
         assert is_torch_available() is True
 
@@ -76,7 +76,7 @@ class TestTorchAvailabilityAndDevice:
 
 
 @unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
-class TestHausdorffGPUvsCPU:
+class TestHausdorffGPUvsCPU(unittest.TestCase):
     def test_hausdorff_max_matches_cpu(self):
         bag1 = _make_bag_custom("b1", 1, [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])
         bag2 = _make_bag_custom("b2", 0, [[2.0, 2.5], [4.0, 4.5]])
@@ -110,7 +110,7 @@ class TestHausdorffGPUvsCPU:
 
 
 @unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
-class TestCauchySchwarzGPUvsCPU:
+class TestCauchySchwarzGPUvsCPU(unittest.TestCase):
     def test_cauchy_schwarz_matches_cpu(self):
         bag1 = _make_bag_custom("b1", 1, [[1.0, 2.0], [3.0, 4.0]])
         bag2 = _make_bag_custom("b2", 0, [[2.0, 3.0], [4.0, 5.0]])
@@ -126,7 +126,7 @@ class TestCauchySchwarzGPUvsCPU:
 
 
 @unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
-class TestMahalanobisGPUvsCPU:
+class TestMahalanobisGPUvsCPU(unittest.TestCase):
     def test_mahalanobis_matches_cpu(self):
         rng = np.random.RandomState(42)
         mat1 = rng.randn(10, 4) + 2.0
@@ -142,7 +142,7 @@ class TestMahalanobisGPUvsCPU:
 
 
 @unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
-class TestSinkhornEMDGPU:
+class TestSinkhornEMDGPU(unittest.TestCase):
     def test_sinkhorn_identical_is_near_zero(self):
         mat = np.array([[1.0, 2.0], [3.0, 4.0]])
         val = sinkhorn_emd_torch(mat, mat)
@@ -157,7 +157,7 @@ class TestSinkhornEMDGPU:
 
 
 @unittest.skipIf(not is_torch_available(), "PyTorch no está instalado")
-class TestComputeDistanceMatrixGPU:
+class TestComputeDistanceMatrixGPU(unittest.TestCase):
     def test_matrix_gpu_matches_cpu_hausdorff(self):
         dataset = _make_binary_dataset(n_pos=8, n_neg=8)
         bags = dataset.bags

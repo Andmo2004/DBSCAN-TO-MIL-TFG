@@ -401,7 +401,7 @@ class VRCIndex(BaseCVI):
             # Clusters perfectamente compactos (todos singletons idénticos)
             return float("inf")
  
-        return float((ssb / ssw) * ((n_valid - k) / (k - 1)))
+        return (ssb / ssw) * ((n_valid - k) / (k - 1))
  
  
 class IIndex(BaseCVI):
@@ -496,7 +496,7 @@ class IIndex(BaseCVI):
             logger.warning("[IIndex] Clustering degenerado (sin separación o Ek ≈ 0).")
             return 0.0
  
-        return float(((1.0 / k) * (e1 / ek) * dk) ** self._P)
+        return ((1.0 / k) * (e1 / ek) * dk) ** self._P
 
 
 # 
@@ -608,7 +608,7 @@ class InternalCVIEvaluator:
             try:
                 value = cvi.compute(dist_matrix, labels, bag_ids, X=X)
                 results["scores"][cvi.name] = {
-                    "value":            round(float(value), 6),
+                    "value":            round(value, 6),
                     "category":         cvi.category,
                     "higher_is_better": cvi.higher_is_better,
                 }
@@ -646,19 +646,27 @@ class InternalCVIEvaluator:
         """
         bag_index = {bag.bag_id: bag for bag in dataset.bags}
  
+        # Inferir dimensión de atributos d por adelantado desde cualquier bolsa no vacía
+        d = 1
+        for b in dataset.bags:
+            if len(b) > 0:
+                mat = b.as_matrix()
+                if mat.ndim == 2 and mat.shape[1] > 0:
+                    d = mat.shape[1]
+                    break
+
         centroids = []
         for bid in bag_ids:
             bag = bag_index.get(bid)
             if bag is None or len(bag) == 0:
-                d = len(centroids[0]) if centroids else 1
-                centroids.append(np.zeros(d))
+                centroids.append(np.zeros(d, dtype=np.float64))
                 logger.warning(
                     f"[InternalCVIEvaluator] Bolsa '{bid}' no encontrada o vacía."
                 )
             else:
                 centroids.append(np.mean(bag.as_matrix(), axis=0))
  
-        return np.array(centroids)   # (N, n_features)
+        return np.array(centroids, dtype=np.float64) if centroids else np.empty((0, d), dtype=np.float64)
  
     #  Reporte en consola 
  

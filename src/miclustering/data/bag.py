@@ -1,6 +1,7 @@
 from miclustering.data.instance import Instance
 from typing import Any, Optional, List
 import numpy as np
+import weakref
 
 
 class Bag:
@@ -22,6 +23,29 @@ class Bag:
 
         if self._instances and not all(isinstance(i, Instance) for i in self._instances):
             raise TypeError("Todos los elementos deben ser instancias de Instance")
+
+        for inst in self._instances:
+            inst._bag_ref = weakref.ref(self)
+
+    def __getstate__(self):
+        return {
+            '_bag_id': self._bag_id,
+            '_label': self._label,
+            '_instances': self._instances,
+            '_matrix_cache': self._matrix_cache,
+        }
+
+    def __setstate__(self, state):
+        self._bag_id = state['_bag_id']
+        self._label = state['_label']
+        self._instances = state['_instances']
+        self._matrix_cache = state.get('_matrix_cache')
+        for inst in self._instances:
+            inst._bag_ref = weakref.ref(self)
+
+    def invalidate_cache(self) -> None:
+        """Invalida la caché interna de la matriz NumPy."""
+        self._matrix_cache = None
 
     def __iter__(self):
         """Permite iterar sobre las instancias: for inst in bag."""
@@ -80,8 +104,11 @@ class Bag:
         Args:
             instance: Objeto Instance a añadir.
         """
+        if not isinstance(instance, Instance):
+            raise TypeError("El elemento debe ser una instancia de Instance")
+        instance._bag_ref = weakref.ref(self)
         self._instances.append(instance)
-        self._matrix_cache = None
+        self.invalidate_cache()
 
     def as_matrix(self) -> np.ndarray:
         """Devuelve las instancias como una matriz NumPy. (n_instancias * n_atributos)

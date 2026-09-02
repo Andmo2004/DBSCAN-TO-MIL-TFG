@@ -291,3 +291,12 @@ class TestMIDataEquality:
     def test_inequality_with_non_midata(self, small_dataset):
         assert small_dataset != "not_a_dataset"
         assert small_dataset != []
+
+
+# Carga desde ARFF
+
+class TestMIDataFromArff:
+
+    def test_from_arff_delegates_and_raises_on_missing_file(self, tmp_path):
+        with pytest.raises(FileNotFoundError):
+            MIData.from_arff(str(tmp_path / "non_existent.arff"))

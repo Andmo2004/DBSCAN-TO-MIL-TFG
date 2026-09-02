@@ -125,6 +125,7 @@ def hausdorff_torch(
     mat2: np.ndarray,
     device: Optional[Any] = None,
     mode: str = "max",
+    dtype: Optional[Any] = None,
 ) -> float:
     """Calcula la distancia de Hausdorff (Max, Min o Avg) usando tensores PyTorch en GPU.
 
@@ -133,6 +134,8 @@ def hausdorff_torch(
         mat2: Matriz de la segunda bolsa (m_inst x d).
         device: torch.device para el cálculo.
         mode: 'max', 'min' o 'avg'.
+        dtype: Tipo de datos (por defecto float32 en MPS/CUDA para máximo rendimiento,
+               o float64 en CPU).
 
     Returns:
         Distancia de Hausdorff (float).
@@ -144,8 +147,10 @@ def hausdorff_torch(
         return float("inf")
 
     dev = device or get_torch_device("auto")
-    t1 = torch.as_tensor(mat1, dtype=torch.float32, device=dev)
-    t2 = torch.as_tensor(mat2, dtype=torch.float32, device=dev)
+    if dtype is None:
+        dtype = torch.float32 if getattr(dev, "type", "") in ("mps", "cuda") else torch.float64
+    t1 = torch.as_tensor(mat1, dtype=dtype, device=dev)
+    t2 = torch.as_tensor(mat2, dtype=dtype, device=dev)
 
     # torch.cdist utiliza GEMM optimizado en GPU
     d_mat = torch.cdist(t1, t2, p=2.0)
@@ -169,6 +174,7 @@ def cauchy_schwarz_torch(
     mat1: np.ndarray,
     mat2: np.ndarray,
     device: Optional[Any] = None,
+    dtype: Optional[Any] = None,
 ) -> float:
     """Calcula la distancia Cauchy-Schwarz vectorizada en GPU con PyTorch."""
     if not TORCH_AVAILABLE:
@@ -178,8 +184,10 @@ def cauchy_schwarz_torch(
         return float("inf")
 
     dev = device or get_torch_device("auto")
-    t1 = torch.as_tensor(mat1, dtype=torch.float32, device=dev)
-    t2 = torch.as_tensor(mat2, dtype=torch.float32, device=dev)
+    if dtype is None:
+        dtype = torch.float32 if getattr(dev, "type", "") in ("mps", "cuda") else torch.float64
+    t1 = torch.as_tensor(mat1, dtype=dtype, device=dev)
+    t2 = torch.as_tensor(mat2, dtype=dtype, device=dev)
 
     vec1 = torch.mean(t1, dim=0)
     vec2 = torch.mean(t2, dim=0)
@@ -198,6 +206,7 @@ def mahalanobis_torch(
     mat1: np.ndarray,
     mat2: np.ndarray,
     device: Optional[Any] = None,
+    dtype: Optional[Any] = None,
 ) -> float:
     """Calcula la distancia de Mahalanobis vectorizada en GPU con PyTorch."""
     if not TORCH_AVAILABLE:
@@ -207,7 +216,8 @@ def mahalanobis_torch(
         return float("inf")
 
     dev = device or get_torch_device("auto")
-    dtype = torch.float32 if getattr(dev, "type", "") == "mps" else torch.float64
+    if dtype is None:
+        dtype = torch.float32 if getattr(dev, "type", "") in ("mps", "cuda") else torch.float64
     t1 = torch.as_tensor(mat1, dtype=dtype, device=dev)
     t2 = torch.as_tensor(mat2, dtype=dtype, device=dev)
     d = t1.shape[1]
@@ -246,6 +256,7 @@ def sinkhorn_emd_torch(
     device: Optional[Any] = None,
     reg: Optional[float] = None,
     max_iter: int = 100,
+    dtype: Optional[Any] = None,
 ) -> float:
     """Calcula la distancia de Transporte Óptimo (EMD/Sinkhorn) acelerada en GPU.
 
@@ -271,8 +282,11 @@ def sinkhorn_emd_torch(
     if not TORCH_AVAILABLE:
         raise RuntimeError("PyTorch no está disponible para cálculo Sinkhorn.")
 
+    logger.warning("POT no disponible o cálculo falló. Usando aproximación regularizada Sinkhorn-Knopp en lugar de EMD exacto.")
+
     dev = device or get_torch_device("auto")
-    dtype = torch.float32 if getattr(dev, "type", "") == "mps" else torch.float64
+    if dtype is None:
+        dtype = torch.float32 if getattr(dev, "type", "") in ("mps", "cuda") else torch.float64
     t1 = torch.as_tensor(mat1, dtype=dtype, device=dev)
     t2 = torch.as_tensor(mat2, dtype=dtype, device=dev)
     n_a = t1.shape[0]
@@ -309,16 +323,17 @@ def sinkhorn_emd_torch(
 def compute_mahalanobis_matrix_torch(
     bags: List[Bag],
     device: str = "auto",
+    dtype: Optional[Any] = None,
 ) -> np.ndarray:
     """Calcula la matriz de Mahalanobis en GPU con estadísticos precomputados por bolsa.
 
     Precomputa media y covarianza una sola vez por bolsa — O(N) — en vez de
-    recalcularlas en cada par — O(N²). Mismo resultado numérico que el bucle
-    ingenuo con ``mahalanobis_torch``.
+    recalcularlas en cada par — O(N²).
 
     Args:
         bags: Lista de objetos Bag.
         device: Dispositivo ('auto', 'cuda', 'mps', 'cpu').
+        dtype: Tipo de datos (por defecto float32 en MPS/CUDA, float64 en CPU).
 
     Returns:
         Matriz numpy NxN de distancias de Mahalanobis.
@@ -328,7 +343,8 @@ def compute_mahalanobis_matrix_torch(
     if n <= 1:
         return np.zeros((n, n), dtype=np.float64)
 
-    dtype = torch.float32 if getattr(dev, "type", "") == "mps" else torch.float64
+    if dtype is None:
+        dtype = torch.float32 if getattr(dev, "type", "") in ("mps", "cuda") else torch.float64
 
     # Precomputar media y covarianza por bolsa: O(N)
     logger.info(f"[GPU Mahalanobis] Precomputando estadísticos para {n} bolsas en {dev}...")
