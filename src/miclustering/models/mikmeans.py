@@ -35,6 +35,7 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         k: int,
         metric: str = 'hausdorff',
         max_iters: int = 100,
+        tol: float = 0.01,
         random_state: Optional[int] = None,
         n_jobs: int = 1,
         device: str = "cpu",
@@ -45,6 +46,9 @@ class MIKMeans(BaseEstimator, ClusterMixin):
             k: Número de clústeres.
             metric: Métrica de distancia a utilizar entre bolsas y centroides.
             max_iters: Número máximo de iteraciones.
+            tol: Tolerancia relativa de convergencia (fracción máxima de bolsas que
+                 pueden cambiar de clúster entre iteraciones consecutivas, por defecto
+                 0.01 = 1%). Si es 0.0, exige convergencia exacta.
             random_state: Semilla para la inicialización aleatoria.
             n_jobs: Número de procesos paralelos para cómputo (-1 para todos los núcleos).
             device: Dispositivo de cómputo ('cpu', 'cuda', 'mps', 'auto').
@@ -53,10 +57,13 @@ class MIKMeans(BaseEstimator, ClusterMixin):
             raise ValueError(f"El parámetro 'k' debe ser >= 1. Recibido: {k}")
         if max_iters < 1:
             raise ValueError(f"El parámetro 'max_iters' debe ser >= 1. Recibido: {max_iters}")
+        if tol < 0:
+            raise ValueError(f"El parámetro 'tol' debe ser >= 0. Recibido: {tol}")
             
         self._k = k
         self._metric_name = metric.lower()
         self._max_iters = max_iters
+        self._tol = tol
         self._random_state = random_state
         self._n_jobs = n_jobs
         self._device = (device or "cpu").lower().strip()
@@ -69,11 +76,16 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         self._train_bags: List[Bag] = []
         self._centroids: List[Bag] = []
 
-        logger.debug(f"MIKMeans inicializado: k={k}, metric={metric}")
+        logger.debug(f"MIKMeans inicializado: k={k}, metric={metric}, tol={self._tol}")
 
     @property
     def k(self) -> int:
         return self._k
+
+    @property
+    def tol(self) -> float:
+        """Tolerancia de convergencia relativa configurada."""
+        return self._tol
 
     @property
     def n_jobs(self) -> int:
@@ -174,7 +186,7 @@ class MIKMeans(BaseEstimator, ClusterMixin):
         
         cluster_assignments = np.zeros(num_bags, dtype=int)
         
-        logger.info(f"Iniciando MIKMeans (k={self._k}, max_iters={self._max_iters})...")
+        logger.info(f"Iniciando MIKMeans (k={self._k}, max_iters={self._max_iters}, tol={self._tol})...")
 
         for iteration in range(self._max_iters):
             new_assignments = np.zeros(num_bags, dtype=int)
@@ -185,8 +197,19 @@ class MIKMeans(BaseEstimator, ClusterMixin):
                 new_assignments[i] = np.argmin(distances)
                 
             # Comprobar convergencia
-            if np.array_equal(cluster_assignments, new_assignments):
-                logger.debug(f"Convergencia alcanzada en la iteración {iteration}.")
+            n_changed = int(np.sum(cluster_assignments != new_assignments))
+            rel_change = n_changed / num_bags
+
+            if n_changed == 0:
+                logger.debug(f"Convergencia exacta alcanzada en la iteración {iteration}.")
+                cluster_assignments = new_assignments
+                break
+            elif self._tol > 0 and rel_change <= self._tol:
+                logger.debug(
+                    f"Convergencia por tolerancia ({rel_change:.2%} <= {self._tol:.2%}) "
+                    f"alcanzada en la iteración {iteration} ({n_changed}/{num_bags} bolsas cambiaron)."
+                )
+                cluster_assignments = new_assignments
                 break
                 
             cluster_assignments = new_assignments
@@ -211,7 +234,7 @@ class MIKMeans(BaseEstimator, ClusterMixin):
             self._centroids = new_centroids
             
         else:
-            logger.warning(f"MIKMeans no convergió después de {self._max_iters} iteraciones.")
+            logger.warning(f"MIKMeans no convergió después de {self._max_iters} iteraciones (tol={self._tol}).")
 
         self._labels = {self._train_bags[i].bag_id: int(cluster_assignments[i]) for i in range(num_bags)}
         self._fitted = True
@@ -262,23 +285,23 @@ class MIKMeans(BaseEstimator, ClusterMixin):
 
     def __repr__(self,  N_CHAR_MAX: int = 700) -> str:
         state = "fitted" if self._fitted else "unfitted"
-        return f"<MIKMeans(k={self._k}, metric={self._metric_name}, status={state})>"
+        return f"<MIKMeans(k={self._k}, metric={self._metric_name}, tol={self._tol}, status={state})>"
 
     def __str__(self) -> str:
         if not self._fitted:
-            return f"MIKMeans (Unfitted): k={self._k}, metric={self._metric_name}"
+            return f"MIKMeans (Unfitted): k={self._k}, metric={self._metric_name}, tol={self._tol}"
             
         stats = self.get_statistics()
         return (f"MIKMeans Model:\n"
-                f"  - Config: k={self._k}, metric={self._metric_name}\n"
+                f"  - Config: k={self._k}, metric={self._metric_name}, tol={self._tol}\n"
                 f"  - Status: Fitted on {stats['total_bags']} bags\n"
                 f"  - Cluster Sizes: {stats['cluster_sizes']}")
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     try:
-        from miclustering.data.midata import MIData
-        full_data = MIData.from_arff("datasets/musk1.arff") 
+        from miclustering.data.arff_reader import ArffToMIData
+        full_data = ArffToMIData.from_arff("datasets/musk1.arff") 
         train_data, test_data = full_data.split_data(percentage_train=70, seed=42)
         
         model = MIKMeans(k=2, metric='hausdorff_avg')

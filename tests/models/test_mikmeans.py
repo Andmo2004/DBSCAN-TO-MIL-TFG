@@ -95,10 +95,28 @@ class TestMIKMeansConstruction:
         m = MIKMeans(k=2, random_state=42)
         assert m._random_state == 42
 
+    def test_default_tol_is_0_01(self):
+        m = MIKMeans(k=2)
+        assert m.tol == 0.01
+
+    def test_custom_tol_stored(self):
+        m = MIKMeans(k=2, tol=0.05)
+        assert m.tol == 0.05
+
+    def test_negative_tol_raises(self):
+        with pytest.raises(ValueError, match="tol"):
+            MIKMeans(k=2, tol=-0.01)
+
 
 #  2. fit() 
 
 class TestMIKMeansFit:
+
+    def test_fit_with_custom_tol(self):
+        ds = _ds()
+        m = MIKMeans(k=2, tol=0.05, random_state=0)
+        m.fit(ds)
+        assert m.is_fitted
 
     def test_fit_returns_self(self):
         ds = _ds()
